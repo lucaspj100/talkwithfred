@@ -108,7 +108,7 @@ function Dashboard() {
         {convs.length === 0 && (
           <p className="p-5 text-sm text-muted-foreground">Nenhuma conversa ainda. Escolha um modo acima para começar.</p>
         )}
-        {convs.slice(0, 8).map((c) => (
+        {convs.slice(0, 8).map((c: typeof convs[number]) => (
           <Link
             key={c.id}
             to="/chat/$conversationId"
