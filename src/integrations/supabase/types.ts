@@ -14,16 +14,209 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      conversations: {
+        Row: {
+          created_at: string
+          id: string
+          mode: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mode?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mode?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          correction: string | null
+          created_at: string
+          explanation: string | null
+          id: string
+          improved_sentence: string | null
+          input_type: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          correction?: string | null
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          improved_sentence?: string | null
+          input_type?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          correction?: string | null
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          improved_sentence?: string | null
+          input_type?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          last_login: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string
+          id: string
+          last_login?: string | null
+          name?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          last_login?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      usage_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          messages_sent: number | null
+          user_id: string
+          voice_minutes_used: number | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          messages_sent?: number | null
+          user_id: string
+          voice_minutes_used?: number | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          messages_sent?: number | null
+          user_id?: string
+          voice_minutes_used?: number | null
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          biggest_difficulty: string
+          correction_preference: string
+          created_at: string
+          english_level: string
+          explanation_language: string
+          id: string
+          main_goal: string
+          speaking_speed_preference: string
+          specific_training_situation: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          biggest_difficulty: string
+          correction_preference: string
+          created_at?: string
+          english_level: string
+          explanation_language: string
+          id?: string
+          main_goal: string
+          speaking_speed_preference: string
+          specific_training_situation?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          biggest_difficulty?: string
+          correction_preference?: string
+          created_at?: string
+          english_level?: string
+          explanation_language?: string
+          id?: string
+          main_goal?: string
+          speaking_speed_preference?: string
+          specific_training_situation?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +343,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
