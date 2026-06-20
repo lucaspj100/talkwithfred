@@ -29,9 +29,12 @@ export const Route = createFileRoute("/api/chat")({
               auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
             },
           );
-          const { data: claims, error: claimErr } = await supabase.auth.getClaims(token);
-          if (claimErr || !claims?.claims?.sub) return new Response("Unauthorized", { status: 401 });
-          const userId = claims.claims.sub as string;
+          const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+          if (userErr || !userData?.user?.id) {
+            console.error("[/api/chat] auth", userErr);
+            return new Response("Unauthorized", { status: 401 });
+          }
+          const userId = userData.user.id;
 
           const [{ data: userProfile }, { data: profile }] = await Promise.all([
             supabase.from("user_profiles").select("*").eq("user_id", userId).maybeSingle(),

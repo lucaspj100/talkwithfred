@@ -50,10 +50,14 @@ function ChatPage() {
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        headers: () => (token ? { Authorization: `Bearer ${token}` } : {}) as Record<string, string>,
+        headers: async (): Promise<Record<string, string>> => {
+          const { data } = await supabase.auth.getSession();
+          const t = data.session?.access_token;
+          return t ? { Authorization: `Bearer ${t}` } : {};
+        },
         body: { mode: conversation.mode as Mode, conversationId: conversation.id },
       }),
-    [token, conversation.id, conversation.mode],
+    [conversation.id, conversation.mode],
   );
 
   const { messages, sendMessage, status, setMessages } = useChat({
@@ -75,7 +79,10 @@ function ChatPage() {
       } catch (e) { console.error(e); }
       setInputType("text");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => {
+      console.error("[chat]", e);
+      toast.error("Fred teve um problema para responder agora. Tente novamente em alguns segundos.");
+    },
   });
 
   const [input, setInput] = useState("");
