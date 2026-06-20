@@ -63,9 +63,9 @@ function AuthPage() {
             </TabsList>
             <TabsContent value="signup" className="space-y-4 pt-4">
               <form onSubmit={handleSignup} className="space-y-4">
-                <div><Label>Nome</Label><Input required value={signupData.name} onChange={(e) => setSignupData({ ...signupData, name: e.target.value })} /></div>
-                <div><Label>E-mail</Label><Input required type="email" value={signupData.email} onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} /></div>
-                <div><Label>Senha</Label><Input required type="password" minLength={6} value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} /></div>
+                <div><Label htmlFor="signup-name">Nome</Label><Input id="signup-name" required value={signupData.name} onChange={(e) => setSignupData({ ...signupData, name: e.target.value })} /></div>
+                <div><Label htmlFor="signup-email">E-mail</Label><Input id="signup-email" required type="email" value={signupData.email} onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} /></div>
+                <div><Label htmlFor="signup-pw">Senha</Label><Input id="signup-pw" required type="password" minLength={6} value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} /></div>
                 <Button type="submit" className="w-full" disabled={loading}>{loading ? "Criando..." : "Criar conta"}</Button>
               </form>
             </TabsContent>
