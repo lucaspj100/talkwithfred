@@ -79,7 +79,10 @@ function ChatPage() {
       } catch (e) { console.error(e); }
       setInputType("text");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => {
+      console.error("[chat]", e);
+      toast.error("Fred teve um problema para responder agora. Tente novamente em alguns segundos.");
+    },
   });
 
   const [input, setInput] = useState("");
