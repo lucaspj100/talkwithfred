@@ -50,10 +50,14 @@ function ChatPage() {
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        headers: () => (token ? { Authorization: `Bearer ${token}` } : {}) as Record<string, string>,
+        headers: async () => {
+          const { data } = await supabase.auth.getSession();
+          const t = data.session?.access_token;
+          return t ? { Authorization: `Bearer ${t}` } : {};
+        },
         body: { mode: conversation.mode as Mode, conversationId: conversation.id },
       }),
-    [token, conversation.id, conversation.mode],
+    [conversation.id, conversation.mode],
   );
 
   const { messages, sendMessage, status, setMessages } = useChat({
