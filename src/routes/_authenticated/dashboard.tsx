@@ -204,3 +204,64 @@ function ModeCard({ icon, title, description, cta, onClick, tone }: {
     </button>
   );
 }
+
+function FocusCard({ profile }: { profile: NonNullable<ReturnType<typeof Route.useLoaderData>["me"]["userProfile"]> }) {
+  const completed = profile.onboarding_completed;
+  const primaryGoal = profile.primary_english_goal ?? profile.main_goal ?? null;
+  const goals = (profile.english_goals as string[] | null) ?? [];
+  const secondary = goals.filter((g) => g !== primaryGoal);
+  const primaryArea = profile.primary_professional_area as string | null;
+  const customArea = profile.custom_professional_area as string | null;
+  const situations = ((profile.preferred_situations as string[] | null) ?? []).slice(0, 4);
+  const practiceGoal = profile.practice_goal as string | null;
+
+  if (!completed) {
+    return (
+      <div className="mt-6 rounded-2xl border border-primary/40 bg-gradient-to-br from-primary/15 to-transparent p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="flex items-center gap-2 text-xs uppercase text-primary">
+              <Sparkles className="size-3.5" /> Atualize seu foco com Fred
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Conte para Fred seus objetivos atuais para personalizar conversas e treinos.
+            </p>
+          </div>
+          <Link to="/settings/onboarding">
+            <Button size="sm">Atualizar agora</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border border-border bg-card/60 p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs uppercase text-muted-foreground">Seu foco atual</p>
+          <div className="mt-2 grid gap-1 text-sm">
+            {primaryGoal && (
+              <p><span className="text-muted-foreground">Objetivo:</span> <span className="font-medium">{labelGoal(primaryGoal)}</span></p>
+            )}
+            {primaryArea && (
+              <p><span className="text-muted-foreground">Área:</span> <span className="font-medium">{labelArea(primaryArea, customArea)}</span></p>
+            )}
+            {situations.length > 0 && (
+              <p className="truncate"><span className="text-muted-foreground">Situações:</span> <span className="font-medium">{situations.map(labelSituation).join(", ")}</span></p>
+            )}
+            {secondary.length > 0 && (
+              <p className="truncate text-xs text-muted-foreground">Também: {secondary.map(labelGoal).join(", ")}</p>
+            )}
+            {practiceGoal && (
+              <p className="text-xs text-muted-foreground">Meta: {labelPracticeGoal(practiceGoal)}</p>
+            )}
+          </div>
+        </div>
+        <Link to="/settings/onboarding">
+          <Button size="sm" variant="outline"><Pencil className="mr-1 size-3.5" />Editar foco</Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
