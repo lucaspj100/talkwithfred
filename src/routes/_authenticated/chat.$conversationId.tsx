@@ -420,6 +420,8 @@ function ChatPage() {
       const mime = ["audio/webm", "audio/mp4"].find((t) => MediaRecorder.isTypeSupported(t)) ?? "audio/webm";
       const rec = new MediaRecorder(stream, { mimeType: mime });
       chunksRef.current = [];
+      finalTranscriptRef.current = "";
+      liveTranscriptRef.current = "";
       setFinalTranscript("");
       setLiveTranscript("");
       rec.ondataavailable = (e) => e.data.size > 0 && chunksRef.current.push(e.data);
@@ -428,12 +430,14 @@ function ChatPage() {
         setRecording(false);
         stopLiveRecognition();
         const blob = new Blob(chunksRef.current, { type: mime });
-        const liveText = `${finalTranscript} ${liveTranscript}`.trim();
+        const liveText = `${finalTranscriptRef.current} ${liveTranscriptRef.current}`.trim();
 
         const send = (text: string) => {
           setInputType("voice");
           stopAudio();
           sendMessage({ text });
+          finalTranscriptRef.current = "";
+          liveTranscriptRef.current = "";
           setFinalTranscript("");
           setLiveTranscript("");
         };
