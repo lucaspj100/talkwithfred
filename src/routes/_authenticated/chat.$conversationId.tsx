@@ -513,7 +513,7 @@ function ChatPage() {
                   <img src={fredAvatar} alt="" width={64} height={64} loading="lazy" className="h-8 w-8 shrink-0 rounded-full object-cover" />
                   <div className="max-w-[85%]">
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {display || (status === "streaming" ? "..." : "")}
+                      {showPlaceholder ? "..." : display || (status === "streaming" ? "..." : "")}
                       {isCaptioning && <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-primary/60 align-baseline" aria-hidden />}
                     </p>
                     {text && (
