@@ -231,41 +231,74 @@ export type Database = {
       }
       user_profiles: {
         Row: {
-          biggest_difficulty: string
-          correction_preference: string
+          biggest_difficulty: string | null
+          correction_preference: string | null
           created_at: string
-          english_level: string
-          explanation_language: string
+          custom_professional_area: string | null
+          english_goals: Json
+          english_level: string | null
+          explanation_language: string | null
           id: string
-          main_goal: string
-          speaking_speed_preference: string
+          main_goal: string | null
+          onboarding_completed: boolean
+          onboarding_completed_at: string | null
+          onboarding_updated_at: string | null
+          practice_goal: string | null
+          preferred_situations: Json
+          primary_english_goal: string | null
+          primary_professional_area: string | null
+          professional_areas: Json
+          speaking_speed_preference: string | null
           specific_training_situation: string | null
+          technical_terms: Json
           updated_at: string
           user_id: string
         }
         Insert: {
-          biggest_difficulty: string
-          correction_preference: string
+          biggest_difficulty?: string | null
+          correction_preference?: string | null
           created_at?: string
-          english_level: string
-          explanation_language: string
+          custom_professional_area?: string | null
+          english_goals?: Json
+          english_level?: string | null
+          explanation_language?: string | null
           id?: string
-          main_goal: string
-          speaking_speed_preference: string
+          main_goal?: string | null
+          onboarding_completed?: boolean
+          onboarding_completed_at?: string | null
+          onboarding_updated_at?: string | null
+          practice_goal?: string | null
+          preferred_situations?: Json
+          primary_english_goal?: string | null
+          primary_professional_area?: string | null
+          professional_areas?: Json
+          speaking_speed_preference?: string | null
           specific_training_situation?: string | null
+          technical_terms?: Json
           updated_at?: string
           user_id: string
         }
         Update: {
-          biggest_difficulty?: string
-          correction_preference?: string
+          biggest_difficulty?: string | null
+          correction_preference?: string | null
           created_at?: string
-          english_level?: string
-          explanation_language?: string
+          custom_professional_area?: string | null
+          english_goals?: Json
+          english_level?: string | null
+          explanation_language?: string | null
           id?: string
-          main_goal?: string
-          speaking_speed_preference?: string
+          main_goal?: string | null
+          onboarding_completed?: boolean
+          onboarding_completed_at?: string | null
+          onboarding_updated_at?: string | null
+          practice_goal?: string | null
+          preferred_situations?: Json
+          primary_english_goal?: string | null
+          primary_professional_area?: string | null
+          professional_areas?: Json
+          speaking_speed_preference?: string | null
           specific_training_situation?: string | null
+          technical_terms?: Json
           updated_at?: string
           user_id?: string
         }
