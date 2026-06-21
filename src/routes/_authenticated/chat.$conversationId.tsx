@@ -358,6 +358,8 @@ function ChatPage() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recognitionRef = useRef<any>(null);
+  const finalTranscriptRef = useRef("");
+  const liveTranscriptRef = useRef("");
   const liveSupported = typeof window !== "undefined" && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
   const liveWarnedRef = useRef(false);
 
