@@ -596,6 +596,20 @@ function ChatPage() {
             })}
           </div>
 
+          {recording && (
+            <div className="mx-3 mt-2 rounded-2xl border border-primary/40 bg-primary/5 px-4 py-3">
+              <p className="text-[11px] uppercase tracking-wide text-primary/80">Você está dizendo</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
+                {finalTranscript && <span>{finalTranscript} </span>}
+                <span className="text-muted-foreground">{liveTranscript}</span>
+                {!finalTranscript && !liveTranscript && (
+                  <span className="text-muted-foreground">Estou ouvindo... fale em inglês.</span>
+                )}
+                <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-primary/60 align-baseline" aria-hidden />
+              </p>
+            </div>
+          )}
+
           <form onSubmit={onSubmit} className="border-t border-border p-3">
             <div className="flex items-end gap-2">
               <Button
