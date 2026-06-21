@@ -129,59 +129,63 @@ function ChatPage() {
     await preparePlayback(id, text, { manual: true });
   }
 
-  // Core: fetch TTS in background, then start playback.
+  // Core: stream TTS progressively via <audio src=...> so playback starts
+  // as soon as the browser has enough buffered data (no arrayBuffer wait).
   async function preparePlayback(id: string, text: string, opts: { manual: boolean }) {
     stopAudio();
     setPreparingId(id);
     const ac = new AbortController();
     ttsAbortRef.current = ac;
+    // Autoplay uses a shortened version to keep latency low; manual playback
+    // can use the full response.
     const speechText = opts.manual ? text : shortenForSpeech(text);
     try {
       const { data } = await supabase.auth.getSession();
       const t = data.session?.access_token ?? token;
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
-        body: JSON.stringify({ text: speechText }),
-        signal: ac.signal,
-      });
-      if (!res.ok) throw new Error(await res.text().catch(() => `TTS ${res.status}`));
-      const buf = await res.arrayBuffer();
-      if (ac.signal.aborted) return;
-      const url = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
-      // If something else started/stopped while we were fetching, abort.
-      if (preparingIdRef.current !== id) {
-        URL.revokeObjectURL(url);
-        return;
-      }
-      const audio = new Audio(url);
-      audio.onended = () => {
+      if (!t) throw new Error("no_session");
+
+      const streamUrl =
+        `/api/tts-stream?text=${encodeURIComponent(speechText)}` +
+        `&access_token=${encodeURIComponent(t)}`;
+
+      const audio = new Audio();
+      audio.preload = "auto";
+      audio.src = streamUrl;
+
+      const cleanup = () => {
         if (audioRef.current === audio) {
           setPlayingId(null);
           audioRef.current = null;
         }
-        URL.revokeObjectURL(url);
-        if (currentUrlRef.current === url) currentUrlRef.current = null;
       };
+      audio.onended = cleanup;
       audio.onerror = () => {
-        if (audioRef.current === audio) {
-          setPlayingId(null);
-          audioRef.current = null;
-        }
-        URL.revokeObjectURL(url);
-        if (currentUrlRef.current === url) currentUrlRef.current = null;
+        cleanup();
+        setPreparingId((p) => (p === id ? null : p));
+        if (opts.manual) toast.error("Falha ao reproduzir áudio.");
       };
-      try {
-        await audio.play();
-        if (ttsAbortRef.current === ac) ttsAbortRef.current = null;
-        // Started successfully — commit state.
-        audioRef.current = audio;
-        currentUrlRef.current = url;
+      // Flip to "speaking" state as soon as audio actually starts playing.
+      audio.onplaying = () => {
+        if (ac.signal.aborted) return;
         setPreparingId((p) => (p === id ? null : p));
         setPlayingId(id);
         playedIdsRef.current.add(id);
+      };
+
+      if (ac.signal.aborted) return;
+
+      // Race-check: don't take over if user already moved on.
+      if (preparingIdRef.current !== id) return;
+
+      audioRef.current = audio;
+
+      try {
+        // Start playback as soon as possible. The browser will begin playing
+        // once enough data is buffered, without waiting for the full file.
+        await audio.play();
+        if (ttsAbortRef.current === ac) ttsAbortRef.current = null;
       } catch (err) {
-        URL.revokeObjectURL(url);
+        if (audioRef.current === audio) audioRef.current = null;
         setPreparingId((p) => (p === id ? null : p));
         if ((err as Error)?.name === "NotAllowedError") {
           if (!blockToastShownRef.current) {
@@ -189,7 +193,6 @@ function ChatPage() {
             toast.message("O navegador bloqueou o áudio. Clique novamente em qualquer lugar ou no botão Ouvir Fred para liberar.");
           }
           // Keep autoplayEnabled as the user's persistent preference.
-          // Do NOT mark as played — allow retry on next message.
         } else if (opts.manual) {
           toast.error("Falha ao reproduzir áudio.");
         }
