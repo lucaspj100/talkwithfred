@@ -186,10 +186,10 @@ function ChatPage() {
         if ((err as Error)?.name === "NotAllowedError") {
           if (!blockToastShownRef.current) {
             blockToastShownRef.current = true;
-            toast.message("Clique em Ativar áudio automático para ouvir Fred automaticamente.");
+            toast.message("O navegador bloqueou o áudio. Clique novamente em qualquer lugar ou no botão Ouvir Fred para liberar.");
           }
-          persistAutoplay(false);
-          // Do NOT mark as played — allow retry once enabled.
+          // Keep autoplayEnabled as the user's persistent preference.
+          // Do NOT mark as played — allow retry on next message.
         } else if (opts.manual) {
           toast.error("Falha ao reproduzir áudio.");
         }
