@@ -17,9 +17,12 @@ import { Route as ApiTtsStreamRouteImport } from './routes/api/tts-stream'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
+import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -61,6 +64,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPracticeRoute = AuthenticatedPracticeRouteImport.update({
+  id: '/practice',
+  path: '/practice',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -76,6 +84,18 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPracticeIndexRoute =
+  AuthenticatedPracticeIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
+const AuthenticatedPracticeFillInBlankRoute =
+  AuthenticatedPracticeFillInBlankRouteImport.update({
+    id: '/fill-in-blank',
+    path: '/fill-in-blank',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
 const AuthenticatedChatConversationIdRoute =
   AuthenticatedChatConversationIdRouteImport.update({
     id: '/chat/$conversationId',
@@ -90,11 +110,14 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/practice': typeof AuthenticatedPracticeRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
+  '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/practice/': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -108,6 +131,8 @@ export interface FileRoutesByTo {
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
+  '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/practice': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,11 +143,14 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/practice': typeof AuthenticatedPracticeRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
+  '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -133,11 +161,14 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/onboarding'
+    | '/practice'
     | '/api/chat'
     | '/api/stt'
     | '/api/tts'
     | '/api/tts-stream'
     | '/chat/$conversationId'
+    | '/practice/fill-in-blank'
+    | '/practice/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -151,6 +182,8 @@ export interface FileRouteTypes {
     | '/api/tts'
     | '/api/tts-stream'
     | '/chat/$conversationId'
+    | '/practice/fill-in-blank'
+    | '/practice'
   id:
     | '__root__'
     | '/'
@@ -160,11 +193,14 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
+    | '/_authenticated/practice'
     | '/api/chat'
     | '/api/stt'
     | '/api/tts'
     | '/api/tts-stream'
     | '/_authenticated/chat/$conversationId'
+    | '/_authenticated/practice/fill-in-blank'
+    | '/_authenticated/practice/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -236,6 +272,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/practice': {
+      id: '/_authenticated/practice'
+      path: '/practice'
+      fullPath: '/practice'
+      preLoaderRoute: typeof AuthenticatedPracticeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -257,6 +300,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/practice/': {
+      id: '/_authenticated/practice/'
+      path: '/'
+      fullPath: '/practice/'
+      preLoaderRoute: typeof AuthenticatedPracticeIndexRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
+    '/_authenticated/practice/fill-in-blank': {
+      id: '/_authenticated/practice/fill-in-blank'
+      path: '/fill-in-blank'
+      fullPath: '/practice/fill-in-blank'
+      preLoaderRoute: typeof AuthenticatedPracticeFillInBlankRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
     '/_authenticated/chat/$conversationId': {
       id: '/_authenticated/chat/$conversationId'
       path: '/chat/$conversationId'
@@ -267,10 +324,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedPracticeRouteChildren {
+  AuthenticatedPracticeFillInBlankRoute: typeof AuthenticatedPracticeFillInBlankRoute
+  AuthenticatedPracticeIndexRoute: typeof AuthenticatedPracticeIndexRoute
+}
+
+const AuthenticatedPracticeRouteChildren: AuthenticatedPracticeRouteChildren = {
+  AuthenticatedPracticeFillInBlankRoute: AuthenticatedPracticeFillInBlankRoute,
+  AuthenticatedPracticeIndexRoute: AuthenticatedPracticeIndexRoute,
+}
+
+const AuthenticatedPracticeRouteWithChildren =
+  AuthenticatedPracticeRoute._addFileChildren(
+    AuthenticatedPracticeRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRouteWithChildren
   AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRoute
 }
 
@@ -278,6 +351,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedPracticeRoute: AuthenticatedPracticeRouteWithChildren,
   AuthenticatedChatConversationIdRoute: AuthenticatedChatConversationIdRoute,
 }
 

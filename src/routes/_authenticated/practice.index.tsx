@@ -66,7 +66,7 @@ function PracticeIndex() {
             <Empty text="Sem erros registrados ainda. Converse com Fred para começarmos a capturar." />
           ) : (
             <ul className="divide-y divide-border">
-              {errors.map((e) => (
+              {errors.map((e: typeof errors[number]) => (
                 <li key={e.id} className="py-3 text-sm">
                   <p className="line-through text-muted-foreground">{e.original}</p>
                   <p className="font-medium text-foreground">{e.correction}</p>
@@ -81,7 +81,7 @@ function PracticeIndex() {
             <Empty text="Sem vocabulário ainda. Quanto mais conversas, mais palavras." />
           ) : (
             <ul className="divide-y divide-border">
-              {vocab.map((v) => (
+              {vocab.map((v: typeof vocab[number]) => (
                 <li key={v.id} className="py-3 text-sm">
                   <p className="font-medium">{v.original}</p>
                   {v.explanation_pt && <p className="text-xs text-muted-foreground">{v.explanation_pt}</p>}
