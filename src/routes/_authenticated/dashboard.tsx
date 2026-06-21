@@ -7,9 +7,16 @@ import { MODES, type Mode } from "@/lib/fred-prompt";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target } from "lucide-react";
+import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles } from "lucide-react";
 import { useState } from "react";
 import fredAvatar from "@/assets/fred-avatar.jpg";
+import {
+  labelGoal,
+  labelArea,
+  labelSituation,
+  labelLevel,
+  labelPracticeGoal,
+} from "@/lib/onboarding-options";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   loader: async () => {
@@ -23,8 +30,6 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 const LABEL: Record<string, string> = {
   beginner: "Iniciante", basic: "Básico", intermediate: "Intermediário", advanced: "Avançado",
-  work: "Trabalho", job_interview: "Entrevista", travel: "Viagem", conversation: "Conversação",
-  study: "Estudo", presentation: "Apresentação", meeting: "Reunião", other: "Outro",
 };
 
 function Dashboard() {
