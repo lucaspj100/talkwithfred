@@ -87,6 +87,72 @@ function ChatPage() {
   // Seed with initial message IDs so we don't autoplay historical messages.
   const playedIdsRef = useRef<Set<string>>(new Set(initialUI.map((m) => m.id)));
 
+  // ============= Progressive captions (karaoke-style) =============
+  // captionCounts[id] = words to reveal. Unset = show full text (history + finished).
+  const [captionCounts, setCaptionCounts] = useState<Record<string, number>>({});
+  const captionRafRef = useRef<number | null>(null);
+  const captionIdRef = useRef<string | null>(null);
+
+  function takeWords(text: string, n: number): string {
+    const tokens = text.split(/(\s+)/);
+    let words = 0;
+    let out = "";
+    for (const t of tokens) {
+      if (/^\s*$/.test(t)) { out += t; continue; }
+      if (words >= n) break;
+      out += t;
+      words++;
+    }
+    return out;
+  }
+
+  function countWords(text: string): number {
+    return (text.trim().match(/\S+/g) ?? []).length;
+  }
+
+  function stopCaption(reveal: boolean) {
+    if (captionRafRef.current != null) {
+      cancelAnimationFrame(captionRafRef.current);
+      captionRafRef.current = null;
+    }
+    const id = captionIdRef.current;
+    captionIdRef.current = null;
+    if (!id || !reveal) return;
+    setCaptionCounts((m) => {
+      if (!(id in m)) return m;
+      const { [id]: _omit, ...rest } = m;
+      return rest;
+    });
+  }
+
+  function startCaption(id: string, spokenText: string, audio: HTMLAudioElement) {
+    stopCaption(true);
+    const total = countWords(spokenText);
+    if (total === 0) return;
+    captionIdRef.current = id;
+    setCaptionCounts((m) => ({ ...m, [id]: 0 }));
+    const startedAt = performance.now();
+    const FALLBACK_WPS = 2.7;
+
+    const tick = () => {
+      captionRafRef.current = null;
+      if (audioRef.current !== audio || captionIdRef.current !== id) return;
+      const dur = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : null;
+      let n: number;
+      if (dur) {
+        n = Math.min(total, Math.floor((audio.currentTime / dur) * total) + 1);
+      } else {
+        const elapsed = (performance.now() - startedAt) / 1000;
+        n = Math.min(total, Math.floor(elapsed * FALLBACK_WPS) + 1);
+      }
+      setCaptionCounts((m) => (m[id] === n ? m : { ...m, [id]: n }));
+      if (n < total && !audio.paused && !audio.ended) {
+        captionRafRef.current = requestAnimationFrame(tick);
+      }
+    };
+    captionRafRef.current = requestAnimationFrame(tick);
+  }
+
   const persistAutoplay = (v: boolean) => {
     setAutoplayEnabled(v);
     try { window.localStorage.setItem("fred:autoplay", v ? "1" : "0"); } catch { /* ignore */ }
@@ -106,6 +172,7 @@ function ChatPage() {
   }
 
   const stopAudio = useCallback(() => {
+    stopCaption(true);
     if (ttsAbortRef.current) {
       try { ttsAbortRef.current.abort(); } catch { /* ignore */ }
       ttsAbortRef.current = null;
