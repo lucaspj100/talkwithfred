@@ -40,27 +40,40 @@ function ChatPage() {
   const persist = useServerFn(persistTurn);
   const initialUI = useMemo(() => toUIMessages(initialMsgs as DBMessage[]), [initialMsgs]);
   const [token, setToken] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
   const [inputType, setInputType] = useState<"text" | "voice">("text");
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setToken(data.session?.access_token ?? null));
-  }, []);
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      setToken(data.session?.access_token ?? null);
+      setAuthReady(true);
+      if (!data.session) navigate({ to: "/auth" });
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      setToken(session?.access_token ?? null);
+    });
+    return () => { mounted = false; sub.subscription.unsubscribe(); };
+  }, [navigate]);
 
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/chat",
-        headers: async (): Promise<Record<string, string>> => {
+        body: { mode: conversation.mode as Mode, conversationId: conversation.id },
+        fetch: (async (input: RequestInfo | URL, init?: RequestInit) => {
           const { data } = await supabase.auth.getSession();
           const t = data.session?.access_token;
-          return t ? { Authorization: `Bearer ${t}` } : {};
-        },
-        body: { mode: conversation.mode as Mode, conversationId: conversation.id },
+          const headers = new Headers(init?.headers);
+          if (t) headers.set("Authorization", `Bearer ${t}`);
+          return fetch(input, { ...init, headers });
+        }) as typeof fetch,
       }),
     [conversation.id, conversation.mode],
   );
 
-  const { messages, sendMessage, status, setMessages } = useChat({
+  const { messages, sendMessage, status } = useChat({
     id: conversation.id,
     messages: initialUI,
     transport,
@@ -81,17 +94,33 @@ function ChatPage() {
     },
     onError: (e) => {
       console.error("[chat]", e);
-      toast.error("Fred teve um problema para responder agora. Tente novamente em alguns segundos.");
+      const msg = (e as Error)?.message ?? "";
+      if (/unauthorized|401/i.test(msg)) {
+        toast.error("Sua sessão expirou. Faça login novamente para conversar com Fred.");
+        navigate({ to: "/auth" });
+      } else {
+        toast.error("Fred teve um problema para responder agora. Tente novamente em alguns segundos.");
+      }
     },
   });
 
   const [input, setInput] = useState("");
   const isBusy = status === "submitted" || status === "streaming";
 
-  function onSubmit(e?: React.FormEvent) {
+  async function onSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     const text = input.trim();
     if (!text || isBusy) return;
+    if (!authReady) {
+      toast.error("Carregando sua sessão, aguarde um instante...");
+      return;
+    }
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      toast.error("Sua sessão expirou. Faça login novamente para conversar com Fred.");
+      navigate({ to: "/auth" });
+      return;
+    }
     setInput("");
     sendMessage({ text });
   }
