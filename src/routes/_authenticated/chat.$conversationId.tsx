@@ -1,14 +1,14 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getConversation, persistTurn } from "@/lib/conversations.functions";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import fredAvatar from "@/assets/fred-avatar.jpg";
-import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { MODES, type Mode } from "@/lib/fred-prompt";
 
@@ -75,27 +75,47 @@ function ChatPage() {
 
   // ============= TTS playback =============
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [preparingId, setPreparingId] = useState<string | null>(null);
+  const [autoplayEnabled, setAutoplayEnabled] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    return window.localStorage.getItem("fred:autoplay") !== "0";
+  });
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const autoplayAllowedRef = useRef(false);
-  const autoplayBlockedNotifiedRef = useRef(false);
+  const currentUrlRef = useRef<string | null>(null);
+  const blockToastShownRef = useRef(false);
   // Seed with initial message IDs so we don't autoplay historical messages.
-  const autoplayedIdsRef = useRef<Set<string>>(new Set(initialUI.map((m) => m.id)));
+  const playedIdsRef = useRef<Set<string>>(new Set(initialUI.map((m) => m.id)));
 
-  function stopAudio() {
+  const persistAutoplay = (v: boolean) => {
+    setAutoplayEnabled(v);
+    try { window.localStorage.setItem("fred:autoplay", v ? "1" : "0"); } catch { /* ignore */ }
+  };
+
+  const stopAudio = useCallback(() => {
     if (audioRef.current) {
-      audioRef.current.pause();
+      try { audioRef.current.pause(); } catch { /* ignore */ }
       audioRef.current.src = "";
       audioRef.current = null;
     }
+    if (currentUrlRef.current) {
+      URL.revokeObjectURL(currentUrlRef.current);
+      currentUrlRef.current = null;
+    }
     setPlayingId(null);
+    setPreparingId(null);
+  }, []);
+
+  // Manual playback (button click). Always tries to play; toggles off if already playing.
+  async function playMessage(id: string, text: string) {
+    if (playingId === id || preparingId === id) { stopAudio(); return; }
+    await preparePlayback(id, text, { manual: true });
   }
 
-  async function playMessage(id: string, text: string, opts?: { auto?: boolean }) {
-    const auto = opts?.auto ?? false;
+  // Core: fetch TTS in background, then start playback.
+  async function preparePlayback(id: string, text: string, opts: { manual: boolean }) {
+    stopAudio();
+    setPreparingId(id);
     try {
-      if (!auto && playingId === id) { stopAudio(); return; }
-      stopAudio();
-      setPlayingId(id);
       const { data } = await supabase.auth.getSession();
       const t = data.session?.access_token ?? token;
       const res = await fetch("/api/tts", {
@@ -103,35 +123,63 @@ function ChatPage() {
         headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
         body: JSON.stringify({ text }),
       });
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) throw new Error(await res.text().catch(() => `TTS ${res.status}`));
       const buf = await res.arrayBuffer();
       const url = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audio.onended = () => {
-        if (audioRef.current === audio) setPlayingId(null);
+      // If something else started/stopped while we were fetching, abort.
+      if (preparingIdRef.current !== id && !opts.manual) {
         URL.revokeObjectURL(url);
+        return;
+      }
+      const audio = new Audio(url);
+      audio.onended = () => {
+        if (audioRef.current === audio) {
+          setPlayingId(null);
+          audioRef.current = null;
+        }
+        URL.revokeObjectURL(url);
+        if (currentUrlRef.current === url) currentUrlRef.current = null;
+      };
+      audio.onerror = () => {
+        if (audioRef.current === audio) {
+          setPlayingId(null);
+          audioRef.current = null;
+        }
+        URL.revokeObjectURL(url);
+        if (currentUrlRef.current === url) currentUrlRef.current = null;
       };
       try {
         await audio.play();
-        autoplayAllowedRef.current = true;
+        // Started successfully — commit state.
+        audioRef.current = audio;
+        currentUrlRef.current = url;
+        setPreparingId((p) => (p === id ? null : p));
+        setPlayingId(id);
+        playedIdsRef.current.add(id);
       } catch (err) {
-        setPlayingId(null);
         URL.revokeObjectURL(url);
-        if (auto && (err as Error)?.name === "NotAllowedError") {
-          if (!autoplayBlockedNotifiedRef.current) {
-            autoplayBlockedNotifiedRef.current = true;
-            toast.message("Clique uma vez na tela para ativar o áudio automático do Fred.");
+        setPreparingId((p) => (p === id ? null : p));
+        if ((err as Error)?.name === "NotAllowedError") {
+          if (!blockToastShownRef.current) {
+            blockToastShownRef.current = true;
+            toast.message("Clique em Ativar áudio automático para ouvir Fred automaticamente.");
           }
-        } else if (!auto) {
-          throw err;
+          persistAutoplay(false);
+          // Do NOT mark as played — allow retry once enabled.
+        } else if (opts.manual) {
+          toast.error("Falha ao reproduzir áudio.");
         }
       }
     } catch (e) {
-      setPlayingId(null);
-      if (!auto) toast.error((e as Error).message || "Falha ao reproduzir");
+      console.error("[tts]", e);
+      setPreparingId((p) => (p === id ? null : p));
+      if (opts.manual) toast.error("Falha ao gerar áudio.");
     }
   }
+
+  // Track latest preparingId for the async race-check above.
+  const preparingIdRef = useRef<string | null>(null);
+  useEffect(() => { preparingIdRef.current = preparingId; }, [preparingId]);
 
   const { messages, sendMessage, status } = useChat({
     id: conversation.id,
@@ -141,10 +189,9 @@ function ChatPage() {
       const last = messages[messages.length - 1];
       const userText = last && last.role === "user" ? extractText(last) : "";
       const assistantText = extractText(message as UIMessage);
-      if (assistantText && !autoplayedIdsRef.current.has(message.id)) {
-        autoplayedIdsRef.current.add(message.id);
-        // Fire and forget — autoplay if browser allows.
-        void playMessage(message.id, assistantText, { auto: true });
+      if (assistantText && autoplayEnabled && !playedIdsRef.current.has(message.id)) {
+        // Fire and forget — background TTS + autoplay.
+        void preparePlayback(message.id, assistantText, { manual: false });
       }
       if (!userText || !assistantText) return;
       try {
@@ -172,18 +219,6 @@ function ChatPage() {
   const [input, setInput] = useState("");
   const isBusy = status === "submitted" || status === "streaming";
 
-  // Mark autoplay as allowed after first user gesture anywhere on the page.
-  useEffect(() => {
-    if (autoplayAllowedRef.current) return;
-    const onGesture = () => { autoplayAllowedRef.current = true; };
-    window.addEventListener("pointerdown", onGesture, { once: true });
-    window.addEventListener("keydown", onGesture, { once: true });
-    return () => {
-      window.removeEventListener("pointerdown", onGesture);
-      window.removeEventListener("keydown", onGesture);
-    };
-  }, []);
-
   async function onSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     const text = input.trim();
@@ -198,6 +233,9 @@ function ChatPage() {
       navigate({ to: "/auth" });
       return;
     }
+    // User gesture: re-enable autoplay if previously blocked.
+    if (!autoplayEnabled) persistAutoplay(true);
+    blockToastShownRef.current = false;
     stopAudio();
     setInput("");
     sendMessage({ text });
@@ -215,6 +253,8 @@ function ChatPage() {
       return;
     }
     try {
+      if (!autoplayEnabled) persistAutoplay(true);
+      blockToastShownRef.current = false;
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mime = ["audio/webm", "audio/mp4"].find((t) => MediaRecorder.isTypeSupported(t)) ?? "audio/webm";
       const rec = new MediaRecorder(stream, { mimeType: mime });
@@ -254,11 +294,12 @@ function ChatPage() {
   }
 
   // ============= Fred state =============
-  const fredState: "neutral" | "listening" | "thinking" | "responding" | "speaking" =
+  const fredState: "neutral" | "listening" | "thinking" | "responding" | "preparing" | "speaking" =
     recording ? "listening"
     : transcribing || status === "submitted" ? "thinking"
     : status === "streaming" ? "responding"
     : playingId ? "speaking"
+    : preparingId ? "preparing"
     : "neutral";
 
   const stateLabel: Record<typeof fredState, string> = {
@@ -266,6 +307,7 @@ function ChatPage() {
     listening: "Te ouvindo...",
     thinking: "Pensando...",
     responding: "Respondendo...",
+    preparing: "Preparando áudio...",
     speaking: "Fred está falando...",
   };
 
@@ -274,16 +316,33 @@ function ChatPage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages.length, status]);
 
+  // Cleanup on unmount
+  useEffect(() => () => stopAudio(), [stopAudio]);
+
   const modeLabel = MODES.find((m) => m.id === conversation.mode)?.label ?? conversation.mode;
 
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-6">
-      <header className="mb-4 flex items-center justify-between">
+      <header className="mb-4 flex items-center justify-between gap-2">
         <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
           <ArrowLeft className="mr-1 size-4" /> Dashboard
         </Button>
-        <p className="text-sm text-muted-foreground">{modeLabel}</p>
-        <div className="w-24" />
+        <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+        <Button
+          type="button"
+          variant={autoplayEnabled ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => {
+            const next = !autoplayEnabled;
+            persistAutoplay(next);
+            blockToastShownRef.current = false;
+            toast.message(next ? "Áudio automático ativado." : "Áudio automático desativado.");
+          }}
+          title={autoplayEnabled ? "Desativar áudio automático" : "Ativar áudio automático"}
+        >
+          {autoplayEnabled ? <Volume2 className="mr-1 size-4" /> : <VolumeX className="mr-1 size-4" />}
+          {autoplayEnabled ? "Áudio auto: on" : "Ativar áudio automático"}
+        </Button>
       </header>
 
       <div className="grid flex-1 gap-6 md:grid-cols-[260px,1fr]">
@@ -327,6 +386,8 @@ function ChatPage() {
                   </div>
                 );
               }
+              const isPreparing = preparingId === m.id;
+              const isPlaying = playingId === m.id;
               return (
                 <div key={m.id} className="flex items-start gap-3">
                   <img src={fredAvatar} alt="" width={64} height={64} loading="lazy" className="h-8 w-8 shrink-0 rounded-full object-cover" />
@@ -337,8 +398,8 @@ function ChatPage() {
                         onClick={() => playMessage(m.id, text)}
                         className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
                       >
-                        {playingId === m.id ? <Square className="size-3" /> : <Volume2 className="size-3" />}
-                        {playingId === m.id ? "Parar" : "Ouvir Fred"}
+                        {isPreparing ? <Loader2 className="size-3 animate-spin" /> : isPlaying ? <Square className="size-3" /> : <Volume2 className="size-3" />}
+                        {isPreparing ? "Preparando áudio..." : isPlaying ? "Parar" : "Ouvir Fred"}
                       </button>
                     )}
                   </div>
