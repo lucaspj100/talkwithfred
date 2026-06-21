@@ -11,8 +11,11 @@ export const Route = createFileRoute("/api/chat")({
       POST: async ({ request }) => {
         try {
           const auth = request.headers.get("authorization");
-          if (!auth?.startsWith("Bearer ")) return new Response("Unauthorized", { status: 401 });
-          const token = auth.slice(7);
+          const hasBearer = !!auth?.startsWith("Bearer ");
+          const tokenPreview = hasBearer ? `${auth!.slice(7, 15)}...(len=${auth!.length - 7})` : "none";
+          console.log(`[/api/chat] Authorization header: ${hasBearer ? "present" : "MISSING"} (${tokenPreview})`);
+          if (!hasBearer) return new Response("Unauthorized", { status: 401 });
+          const token = auth!.slice(7);
 
           const body = (await request.json()) as {
             messages?: UIMessage[];
@@ -21,9 +24,13 @@ export const Route = createFileRoute("/api/chat")({
           };
           if (!Array.isArray(body.messages)) return new Response("Bad request", { status: 400 });
 
+          if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
+            console.error("[/api/chat] missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY");
+            return new Response("Server misconfigured", { status: 500 });
+          }
           const supabase = createClient<Database>(
-            process.env.SUPABASE_URL!,
-            process.env.SUPABASE_PUBLISHABLE_KEY!,
+            process.env.SUPABASE_URL,
+            process.env.SUPABASE_PUBLISHABLE_KEY,
             {
               global: { headers: { Authorization: `Bearer ${token}` } },
               auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
@@ -31,7 +38,7 @@ export const Route = createFileRoute("/api/chat")({
           );
           const { data: userData, error: userErr } = await supabase.auth.getUser(token);
           if (userErr || !userData?.user?.id) {
-            console.error("[/api/chat] auth", userErr);
+            console.error("[/api/chat] getUser failed:", userErr?.message ?? "no user");
             return new Response("Unauthorized", { status: 401 });
           }
           const userId = userData.user.id;
