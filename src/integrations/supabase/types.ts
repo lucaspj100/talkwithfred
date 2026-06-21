@@ -41,6 +41,66 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_items: {
+        Row: {
+          conversation_id: string | null
+          correction: string | null
+          created_at: string
+          explanation_pt: string | null
+          id: string
+          kind: Database["public"]["Enums"]["learning_item_kind"]
+          mastered_at: string | null
+          original: string
+          source_message_id: string | null
+          times_practiced: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          correction?: string | null
+          created_at?: string
+          explanation_pt?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["learning_item_kind"]
+          mastered_at?: string | null
+          original: string
+          source_message_id?: string | null
+          times_practiced?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          correction?: string | null
+          created_at?: string
+          explanation_pt?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["learning_item_kind"]
+          mastered_at?: string | null
+          original?: string
+          source_message_id?: string | null
+          times_practiced?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_items_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_items_source_message_id_fkey"
+            columns: ["source_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -87,6 +147,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      practice_sessions: {
+        Row: {
+          activity: string
+          created_at: string
+          id: string
+          items_correct: number
+          items_total: number
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          activity: string
+          created_at?: string
+          id?: string
+          items_correct?: number
+          items_total?: number
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          activity?: string
+          created_at?: string
+          id?: string
+          items_correct?: number
+          items_total?: number
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -202,6 +292,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_stats: {
+        Row: {
+          created_at: string
+          last_practice_date: string | null
+          longest_streak: number
+          streak_days: number
+          updated_at: string
+          user_id: string
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          last_practice_date?: string | null
+          longest_streak?: number
+          streak_days?: number
+          updated_at?: string
+          user_id: string
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          last_practice_date?: string | null
+          longest_streak?: number
+          streak_days?: number
+          updated_at?: string
+          user_id?: string
+          xp?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -217,6 +337,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user"
+      learning_item_kind: "error" | "vocabulary" | "phrase"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -345,6 +466,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      learning_item_kind: ["error", "vocabulary", "phrase"],
     },
   },
 } as const
