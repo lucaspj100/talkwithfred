@@ -498,8 +498,16 @@ function ChatPage() {
               const isPreparing = preparingId === m.id;
               const isPlaying = playingId === m.id;
               const captionN = captionCounts[m.id];
-              const display = captionN != null ? takeWords(text, captionN) : text;
-              const isCaptioning = captionN != null && captionN < countWords(text);
+              const isPending = karaokePendingIds.has(m.id);
+              const totalWords = countWords(text);
+              const display =
+                captionN != null
+                  ? takeWords(text, captionN)
+                  : isPending
+                    ? ""
+                    : text;
+              const isCaptioning = captionN != null && captionN < totalWords;
+              const showPlaceholder = isPending && captionN == null;
               return (
                 <div key={m.id} className="flex items-start gap-3">
                   <img src={fredAvatar} alt="" width={64} height={64} loading="lazy" className="h-8 w-8 shrink-0 rounded-full object-cover" />
