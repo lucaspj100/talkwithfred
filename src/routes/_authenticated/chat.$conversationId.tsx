@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getConversation, persistTurn } from "@/lib/conversations.functions";
+import { extractLearningItems } from "@/lib/learning.functions";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -38,6 +39,7 @@ function ChatPage() {
   const { conversation, messages: initialMsgs } = Route.useLoaderData();
   const navigate = useNavigate();
   const persist = useServerFn(persistTurn);
+  const extract = useServerFn(extractLearningItems);
   const initialUI = useMemo(() => toUIMessages(initialMsgs as DBMessage[]), [initialMsgs]);
   const [token, setToken] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -310,6 +312,12 @@ function ChatPage() {
           assistantMessage: assistantText,
           inputType,
         }});
+        // Background extraction of errors / vocabulary / phrases.
+        void extract({ data: {
+          conversationId: conversation.id,
+          userMessage: userText,
+          assistantMessage: assistantText,
+        }}).catch((e) => console.error("[extract]", e));
       } catch (e) { console.error(e); }
       setInputType("text");
     },
