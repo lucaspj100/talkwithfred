@@ -215,10 +215,9 @@ function ChatPage() {
   async function preparePlayback(id: string, text: string, opts: { manual: boolean }) {
     stopAudio();
     setPreparingId(id);
+    addKaraokePending(id);
     const ac = new AbortController();
     ttsAbortRef.current = ac;
-    // Autoplay uses a shortened version to keep latency low; manual playback
-    // can use the full response.
     const speechText = opts.manual ? text : shortenForSpeech(text);
     try {
       const { data } = await supabase.auth.getSession();
@@ -239,6 +238,7 @@ function ChatPage() {
           audioRef.current = null;
         }
         stopCaption(true);
+        clearKaraokePending(id);
       };
       audio.onended = cleanup;
       audio.onerror = () => {
@@ -246,7 +246,6 @@ function ChatPage() {
         setPreparingId((p) => (p === id ? null : p));
         if (opts.manual) toast.error("Falha ao reproduzir áudio.");
       };
-      // Flip to "speaking" state as soon as audio actually starts playing.
       audio.onplaying = () => {
         if (ac.signal.aborted) return;
         setPreparingId((p) => (p === id ? null : p));
@@ -255,35 +254,32 @@ function ChatPage() {
         startCaption(id, speechText, audio);
       };
 
-      if (ac.signal.aborted) return;
-
-      // Race-check: don't take over if user already moved on.
-      if (preparingIdRef.current !== id) return;
+      if (ac.signal.aborted) { clearKaraokePending(id); return; }
+      if (preparingIdRef.current !== id) { clearKaraokePending(id); return; }
 
       audioRef.current = audio;
 
       try {
-        // Start playback as soon as possible. The browser will begin playing
-        // once enough data is buffered, without waiting for the full file.
         await audio.play();
         if (ttsAbortRef.current === ac) ttsAbortRef.current = null;
       } catch (err) {
         if (audioRef.current === audio) audioRef.current = null;
         setPreparingId((p) => (p === id ? null : p));
+        clearKaraokePending(id);
         if ((err as Error)?.name === "NotAllowedError") {
           if (!blockToastShownRef.current) {
             blockToastShownRef.current = true;
             toast.message("O navegador bloqueou o áudio. Clique novamente em qualquer lugar ou no botão Ouvir Fred para liberar.");
           }
-          // Keep autoplayEnabled as the user's persistent preference.
         } else if (opts.manual) {
           toast.error("Falha ao reproduzir áudio.");
         }
       }
     } catch (e) {
-      if ((e as Error)?.name === "AbortError") return;
+      if ((e as Error)?.name === "AbortError") { clearKaraokePending(id); return; }
       console.error("[tts]", e);
       setPreparingId((p) => (p === id ? null : p));
+      clearKaraokePending(id);
       if (opts.manual) toast.error("Falha ao gerar áudio.");
     } finally {
       if (ttsAbortRef.current === ac) ttsAbortRef.current = null;
