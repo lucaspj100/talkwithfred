@@ -133,19 +133,24 @@ function ChatPage() {
   async function preparePlayback(id: string, text: string, opts: { manual: boolean }) {
     stopAudio();
     setPreparingId(id);
+    const ac = new AbortController();
+    ttsAbortRef.current = ac;
+    const speechText = opts.manual ? text : shortenForSpeech(text);
     try {
       const { data } = await supabase.auth.getSession();
       const t = data.session?.access_token ?? token;
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text: speechText }),
+        signal: ac.signal,
       });
       if (!res.ok) throw new Error(await res.text().catch(() => `TTS ${res.status}`));
       const buf = await res.arrayBuffer();
+      if (ac.signal.aborted) return;
       const url = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
       // If something else started/stopped while we were fetching, abort.
-      if (preparingIdRef.current !== id && !opts.manual) {
+      if (preparingIdRef.current !== id) {
         URL.revokeObjectURL(url);
         return;
       }
@@ -168,6 +173,7 @@ function ChatPage() {
       };
       try {
         await audio.play();
+        if (ttsAbortRef.current === ac) ttsAbortRef.current = null;
         // Started successfully — commit state.
         audioRef.current = audio;
         currentUrlRef.current = url;
@@ -189,9 +195,12 @@ function ChatPage() {
         }
       }
     } catch (e) {
+      if ((e as Error)?.name === "AbortError") return;
       console.error("[tts]", e);
       setPreparingId((p) => (p === id ? null : p));
       if (opts.manual) toast.error("Falha ao gerar áudio.");
+    } finally {
+      if (ttsAbortRef.current === ac) ttsAbortRef.current = null;
     }
   }
 
