@@ -353,8 +353,60 @@ function ChatPage() {
   // ============= Voice recording =============
   const [recording, setRecording] = useState(false);
   const [transcribing, setTranscribing] = useState(false);
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const [finalTranscript, setFinalTranscript] = useState("");
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<any>(null);
+  const finalTranscriptRef = useRef("");
+  const liveTranscriptRef = useRef("");
+  const liveSupported = typeof window !== "undefined" && !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+  const liveWarnedRef = useRef(false);
+
+  function startLiveRecognition() {
+    if (!liveSupported) {
+      if (!liveWarnedRef.current) {
+        liveWarnedRef.current = true;
+        toast.message("Legenda ao vivo não disponível neste navegador, mas vou transcrever quando você terminar de falar.");
+      }
+      return;
+    }
+    try {
+      const Ctor: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const rec = new Ctor();
+      rec.lang = "en-US";
+      rec.interimResults = true;
+      rec.continuous = true;
+      rec.onresult = (event: any) => {
+        let interim = "";
+        let finals = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const r = event.results[i];
+          if (r.isFinal) finals += r[0].transcript;
+          else interim += r[0].transcript;
+        }
+        if (finals) {
+          const next = (finalTranscriptRef.current ? finalTranscriptRef.current + " " : "") + finals.trim();
+          finalTranscriptRef.current = next;
+          setFinalTranscript(next);
+        }
+        liveTranscriptRef.current = interim;
+        setLiveTranscript(interim);
+      };
+      rec.onerror = () => { /* swallow; fallback to STT */ };
+      rec.onend = () => { /* stopped */ };
+      recognitionRef.current = rec;
+      rec.start();
+    } catch {
+      recognitionRef.current = null;
+    }
+  }
+
+  function stopLiveRecognition() {
+    const rec = recognitionRef.current;
+    recognitionRef.current = null;
+    if (rec) { try { rec.stop(); } catch { /* ignore */ } }
+  }
 
   async function toggleRecord() {
     if (recording) {
@@ -368,11 +420,35 @@ function ChatPage() {
       const mime = ["audio/webm", "audio/mp4"].find((t) => MediaRecorder.isTypeSupported(t)) ?? "audio/webm";
       const rec = new MediaRecorder(stream, { mimeType: mime });
       chunksRef.current = [];
+      finalTranscriptRef.current = "";
+      liveTranscriptRef.current = "";
+      setFinalTranscript("");
+      setLiveTranscript("");
       rec.ondataavailable = (e) => e.data.size > 0 && chunksRef.current.push(e.data);
       rec.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
         setRecording(false);
+        stopLiveRecognition();
         const blob = new Blob(chunksRef.current, { type: mime });
+        const liveText = `${finalTranscriptRef.current} ${liveTranscriptRef.current}`.trim();
+
+        const send = (text: string) => {
+          setInputType("voice");
+          stopAudio();
+          sendMessage({ text });
+          finalTranscriptRef.current = "";
+          liveTranscriptRef.current = "";
+          setFinalTranscript("");
+          setLiveTranscript("");
+        };
+
+        // Prefer the live transcript when it looks confident enough.
+        if (liveText && liveText.length >= 2) {
+          send(liveText);
+          return;
+        }
+
+        // Fallback: server STT on the recorded audio.
         if (blob.size < 1024) { toast.error("Áudio muito curto, tente de novo."); return; }
         setTranscribing(true);
         try {
@@ -387,9 +463,7 @@ function ChatPage() {
           const json = await res.json();
           const text: string = (json.text ?? "").trim();
           if (!text) { toast.error("Não consegui entender o áudio."); return; }
-          setInputType("voice");
-          stopAudio();
-          sendMessage({ text });
+          send(text);
         } catch (e) {
           toast.error((e as Error).message || "Falha na transcrição");
         } finally { setTranscribing(false); }
@@ -397,10 +471,12 @@ function ChatPage() {
       recorderRef.current = rec;
       rec.start();
       setRecording(true);
+      startLiveRecognition();
     } catch {
       toast.error("Não foi possível acessar o microfone.");
     }
   }
+
 
   // ============= Fred state =============
   const fredState: "neutral" | "listening" | "thinking" | "responding" | "preparing" | "speaking" =
@@ -530,6 +606,20 @@ function ChatPage() {
               );
             })}
           </div>
+
+          {recording && (
+            <div className="mx-3 mt-2 rounded-2xl border border-primary/40 bg-primary/5 px-4 py-3">
+              <p className="text-[11px] uppercase tracking-wide text-primary/80">Você está dizendo</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">
+                {finalTranscript && <span>{finalTranscript} </span>}
+                <span className="text-muted-foreground">{liveTranscript}</span>
+                {!finalTranscript && !liveTranscript && (
+                  <span className="text-muted-foreground">Estou ouvindo... fale em inglês.</span>
+                )}
+                <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-primary/60 align-baseline" aria-hidden />
+              </p>
+            </div>
+          )}
 
           <form onSubmit={onSubmit} className="border-t border-border p-3">
             <div className="flex items-end gap-2">
