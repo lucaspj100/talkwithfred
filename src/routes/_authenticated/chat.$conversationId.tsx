@@ -90,8 +90,22 @@ function ChatPage() {
   // ============= Progressive captions (karaoke-style) =============
   // captionCounts[id] = words to reveal. Unset = show full text (history + finished).
   const [captionCounts, setCaptionCounts] = useState<Record<string, number>>({});
+  const [karaokePendingIds, setKaraokePendingIds] = useState<Set<string>>(() => new Set());
   const captionRafRef = useRef<number | null>(null);
   const captionIdRef = useRef<string | null>(null);
+
+  const addKaraokePending = useCallback((id: string) => {
+    setKaraokePendingIds((s) => {
+      if (s.has(id)) return s;
+      const next = new Set(s); next.add(id); return next;
+    });
+  }, []);
+  const clearKaraokePending = useCallback((id: string) => {
+    setKaraokePendingIds((s) => {
+      if (!s.has(id)) return s;
+      const next = new Set(s); next.delete(id); return next;
+    });
+  }, []);
 
   function takeWords(text: string, n: number): string {
     const tokens = text.split(/(\s+)/);
