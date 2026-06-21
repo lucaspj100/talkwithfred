@@ -73,6 +73,66 @@ function ChatPage() {
     [conversation.id, conversation.mode],
   );
 
+  // ============= TTS playback =============
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const autoplayAllowedRef = useRef(false);
+  const autoplayBlockedNotifiedRef = useRef(false);
+  // Seed with initial message IDs so we don't autoplay historical messages.
+  const autoplayedIdsRef = useRef<Set<string>>(new Set(initialUI.map((m) => m.id)));
+
+  function stopAudio() {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
+    setPlayingId(null);
+  }
+
+  async function playMessage(id: string, text: string, opts?: { auto?: boolean }) {
+    const auto = opts?.auto ?? false;
+    try {
+      if (!auto && playingId === id) { stopAudio(); return; }
+      stopAudio();
+      setPlayingId(id);
+      const { data } = await supabase.auth.getSession();
+      const t = data.session?.access_token ?? token;
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const buf = await res.arrayBuffer();
+      const url = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => {
+        if (audioRef.current === audio) setPlayingId(null);
+        URL.revokeObjectURL(url);
+      };
+      try {
+        await audio.play();
+        autoplayAllowedRef.current = true;
+      } catch (err) {
+        setPlayingId(null);
+        URL.revokeObjectURL(url);
+        if (auto && (err as Error)?.name === "NotAllowedError") {
+          if (!autoplayBlockedNotifiedRef.current) {
+            autoplayBlockedNotifiedRef.current = true;
+            toast.message("Clique uma vez na tela para ativar o áudio automático do Fred.");
+          }
+        } else if (!auto) {
+          throw err;
+        }
+      }
+    } catch (e) {
+      setPlayingId(null);
+      if (!auto) toast.error((e as Error).message || "Falha ao reproduzir");
+    }
+  }
+
   const { messages, sendMessage, status } = useChat({
     id: conversation.id,
     messages: initialUI,
@@ -81,6 +141,11 @@ function ChatPage() {
       const last = messages[messages.length - 1];
       const userText = last && last.role === "user" ? extractText(last) : "";
       const assistantText = extractText(message as UIMessage);
+      if (assistantText && !autoplayedIdsRef.current.has(message.id)) {
+        autoplayedIdsRef.current.add(message.id);
+        // Fire and forget — autoplay if browser allows.
+        void playMessage(message.id, assistantText, { auto: true });
+      }
       if (!userText || !assistantText) return;
       try {
         await persist({ data: {
@@ -107,6 +172,18 @@ function ChatPage() {
   const [input, setInput] = useState("");
   const isBusy = status === "submitted" || status === "streaming";
 
+  // Mark autoplay as allowed after first user gesture anywhere on the page.
+  useEffect(() => {
+    if (autoplayAllowedRef.current) return;
+    const onGesture = () => { autoplayAllowedRef.current = true; };
+    window.addEventListener("pointerdown", onGesture, { once: true });
+    window.addEventListener("keydown", onGesture, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("keydown", onGesture);
+    };
+  }, []);
+
   async function onSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     const text = input.trim();
@@ -121,6 +198,7 @@ function ChatPage() {
       navigate({ to: "/auth" });
       return;
     }
+    stopAudio();
     setInput("");
     sendMessage({ text });
   }
@@ -161,6 +239,7 @@ function ChatPage() {
           const text: string = (json.text ?? "").trim();
           if (!text) { toast.error("Não consegui entender o áudio."); return; }
           setInputType("voice");
+          stopAudio();
           sendMessage({ text });
         } catch (e) {
           toast.error((e as Error).message || "Falha na transcrição");
@@ -174,38 +253,12 @@ function ChatPage() {
     }
   }
 
-  // ============= TTS playback =============
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  async function playMessage(id: string, text: string) {
-    try {
-      if (playingId === id) { audioRef.current?.pause(); setPlayingId(null); return; }
-      audioRef.current?.pause();
-      setPlayingId(id);
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const buf = await res.arrayBuffer();
-      const url = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audio.onended = () => { setPlayingId(null); URL.revokeObjectURL(url); };
-      await audio.play();
-    } catch (e) {
-      setPlayingId(null);
-      toast.error((e as Error).message || "Falha ao reproduzir");
-    }
-  }
-
   // ============= Fred state =============
-  const fredState: "neutral" | "listening" | "thinking" | "responding" =
+  const fredState: "neutral" | "listening" | "thinking" | "responding" | "speaking" =
     recording ? "listening"
     : transcribing || status === "submitted" ? "thinking"
-    : status === "streaming" || playingId ? "responding"
+    : status === "streaming" ? "responding"
+    : playingId ? "speaking"
     : "neutral";
 
   const stateLabel: Record<typeof fredState, string> = {
@@ -213,6 +266,7 @@ function ChatPage() {
     listening: "Te ouvindo...",
     thinking: "Pensando...",
     responding: "Respondendo...",
+    speaking: "Fred está falando...",
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
