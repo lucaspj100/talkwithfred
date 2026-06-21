@@ -90,8 +90,22 @@ function ChatPage() {
   // ============= Progressive captions (karaoke-style) =============
   // captionCounts[id] = words to reveal. Unset = show full text (history + finished).
   const [captionCounts, setCaptionCounts] = useState<Record<string, number>>({});
+  const [karaokePendingIds, setKaraokePendingIds] = useState<Set<string>>(() => new Set());
   const captionRafRef = useRef<number | null>(null);
   const captionIdRef = useRef<string | null>(null);
+
+  const addKaraokePending = useCallback((id: string) => {
+    setKaraokePendingIds((s) => {
+      if (s.has(id)) return s;
+      const next = new Set(s); next.add(id); return next;
+    });
+  }, []);
+  const clearKaraokePending = useCallback((id: string) => {
+    setKaraokePendingIds((s) => {
+      if (!s.has(id)) return s;
+      const next = new Set(s); next.delete(id); return next;
+    });
+  }, []);
 
   function takeWords(text: string, n: number): string {
     const tokens = text.split(/(\s+)/);
@@ -201,10 +215,9 @@ function ChatPage() {
   async function preparePlayback(id: string, text: string, opts: { manual: boolean }) {
     stopAudio();
     setPreparingId(id);
+    addKaraokePending(id);
     const ac = new AbortController();
     ttsAbortRef.current = ac;
-    // Autoplay uses a shortened version to keep latency low; manual playback
-    // can use the full response.
     const speechText = opts.manual ? text : shortenForSpeech(text);
     try {
       const { data } = await supabase.auth.getSession();
@@ -225,6 +238,7 @@ function ChatPage() {
           audioRef.current = null;
         }
         stopCaption(true);
+        clearKaraokePending(id);
       };
       audio.onended = cleanup;
       audio.onerror = () => {
@@ -232,7 +246,6 @@ function ChatPage() {
         setPreparingId((p) => (p === id ? null : p));
         if (opts.manual) toast.error("Falha ao reproduzir áudio.");
       };
-      // Flip to "speaking" state as soon as audio actually starts playing.
       audio.onplaying = () => {
         if (ac.signal.aborted) return;
         setPreparingId((p) => (p === id ? null : p));
@@ -241,35 +254,32 @@ function ChatPage() {
         startCaption(id, speechText, audio);
       };
 
-      if (ac.signal.aborted) return;
-
-      // Race-check: don't take over if user already moved on.
-      if (preparingIdRef.current !== id) return;
+      if (ac.signal.aborted) { clearKaraokePending(id); return; }
+      if (preparingIdRef.current !== id) { clearKaraokePending(id); return; }
 
       audioRef.current = audio;
 
       try {
-        // Start playback as soon as possible. The browser will begin playing
-        // once enough data is buffered, without waiting for the full file.
         await audio.play();
         if (ttsAbortRef.current === ac) ttsAbortRef.current = null;
       } catch (err) {
         if (audioRef.current === audio) audioRef.current = null;
         setPreparingId((p) => (p === id ? null : p));
+        clearKaraokePending(id);
         if ((err as Error)?.name === "NotAllowedError") {
           if (!blockToastShownRef.current) {
             blockToastShownRef.current = true;
             toast.message("O navegador bloqueou o áudio. Clique novamente em qualquer lugar ou no botão Ouvir Fred para liberar.");
           }
-          // Keep autoplayEnabled as the user's persistent preference.
         } else if (opts.manual) {
           toast.error("Falha ao reproduzir áudio.");
         }
       }
     } catch (e) {
-      if ((e as Error)?.name === "AbortError") return;
+      if ((e as Error)?.name === "AbortError") { clearKaraokePending(id); return; }
       console.error("[tts]", e);
       setPreparingId((p) => (p === id ? null : p));
+      clearKaraokePending(id);
       if (opts.manual) toast.error("Falha ao gerar áudio.");
     } finally {
       if (ttsAbortRef.current === ac) ttsAbortRef.current = null;
@@ -488,14 +498,22 @@ function ChatPage() {
               const isPreparing = preparingId === m.id;
               const isPlaying = playingId === m.id;
               const captionN = captionCounts[m.id];
-              const display = captionN != null ? takeWords(text, captionN) : text;
-              const isCaptioning = captionN != null && captionN < countWords(text);
+              const isPending = karaokePendingIds.has(m.id);
+              const totalWords = countWords(text);
+              const display =
+                captionN != null
+                  ? takeWords(text, captionN)
+                  : isPending
+                    ? ""
+                    : text;
+              const isCaptioning = captionN != null && captionN < totalWords;
+              const showPlaceholder = isPending && captionN == null;
               return (
                 <div key={m.id} className="flex items-start gap-3">
                   <img src={fredAvatar} alt="" width={64} height={64} loading="lazy" className="h-8 w-8 shrink-0 rounded-full object-cover" />
                   <div className="max-w-[85%]">
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {display || (status === "streaming" ? "..." : "")}
+                      {showPlaceholder ? "..." : display || (status === "streaming" ? "..." : "")}
                       {isCaptioning && <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-primary/60 align-baseline" aria-hidden />}
                     </p>
                     {text && (
