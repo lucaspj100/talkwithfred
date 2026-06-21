@@ -88,6 +88,9 @@ function Dashboard() {
         <Stat icon={<Target className="size-4" />} label="Nível" value={LABEL[me.userProfile!.english_level] ?? me.userProfile!.english_level} />
       </div>
 
+      {/* Focus card */}
+      <FocusCard profile={me.userProfile!} />
+
       {/* Two main modes */}
       <h2 className="mt-10 font-display text-xl font-bold">Como você quer praticar?</h2>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
