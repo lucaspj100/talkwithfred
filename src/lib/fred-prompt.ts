@@ -1,4 +1,5 @@
 import type { Tables } from "@/integrations/supabase/types";
+import { labelArea, labelGoal, labelSituation } from "@/lib/onboarding-options";
 
 export type Mode =
   | "free_conversation"
@@ -32,12 +33,18 @@ export function buildFredSystemPrompt(
   userName?: string | null,
 ) {
   const lvl = profile?.english_level ?? "intermediate";
-  const goal = profile?.main_goal ?? "general conversation";
-  const difficulty = profile?.biggest_difficulty ?? "speaking";
   const correction = profile?.correction_preference ?? "sometimes";
   const speed = profile?.speaking_speed_preference ?? "normal";
   const explLang = profile?.explanation_language ?? "mixed";
   const situation = profile?.specific_training_situation ?? "";
+
+  // New personalization fields
+  const primaryGoal = profile?.primary_english_goal ?? profile?.main_goal ?? "general conversation";
+  const goals = ((profile?.english_goals as string[] | null) ?? []).filter((g) => g !== primaryGoal);
+  const primaryArea = profile?.primary_professional_area;
+  const customArea = profile?.custom_professional_area;
+  const situations = (profile?.preferred_situations as string[] | null) ?? [];
+  const terms = (profile?.technical_terms as string[] | null) ?? [];
 
   const explLine =
     explLang === "portuguese"
@@ -60,10 +67,31 @@ export function buildFredSystemPrompt(
       ? "Speak at a natural native pace with richer vocabulary, but never lecture."
       : "Speak at a comfortable conversational pace.";
 
+  const focusLines: string[] = [];
+  focusLines.push(`Main reason for learning English: ${labelGoal(primaryGoal) || primaryGoal}.`);
+  if (goals.length) focusLines.push(`Secondary reasons: ${goals.map(labelGoal).join(", ")}.`);
+  if (primaryArea) {
+    focusLines.push(`Professional/interest area to prioritize: ${labelArea(primaryArea, customArea)}. Use vocabulary and example scenes from this area whenever it fits naturally.`);
+  }
+  if (situations.length) {
+    focusLines.push(`Preferred situations to practice: ${situations.map(labelSituation).join(", ")}. Pull conversation prompts from these when appropriate.`);
+  }
+  if (terms.length) {
+    focusLines.push(`User wants to practice these terms: ${terms.join(", ")}. Weave them in gradually and explain briefly if the user seems unsure.`);
+  }
+
   return `You are Fred, a warm English conversation partner for Brazilians${userName ? ` (user: ${userName})` : ""}.
 Goal: get the user TALKING. Keep it light, fast, human.
 
-User: level=${lvl}, goal=${goal}, difficulty=${difficulty}, pace=${speed}, corrections=${correction}, explain in=${explLang}${situation ? `, train=${situation}` : ""}.
+User profile:
+- Level: ${lvl}
+- Correction style: ${correction}
+- Pace: ${speed}
+- Explain in: ${explLang}${situation ? `\n- Training focus (legacy): ${situation}` : ""}
+
+User focus (personalization):
+${focusLines.map((l) => `- ${l}`).join("\n")}
+
 Mode: ${MODE_GUIDANCE[mode]}
 
 Rules:
@@ -73,5 +101,6 @@ Rules:
 - Keep EVERY reply between 1 and 4 short sentences. Never lecture.
 - End with ONE short question to keep the conversation going.
 - When correcting: brief react → "You can say: '...'" → one-line why → one short question. All inside the same short reply.
+- Adapt examples, scenarios and vocabulary to the user's focus (area, situations, terms) WHENEVER it feels natural — never force it.
 - Be human and encouraging. No emoji spam (one max, only if it fits). Never break character.`;
 }
