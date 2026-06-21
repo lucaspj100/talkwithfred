@@ -224,6 +224,7 @@ function ChatPage() {
           setPlayingId(null);
           audioRef.current = null;
         }
+        stopCaption(true);
       };
       audio.onended = cleanup;
       audio.onerror = () => {
@@ -237,6 +238,7 @@ function ChatPage() {
         setPreparingId((p) => (p === id ? null : p));
         setPlayingId(id);
         playedIdsRef.current.add(id);
+        startCaption(id, speechText, audio);
       };
 
       if (ac.signal.aborted) return;
