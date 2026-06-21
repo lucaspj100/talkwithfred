@@ -82,6 +82,7 @@ function ChatPage() {
   });
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentUrlRef = useRef<string | null>(null);
+  const ttsAbortRef = useRef<AbortController | null>(null);
   const blockToastShownRef = useRef(false);
   // Seed with initial message IDs so we don't autoplay historical messages.
   const playedIdsRef = useRef<Set<string>>(new Set(initialUI.map((m) => m.id)));
@@ -91,7 +92,24 @@ function ChatPage() {
     try { window.localStorage.setItem("fred:autoplay", v ? "1" : "0"); } catch { /* ignore */ }
   };
 
+  // Keep the first ~2 sentences for autoplay so /api/tts stays fast.
+  function shortenForSpeech(text: string, maxChars = 260): string {
+    const clean = text.trim();
+    if (clean.length <= maxChars) return clean;
+    const sentences = clean.match(/[^.!?]+[.!?]+(\s|$)/g) ?? [clean];
+    let out = "";
+    for (const s of sentences) {
+      if ((out + s).length > maxChars) break;
+      out += s;
+    }
+    return (out || clean.slice(0, maxChars)).trim();
+  }
+
   const stopAudio = useCallback(() => {
+    if (ttsAbortRef.current) {
+      try { ttsAbortRef.current.abort(); } catch { /* ignore */ }
+      ttsAbortRef.current = null;
+    }
     if (audioRef.current) {
       try { audioRef.current.pause(); } catch { /* ignore */ }
       audioRef.current.src = "";
@@ -115,19 +133,24 @@ function ChatPage() {
   async function preparePlayback(id: string, text: string, opts: { manual: boolean }) {
     stopAudio();
     setPreparingId(id);
+    const ac = new AbortController();
+    ttsAbortRef.current = ac;
+    const speechText = opts.manual ? text : shortenForSpeech(text);
     try {
       const { data } = await supabase.auth.getSession();
       const t = data.session?.access_token ?? token;
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(t ? { Authorization: `Bearer ${t}` } : {}) },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text: speechText }),
+        signal: ac.signal,
       });
       if (!res.ok) throw new Error(await res.text().catch(() => `TTS ${res.status}`));
       const buf = await res.arrayBuffer();
+      if (ac.signal.aborted) return;
       const url = URL.createObjectURL(new Blob([buf], { type: "audio/mpeg" }));
       // If something else started/stopped while we were fetching, abort.
-      if (preparingIdRef.current !== id && !opts.manual) {
+      if (preparingIdRef.current !== id) {
         URL.revokeObjectURL(url);
         return;
       }
@@ -150,6 +173,7 @@ function ChatPage() {
       };
       try {
         await audio.play();
+        if (ttsAbortRef.current === ac) ttsAbortRef.current = null;
         // Started successfully — commit state.
         audioRef.current = audio;
         currentUrlRef.current = url;
@@ -171,9 +195,12 @@ function ChatPage() {
         }
       }
     } catch (e) {
+      if ((e as Error)?.name === "AbortError") return;
       console.error("[tts]", e);
       setPreparingId((p) => (p === id ? null : p));
       if (opts.manual) toast.error("Falha ao gerar áudio.");
+    } finally {
+      if (ttsAbortRef.current === ac) ttsAbortRef.current = null;
     }
   }
 
