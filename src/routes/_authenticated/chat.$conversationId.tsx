@@ -82,6 +82,7 @@ function ChatPage() {
   });
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentUrlRef = useRef<string | null>(null);
+  const ttsAbortRef = useRef<AbortController | null>(null);
   const blockToastShownRef = useRef(false);
   // Seed with initial message IDs so we don't autoplay historical messages.
   const playedIdsRef = useRef<Set<string>>(new Set(initialUI.map((m) => m.id)));
@@ -91,7 +92,24 @@ function ChatPage() {
     try { window.localStorage.setItem("fred:autoplay", v ? "1" : "0"); } catch { /* ignore */ }
   };
 
+  // Keep the first ~2 sentences for autoplay so /api/tts stays fast.
+  function shortenForSpeech(text: string, maxChars = 260): string {
+    const clean = text.trim();
+    if (clean.length <= maxChars) return clean;
+    const sentences = clean.match(/[^.!?]+[.!?]+(\s|$)/g) ?? [clean];
+    let out = "";
+    for (const s of sentences) {
+      if ((out + s).length > maxChars) break;
+      out += s;
+    }
+    return (out || clean.slice(0, maxChars)).trim();
+  }
+
   const stopAudio = useCallback(() => {
+    if (ttsAbortRef.current) {
+      try { ttsAbortRef.current.abort(); } catch { /* ignore */ }
+      ttsAbortRef.current = null;
+    }
     if (audioRef.current) {
       try { audioRef.current.pause(); } catch { /* ignore */ }
       audioRef.current.src = "";
