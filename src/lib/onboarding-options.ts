@@ -119,10 +119,18 @@ function asMap<T extends { value: string; label: string }>(arr: T[]) {
   return Object.fromEntries(arr.map((o) => [o.value, o.label]));
 }
 
+const SITUATIONS_MAP: Record<string, string> = {
+  ...asMap(GENERAL_SITUATIONS),
+  ...Object.values(AREA_SITUATIONS).reduce<Record<string, string>>(
+    (acc, list) => ({ ...acc, ...asMap(list) }),
+    {},
+  ),
+};
+
 export const LABELS = {
   goals: asMap(ENGLISH_GOALS),
   areas: asMap(PROFESSIONAL_AREAS),
-  situations: { ...asMap(GENERAL_SITUATIONS), ...Object.values(AREA_SITUATIONS).reduce((acc, list) => ({ ...acc, ...asMap(list) }), {}) },
+  situations: SITUATIONS_MAP,
   levels: asMap(ENGLISH_LEVELS),
   corrections: asMap(CORRECTION_PREFS),
   practiceGoals: asMap(PRACTICE_GOALS),

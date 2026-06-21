@@ -22,6 +22,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
+import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
 
@@ -90,6 +91,12 @@ const AuthenticatedPracticeIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedPracticeRoute,
   } as any)
+const AuthenticatedSettingsOnboardingRoute =
+  AuthenticatedSettingsOnboardingRouteImport.update({
+    id: '/settings/onboarding',
+    path: '/settings/onboarding',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPracticeFillInBlankRoute =
   AuthenticatedPracticeFillInBlankRouteImport.update({
     id: '/fill-in-blank',
@@ -117,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRoutesByTo {
@@ -132,6 +140,7 @@ export interface FileRoutesByTo {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRoutesById {
@@ -150,6 +159,7 @@ export interface FileRoutesById {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRouteTypes {
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
+    | '/settings/onboarding'
     | '/practice/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -183,6 +194,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
+    | '/settings/onboarding'
     | '/practice'
   id:
     | '__root__'
@@ -200,6 +212,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
+    | '/_authenticated/settings/onboarding'
     | '/_authenticated/practice/'
   fileRoutesById: FileRoutesById
 }
@@ -307,6 +320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPracticeIndexRouteImport
       parentRoute: typeof AuthenticatedPracticeRoute
     }
+    '/_authenticated/settings/onboarding': {
+      id: '/_authenticated/settings/onboarding'
+      path: '/settings/onboarding'
+      fullPath: '/settings/onboarding'
+      preLoaderRoute: typeof AuthenticatedSettingsOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/practice/fill-in-blank': {
       id: '/_authenticated/practice/fill-in-blank'
       path: '/fill-in-blank'
@@ -345,6 +365,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRouteWithChildren
   AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRoute
+  AuthenticatedSettingsOnboardingRoute: typeof AuthenticatedSettingsOnboardingRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -353,6 +374,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRouteWithChildren,
   AuthenticatedChatConversationIdRoute: AuthenticatedChatConversationIdRoute,
+  AuthenticatedSettingsOnboardingRoute: AuthenticatedSettingsOnboardingRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
