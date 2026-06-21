@@ -385,7 +385,12 @@ function ChatPage() {
           if (r.isFinal) finals += r[0].transcript;
           else interim += r[0].transcript;
         }
-        if (finals) setFinalTranscript((p) => (p ? p + " " : "") + finals.trim());
+        if (finals) {
+          const next = (finalTranscriptRef.current ? finalTranscriptRef.current + " " : "") + finals.trim();
+          finalTranscriptRef.current = next;
+          setFinalTranscript(next);
+        }
+        liveTranscriptRef.current = interim;
         setLiveTranscript(interim);
       };
       rec.onerror = () => { /* swallow; fallback to STT */ };
