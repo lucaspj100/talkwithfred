@@ -5,17 +5,20 @@ import { createLovableGateway } from "@/lib/ai-gateway.server";
 import { buildFredSystemPrompt, type Mode } from "@/lib/fred-prompt";
 import type { Database } from "@/integrations/supabase/types";
 
+// Keep only the last N messages sent to the model to reduce latency / tokens.
+const HISTORY_WINDOW = 10;
+
 export const Route = createFileRoute("/api/chat")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        const t0 = Date.now();
+        const mark = (label: string, since: number) =>
+          console.log(`[/api/chat] ${label}: ${Date.now() - since}ms`);
         try {
           const auth = request.headers.get("authorization");
-          const hasBearer = !!auth?.startsWith("Bearer ");
-          const tokenPreview = hasBearer ? `${auth!.slice(7, 15)}...(len=${auth!.length - 7})` : "none";
-          console.log(`[/api/chat] Authorization header: ${hasBearer ? "present" : "MISSING"} (${tokenPreview})`);
-          if (!hasBearer) return new Response("Unauthorized", { status: 401 });
-          const token = auth!.slice(7);
+          if (!auth?.startsWith("Bearer ")) return new Response("Unauthorized", { status: 401 });
+          const token = auth.slice(7);
 
           const body = (await request.json()) as {
             messages?: UIMessage[];
@@ -25,7 +28,6 @@ export const Route = createFileRoute("/api/chat")({
           if (!Array.isArray(body.messages)) return new Response("Bad request", { status: 400 });
 
           if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
-            console.error("[/api/chat] missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY");
             return new Response("Server misconfigured", { status: 500 });
           }
           const supabase = createClient<Database>(
@@ -36,30 +38,43 @@ export const Route = createFileRoute("/api/chat")({
               auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
             },
           );
+
+          const tAuth = Date.now();
           const { data: userData, error: userErr } = await supabase.auth.getUser(token);
+          mark("auth.getUser", tAuth);
           if (userErr || !userData?.user?.id) {
-            console.error("[/api/chat] getUser failed:", userErr?.message ?? "no user");
             return new Response("Unauthorized", { status: 401 });
           }
           const userId = userData.user.id;
 
+          const tProfile = Date.now();
           const [{ data: userProfile }, { data: profile }] = await Promise.all([
             supabase.from("user_profiles").select("*").eq("user_id", userId).maybeSingle(),
             supabase.from("profiles").select("name").eq("id", userId).maybeSingle(),
           ]);
+          mark("profile fetch", tProfile);
 
           const mode: Mode = body.mode ?? "free_conversation";
           const system = buildFredSystemPrompt(userProfile, mode, profile?.name);
+
+          // Trim history: keep only the last HISTORY_WINDOW messages.
+          const trimmed = body.messages.slice(-HISTORY_WINDOW);
 
           const key = process.env.LOVABLE_API_KEY;
           if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });
           const gateway = createLovableGateway(key);
 
+          const tAi = Date.now();
           const result = streamText({
-            model: gateway("google/gemini-3-flash-preview"),
+            // Lighter/faster model for low-latency conversation.
+            model: gateway("google/gemini-3.1-flash-lite"),
             system,
-            messages: await convertToModelMessages(body.messages),
+            messages: await convertToModelMessages(trimmed),
+            onFinish: () => mark("stream finish (total)", t0),
           });
+          mark("ai stream start", tAi);
+          mark("ttfb total", t0);
+
           return result.toUIMessageStreamResponse({ originalMessages: body.messages });
         } catch (err) {
           console.error("[/api/chat]", err);
