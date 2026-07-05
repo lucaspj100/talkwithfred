@@ -47,7 +47,8 @@ const LeadFormSchema = z.object({
 });
 
 type Diag = {
-  area: string | null;
+  areas: string[];
+  other_area: string;
   goal: string | null;
   level: string | null;
   main_block: string | null;
@@ -61,7 +62,8 @@ function SimulacaoPage() {
 
   const [step, setStep] = useState<Step>("diag_area");
   const [diag, setDiag] = useState<Diag>({
-    area: null,
+    areas: [],
+    other_area: "",
     goal: null,
     level: null,
     main_block: null,
@@ -76,10 +78,16 @@ function SimulacaoPage() {
   const totalSteps = stepOrder.length;
 
   const set = (patch: Partial<Diag>) => setDiag((p) => ({ ...p, ...patch }));
+  const toggleArea = (v: string) =>
+    setDiag((p) => ({
+      ...p,
+      areas: p.areas.includes(v) ? p.areas.filter((x) => x !== v) : [...p.areas, v],
+    }));
 
   const canNext = (() => {
     switch (step) {
-      case "diag_area": return !!diag.area;
+      case "diag_area":
+        return diag.areas.length > 0 && (!diag.areas.includes("other") || diag.other_area.trim().length > 0);
       case "diag_goal": return !!diag.goal;
       case "diag_level": return !!diag.level;
       case "diag_block": return !!diag.main_block;
