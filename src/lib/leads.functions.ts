@@ -68,7 +68,10 @@ export const markLeadConverted = createServerFn({ method: "POST" })
 
 // ---------- Admin ----------
 
-async function ensureAdmin(ctx: { supabase: ReturnType<typeof getAny>; userId: string }): Promise<void> {
+type AuthCtx = { supabase: { from: (t: string) => { select: (c: string) => { eq: (a: string, b: string) => { eq: (a: string, b: string) => { maybeSingle: () => Promise<{ data: unknown }> } } } } }; userId: string };
+
+async function ensureAdmin(context: unknown): Promise<void> {
+  const ctx = context as AuthCtx;
   const { data } = await ctx.supabase
     .from("user_roles")
     .select("role")
@@ -77,8 +80,6 @@ async function ensureAdmin(ctx: { supabase: ReturnType<typeof getAny>; userId: s
     .maybeSingle();
   if (!data) throw new Error("Forbidden");
 }
-// Placeholder for typing; real ctx.supabase is a Supabase client.
-function getAny(): unknown { return null; }
 
 export type AdminLead = {
   id: string;
