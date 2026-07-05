@@ -360,6 +360,9 @@ function MultiGrid({
       })}
     </div>
   );
+}
+
+
 
 const MIN_USER_TURNS = 4;
 const MAX_USER_TURNS = 6;
