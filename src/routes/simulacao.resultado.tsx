@@ -26,7 +26,9 @@ type Saved = {
   leadId: string;
   name: string;
   diag: {
-    area: string | null;
+    areas?: string[];
+    other_area?: string | null;
+    area?: string | null;
     goal: string | null;
     level: string | null;
     main_block: string | null;
@@ -55,7 +57,11 @@ function ResultadoPage() {
   }
 
   const { name, diag } = saved;
-  const area = labelArea(diag.area);
+  const areaList = [
+    ...(diag.areas ?? []).map((v) => (v === "other" ? (diag.other_area || "Outra") : labelArea(v))).filter(Boolean),
+  ];
+  if (areaList.length === 0 && diag.area) areaList.push(labelArea(diag.area) || diag.area);
+  const area = areaList.join(", ");
   const goal = labelGoalSim(diag.goal);
   const block = labelBlock(diag.main_block) || "usar o inglês em contextos profissionais reais";
   const level = labelLevelSim(diag.level);
