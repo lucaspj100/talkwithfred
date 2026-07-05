@@ -181,10 +181,24 @@ function SimulacaoPage() {
 
         {step === "diag_area" && (
           <StepShell
-            title="Qual sua área profissional?"
-            subtitle="Vamos usar isso para adaptar a simulação ao seu contexto real."
+            title="Quais áreas mais representam sua atuação profissional?"
+            subtitle="Pode selecionar mais de uma. Vamos usar isso para adaptar sua análise e a simulação ao seu contexto real."
           >
-            <Grid options={AREAS as unknown as { value: string; label: string }[]} value={diag.area} onChange={(v) => set({ area: v })} />
+            <MultiGrid
+              options={AREAS as unknown as { value: string; label: string }[]}
+              values={diag.areas}
+              onToggle={toggleArea}
+            />
+            {diag.areas.includes("other") && (
+              <div className="mt-4">
+                <label className="mb-1 block text-sm">Qual sua área?</label>
+                <Input
+                  value={diag.other_area}
+                  onChange={(e) => set({ other_area: e.target.value })}
+                  placeholder="Descreva sua área"
+                />
+              </div>
+            )}
           </StepShell>
         )}
         {step === "diag_goal" && (
