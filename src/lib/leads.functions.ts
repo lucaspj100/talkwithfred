@@ -103,7 +103,7 @@ export type AdminLead = {
 export const listLeads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AdminLead[]> => {
-    await ensureAdmin(context as unknown as { supabase: ReturnType<typeof getAny>; userId: string });
+    await ensureAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("leads")
@@ -154,7 +154,7 @@ export const updateLeadStatus = createServerFn({ method: "POST" })
     }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    await ensureAdmin(context as unknown as { supabase: ReturnType<typeof getAny>; userId: string });
+    await ensureAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("leads")
