@@ -22,6 +22,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
+import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public/simulation-chat'
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
@@ -91,6 +92,11 @@ const AuthenticatedPracticeIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedPracticeRoute,
   } as any)
+const ApiPublicSimulationChatRoute = ApiPublicSimulationChatRouteImport.update({
+  id: '/api/public/simulation-chat',
+  path: '/api/public/simulation-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSettingsOnboardingRoute =
   AuthenticatedSettingsOnboardingRouteImport.update({
     id: '/settings/onboarding',
@@ -125,6 +131,7 @@ export interface FileRoutesByFullPath {
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRoutesByTo {
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRoutesById {
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRouteTypes {
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
+    | '/api/public/simulation-chat'
     | '/practice/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
+    | '/api/public/simulation-chat'
     | '/practice'
   id:
     | '__root__'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
     | '/_authenticated/settings/onboarding'
+    | '/api/public/simulation-chat'
     | '/_authenticated/practice/'
   fileRoutesById: FileRoutesById
 }
@@ -225,6 +237,7 @@ export interface RootRouteChildren {
   ApiSttRoute: typeof ApiSttRoute
   ApiTtsRoute: typeof ApiTtsRoute
   ApiTtsStreamRoute: typeof ApiTtsStreamRoute
+  ApiPublicSimulationChatRoute: typeof ApiPublicSimulationChatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -320,6 +333,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPracticeIndexRouteImport
       parentRoute: typeof AuthenticatedPracticeRoute
     }
+    '/api/public/simulation-chat': {
+      id: '/api/public/simulation-chat'
+      path: '/api/public/simulation-chat'
+      fullPath: '/api/public/simulation-chat'
+      preLoaderRoute: typeof ApiPublicSimulationChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/settings/onboarding': {
       id: '/_authenticated/settings/onboarding'
       path: '/settings/onboarding'
@@ -389,6 +409,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSttRoute: ApiSttRoute,
   ApiTtsRoute: ApiTtsRoute,
   ApiTtsStreamRoute: ApiTtsStreamRoute,
+  ApiPublicSimulationChatRoute: ApiPublicSimulationChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
