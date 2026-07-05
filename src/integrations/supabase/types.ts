@@ -41,6 +41,54 @@ export type Database = {
         }
         Relationships: []
       }
+      leads: {
+        Row: {
+          already_lost_opportunity: string | null
+          area: string | null
+          converted_to_whatsapp: boolean
+          created_at: string
+          email: string
+          goal: string | null
+          id: string
+          level: string | null
+          main_block: string | null
+          name: string
+          simulation_summary: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          already_lost_opportunity?: string | null
+          area?: string | null
+          converted_to_whatsapp?: boolean
+          created_at?: string
+          email: string
+          goal?: string | null
+          id?: string
+          level?: string | null
+          main_block?: string | null
+          name: string
+          simulation_summary?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          already_lost_opportunity?: string | null
+          area?: string | null
+          converted_to_whatsapp?: boolean
+          created_at?: string
+          email?: string
+          goal?: string | null
+          id?: string
+          level?: string | null
+          main_block?: string | null
+          name?: string
+          simulation_summary?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       learning_items: {
         Row: {
           conversation_id: string | null
