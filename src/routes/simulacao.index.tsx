@@ -330,6 +330,37 @@ function Grid({
   );
 }
 
+function MultiGrid({
+  options,
+  values,
+  onToggle,
+}: {
+  options: { value: string; label: string }[];
+  values: string[];
+  onToggle: (v: string) => void;
+}) {
+  return (
+    <div className="grid gap-2 md:grid-cols-2">
+      {options.map((o) => {
+        const on = values.includes(o.value);
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onToggle(o.value)}
+            className={cn(
+              "flex items-center justify-between rounded-xl border bg-card/60 p-4 text-left transition",
+              on ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50",
+            )}
+          >
+            <span className="font-medium">{o.label}</span>
+            {on && <Check className="size-4 text-primary" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+
 const MIN_USER_TURNS = 4;
 const MAX_USER_TURNS = 6;
 
