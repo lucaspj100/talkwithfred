@@ -66,8 +66,9 @@ function ResultadoPage() {
   );
   const waHref = wa ? `https://wa.me/${wa.replace(/\D/g, "")}?text=${waMessage}` : null;
 
+  const leadId = saved.leadId;
   async function handleConvert() {
-    try { await mark({ data: { leadId: saved.leadId } }); } catch { /* noop */ }
+    try { await mark({ data: { leadId } }); } catch { /* noop */ }
   }
 
   return (
