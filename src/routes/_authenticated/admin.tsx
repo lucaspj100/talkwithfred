@@ -25,7 +25,7 @@ function AdminPage() {
           <ArrowLeft className="mr-1 size-4" /> Voltar
         </Button>
         <h1 className="font-display text-2xl font-bold">Painel admin</h1>
-        <div className="w-24" />
+        <Link to="/admin/leads"><Button>Ver leads</Button></Link>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-card/40">

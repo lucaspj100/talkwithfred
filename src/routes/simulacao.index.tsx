@@ -47,7 +47,8 @@ const LeadFormSchema = z.object({
 });
 
 type Diag = {
-  area: string | null;
+  areas: string[];
+  other_area: string;
   goal: string | null;
   level: string | null;
   main_block: string | null;
@@ -61,7 +62,8 @@ function SimulacaoPage() {
 
   const [step, setStep] = useState<Step>("diag_area");
   const [diag, setDiag] = useState<Diag>({
-    area: null,
+    areas: [],
+    other_area: "",
     goal: null,
     level: null,
     main_block: null,
@@ -76,10 +78,16 @@ function SimulacaoPage() {
   const totalSteps = stepOrder.length;
 
   const set = (patch: Partial<Diag>) => setDiag((p) => ({ ...p, ...patch }));
+  const toggleArea = (v: string) =>
+    setDiag((p) => ({
+      ...p,
+      areas: p.areas.includes(v) ? p.areas.filter((x) => x !== v) : [...p.areas, v],
+    }));
 
   const canNext = (() => {
     switch (step) {
-      case "diag_area": return !!diag.area;
+      case "diag_area":
+        return diag.areas.length > 0 && (!diag.areas.includes("other") || diag.other_area.trim().length > 0);
       case "diag_goal": return !!diag.goal;
       case "diag_level": return !!diag.level;
       case "diag_block": return !!diag.main_block;
@@ -110,7 +118,8 @@ function SimulacaoPage() {
           name: parsed.data.name,
           email: parsed.data.email,
           whatsapp: parsed.data.whatsapp || null,
-          area: diag.area,
+          areas: diag.areas,
+          other_area: diag.areas.includes("other") ? diag.other_area.trim() || null : null,
           goal: diag.goal,
           level: diag.level,
           main_block: diag.main_block,
@@ -138,7 +147,8 @@ function SimulacaoPage() {
   const diagnosticForChat: LeadDiagnostic = useMemo(
     () => ({
       name: lead.name,
-      area: diag.area,
+      areas: diag.areas,
+      other_area: diag.areas.includes("other") ? diag.other_area.trim() || null : null,
       goal: diag.goal,
       level: diag.level,
       main_block: diag.main_block,
@@ -171,10 +181,24 @@ function SimulacaoPage() {
 
         {step === "diag_area" && (
           <StepShell
-            title="Qual sua área profissional?"
-            subtitle="Vamos usar isso para adaptar a simulação ao seu contexto real."
+            title="Quais áreas mais representam sua atuação profissional?"
+            subtitle="Pode selecionar mais de uma. Vamos usar isso para adaptar sua análise e a simulação ao seu contexto real."
           >
-            <Grid options={AREAS as unknown as { value: string; label: string }[]} value={diag.area} onChange={(v) => set({ area: v })} />
+            <MultiGrid
+              options={AREAS as unknown as { value: string; label: string }[]}
+              values={diag.areas}
+              onToggle={toggleArea}
+            />
+            {diag.areas.includes("other") && (
+              <div className="mt-4">
+                <label className="mb-1 block text-sm">Qual sua área?</label>
+                <Input
+                  value={diag.other_area}
+                  onChange={(e) => set({ other_area: e.target.value })}
+                  placeholder="Descreva sua área"
+                />
+              </div>
+            )}
           </StepShell>
         )}
         {step === "diag_goal" && (
@@ -305,6 +329,40 @@ function Grid({
     </div>
   );
 }
+
+function MultiGrid({
+  options,
+  values,
+  onToggle,
+}: {
+  options: { value: string; label: string }[];
+  values: string[];
+  onToggle: (v: string) => void;
+}) {
+  return (
+    <div className="grid gap-2 md:grid-cols-2">
+      {options.map((o) => {
+        const on = values.includes(o.value);
+        return (
+          <button
+            key={o.value}
+            type="button"
+            onClick={() => onToggle(o.value)}
+            className={cn(
+              "flex items-center justify-between rounded-xl border bg-card/60 p-4 text-left transition",
+              on ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50",
+            )}
+          >
+            <span className="font-medium">{o.label}</span>
+            {on && <Check className="size-4 text-primary" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+
 
 const MIN_USER_TURNS = 4;
 const MAX_USER_TURNS = 6;

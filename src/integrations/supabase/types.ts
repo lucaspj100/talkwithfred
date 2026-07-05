@@ -45,6 +45,7 @@ export type Database = {
         Row: {
           already_lost_opportunity: string | null
           area: string | null
+          areas: string[]
           converted_to_whatsapp: boolean
           created_at: string
           email: string
@@ -53,13 +54,17 @@ export type Database = {
           level: string | null
           main_block: string | null
           name: string
+          other_area: string | null
           simulation_summary: string | null
+          source: string
+          status: string
           updated_at: string
           whatsapp: string | null
         }
         Insert: {
           already_lost_opportunity?: string | null
           area?: string | null
+          areas?: string[]
           converted_to_whatsapp?: boolean
           created_at?: string
           email: string
@@ -68,13 +73,17 @@ export type Database = {
           level?: string | null
           main_block?: string | null
           name: string
+          other_area?: string | null
           simulation_summary?: string | null
+          source?: string
+          status?: string
           updated_at?: string
           whatsapp?: string | null
         }
         Update: {
           already_lost_opportunity?: string | null
           area?: string | null
+          areas?: string[]
           converted_to_whatsapp?: boolean
           created_at?: string
           email?: string
@@ -83,7 +92,10 @@ export type Database = {
           level?: string | null
           main_block?: string | null
           name?: string
+          other_area?: string | null
           simulation_summary?: string | null
+          source?: string
+          status?: string
           updated_at?: string
           whatsapp?: string | null
         }
