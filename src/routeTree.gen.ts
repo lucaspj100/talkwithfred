@@ -28,6 +28,7 @@ import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
+import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -127,12 +128,17 @@ const AuthenticatedChatConversationIdRoute =
     path: '/chat/$conversationId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/practice': typeof AuthenticatedPracticeRouteWithChildren
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
+  '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
@@ -152,7 +159,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/admin': typeof AuthenticatedAdminRoute
+  '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/api/chat': typeof ApiChatRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao': typeof SimulacaoIndexRoute
+  '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
@@ -173,7 +181,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/practice': typeof AuthenticatedPracticeRouteWithChildren
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
+  '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/simulacao/resultado'
     | '/simulacao/'
+    | '/admin/leads'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/simulacao/resultado'
     | '/simulacao'
+    | '/admin/leads'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/simulacao/resultado'
     | '/simulacao/'
+    | '/_authenticated/admin/leads'
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
     | '/_authenticated/settings/onboarding'
@@ -401,8 +413,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatConversationIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/leads': {
+      id: '/_authenticated/admin/leads'
+      path: '/leads'
+      fullPath: '/admin/leads'
+      preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
   }
 }
+
+interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
+}
+
+const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
+}
+
+const AuthenticatedAdminRouteWithChildren =
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
 interface AuthenticatedPracticeRouteChildren {
   AuthenticatedPracticeFillInBlankRoute: typeof AuthenticatedPracticeFillInBlankRoute
@@ -420,7 +450,7 @@ const AuthenticatedPracticeRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRouteWithChildren
@@ -429,7 +459,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRouteWithChildren,
