@@ -10,10 +10,10 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as SimulacaoRouteImport } from './routes/simulacao'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SimulacaoIndexRouteImport } from './routes/simulacao.index'
 import { Route as SimulacaoResultadoRouteImport } from './routes/simulacao.resultado'
 import { Route as ApiTtsStreamRouteImport } from './routes/api/tts-stream'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
@@ -34,11 +34,6 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SimulacaoRoute = SimulacaoRouteImport.update({
-  id: '/simulacao',
-  path: '/simulacao',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -53,10 +48,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SimulacaoIndexRoute = SimulacaoIndexRouteImport.update({
+  id: '/simulacao/',
+  path: '/simulacao/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SimulacaoResultadoRoute = SimulacaoResultadoRouteImport.update({
-  id: '/resultado',
-  path: '/resultado',
-  getParentRoute: () => SimulacaoRoute,
+  id: '/simulacao/resultado',
+  path: '/simulacao/resultado',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTtsStreamRoute = ApiTtsStreamRouteImport.update({
   id: '/api/tts-stream',
@@ -131,7 +131,6 @@ const AuthenticatedChatConversationIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/simulacao': typeof SimulacaoRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -142,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
+  '/simulacao/': typeof SimulacaoIndexRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
@@ -151,7 +151,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/simulacao': typeof SimulacaoRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -161,6 +160,7 @@ export interface FileRoutesByTo {
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
+  '/simulacao': typeof SimulacaoIndexRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
@@ -172,7 +172,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/simulacao': typeof SimulacaoRouteWithChildren
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -183,6 +182,7 @@ export interface FileRoutesById {
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
+  '/simulacao/': typeof SimulacaoIndexRoute
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
@@ -194,7 +194,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
-    | '/simulacao'
     | '/sitemap.xml'
     | '/admin'
     | '/dashboard'
@@ -205,6 +204,7 @@ export interface FileRouteTypes {
     | '/api/tts'
     | '/api/tts-stream'
     | '/simulacao/resultado'
+    | '/simulacao/'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
@@ -214,7 +214,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
-    | '/simulacao'
     | '/sitemap.xml'
     | '/admin'
     | '/dashboard'
@@ -224,6 +223,7 @@ export interface FileRouteTypes {
     | '/api/tts'
     | '/api/tts-stream'
     | '/simulacao/resultado'
+    | '/simulacao'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
@@ -234,7 +234,6 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
-    | '/simulacao'
     | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
@@ -245,6 +244,7 @@ export interface FileRouteTypes {
     | '/api/tts'
     | '/api/tts-stream'
     | '/simulacao/resultado'
+    | '/simulacao/'
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
     | '/_authenticated/settings/onboarding'
@@ -256,12 +256,13 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  SimulacaoRoute: typeof SimulacaoRouteWithChildren
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiSttRoute: typeof ApiSttRoute
   ApiTtsRoute: typeof ApiTtsRoute
   ApiTtsStreamRoute: typeof ApiTtsStreamRoute
+  SimulacaoResultadoRoute: typeof SimulacaoResultadoRoute
+  SimulacaoIndexRoute: typeof SimulacaoIndexRoute
   ApiPublicSimulationChatRoute: typeof ApiPublicSimulationChatRoute
 }
 
@@ -272,13 +273,6 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/simulacao': {
-      id: '/simulacao'
-      path: '/simulacao'
-      fullPath: '/simulacao'
-      preLoaderRoute: typeof SimulacaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -302,12 +296,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/simulacao/': {
+      id: '/simulacao/'
+      path: '/simulacao'
+      fullPath: '/simulacao/'
+      preLoaderRoute: typeof SimulacaoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/simulacao/resultado': {
       id: '/simulacao/resultado'
-      path: '/resultado'
+      path: '/simulacao/resultado'
       fullPath: '/simulacao/resultado'
       preLoaderRoute: typeof SimulacaoResultadoRouteImport
-      parentRoute: typeof SimulacaoRoute
+      parentRoute: typeof rootRouteImport
     }
     '/api/tts-stream': {
       id: '/api/tts-stream'
@@ -439,28 +440,17 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
-interface SimulacaoRouteChildren {
-  SimulacaoResultadoRoute: typeof SimulacaoResultadoRoute
-}
-
-const SimulacaoRouteChildren: SimulacaoRouteChildren = {
-  SimulacaoResultadoRoute: SimulacaoResultadoRoute,
-}
-
-const SimulacaoRouteWithChildren = SimulacaoRoute._addFileChildren(
-  SimulacaoRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  SimulacaoRoute: SimulacaoRouteWithChildren,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiChatRoute: ApiChatRoute,
   ApiSttRoute: ApiSttRoute,
   ApiTtsRoute: ApiTtsRoute,
   ApiTtsStreamRoute: ApiTtsStreamRoute,
+  SimulacaoResultadoRoute: SimulacaoResultadoRoute,
+  SimulacaoIndexRoute: SimulacaoIndexRoute,
   ApiPublicSimulationChatRoute: ApiPublicSimulationChatRoute,
 }
 export const routeTree = rootRouteImport

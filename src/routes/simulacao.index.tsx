@@ -19,7 +19,7 @@ import {
 import { createLead, updateLeadSimulation } from "@/lib/leads.functions";
 import type { LeadDiagnostic } from "@/lib/simulation-prompt";
 
-export const Route = createFileRoute("/simulacao")({
+export const Route = createFileRoute("/simulacao/")({
   head: () => ({
     meta: [
       { title: "Simulação gratuita — Simulador de Inglês para Carreira" },
