@@ -34,7 +34,7 @@ function Landing() {
         </div>
         <div className="flex items-center gap-3">
           <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">Entrar</Link>
-          <Link to="/simulacao"><Button>Fazer simulação gratuita</Button></Link>
+          <Link to="/simulacao"><Button>Ver meu mapa de oportunidades</Button></Link>
         </div>
       </header>
 
@@ -50,14 +50,14 @@ function Landing() {
             Faça uma simulação gratuita com IA, veja onde seu inglês trava e descubra quais oportunidades podem estar ficando fora do seu radar.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link to="/simulacao">
+          <Link to="/simulacao">
               <Button size="lg" className="text-base">
-                Fazer simulação gratuita <ArrowRight className="ml-1 size-4" />
+                Ver meu mapa de oportunidades na carreira <ArrowRight className="ml-1 size-4" />
               </Button>
             </Link>
-            <a href="#como-funciona">
-              <Button size="lg" variant="ghost" className="text-base">Ver como funciona</Button>
-            </a>
+            <Link to="/auth">
+              <Button size="lg" variant="ghost" className="text-base">Praticar com a IA agora</Button>
+            </Link>
           </div>
           <p className="mt-6 text-xs text-muted-foreground">
             Simulação com IA · Feedback personalizado · Sem cartão de crédito
@@ -117,7 +117,7 @@ function Landing() {
         </ol>
         <div className="mt-10 text-center">
           <Link to="/simulacao">
-            <Button size="lg">Começar minha simulação <ArrowRight className="ml-1 size-4" /></Button>
+            <Button size="lg">Ver meu mapa de oportunidades na carreira <ArrowRight className="ml-1 size-4" /></Button>
           </Link>
         </div>
       </section>
@@ -148,7 +148,7 @@ function Landing() {
             A simulação é gratuita. Você recebe um Mapa de Oportunidades no final.
           </p>
           <Link to="/simulacao" className="mt-6 inline-block">
-            <Button size="lg">Fazer simulação gratuita <ArrowRight className="ml-1 size-4" /></Button>
+            <Button size="lg">Ver meu mapa de oportunidades na carreira <ArrowRight className="ml-1 size-4" /></Button>
           </Link>
           <p className="mt-4 text-xs text-muted-foreground">
             As estimativas exibidas são possibilidades de mercado, não garantias de salário, promoção ou contratação.
