@@ -13,6 +13,8 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SimulacaoIndexRouteImport } from './routes/simulacao.index'
+import { Route as SimulacaoResultadoRouteImport } from './routes/simulacao.resultado'
 import { Route as ApiTtsStreamRouteImport } from './routes/api/tts-stream'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
@@ -22,6 +24,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
+import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public/simulation-chat'
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
@@ -43,6 +46,16 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SimulacaoIndexRoute = SimulacaoIndexRouteImport.update({
+  id: '/simulacao/',
+  path: '/simulacao/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SimulacaoResultadoRoute = SimulacaoResultadoRouteImport.update({
+  id: '/simulacao/resultado',
+  path: '/simulacao/resultado',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTtsStreamRoute = ApiTtsStreamRouteImport.update({
@@ -91,6 +104,11 @@ const AuthenticatedPracticeIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedPracticeRoute,
   } as any)
+const ApiPublicSimulationChatRoute = ApiPublicSimulationChatRouteImport.update({
+  id: '/api/public/simulation-chat',
+  path: '/api/public/simulation-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSettingsOnboardingRoute =
   AuthenticatedSettingsOnboardingRouteImport.update({
     id: '/settings/onboarding',
@@ -122,9 +140,12 @@ export interface FileRoutesByFullPath {
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
+  '/simulacao/resultado': typeof SimulacaoResultadoRoute
+  '/simulacao/': typeof SimulacaoIndexRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRoutesByTo {
@@ -138,9 +159,12 @@ export interface FileRoutesByTo {
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
+  '/simulacao/resultado': typeof SimulacaoResultadoRoute
+  '/simulacao': typeof SimulacaoIndexRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRoutesById {
@@ -157,9 +181,12 @@ export interface FileRoutesById {
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
+  '/simulacao/resultado': typeof SimulacaoResultadoRoute
+  '/simulacao/': typeof SimulacaoIndexRoute
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
 }
 export interface FileRouteTypes {
@@ -176,9 +203,12 @@ export interface FileRouteTypes {
     | '/api/stt'
     | '/api/tts'
     | '/api/tts-stream'
+    | '/simulacao/resultado'
+    | '/simulacao/'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
+    | '/api/public/simulation-chat'
     | '/practice/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -192,9 +222,12 @@ export interface FileRouteTypes {
     | '/api/stt'
     | '/api/tts'
     | '/api/tts-stream'
+    | '/simulacao/resultado'
+    | '/simulacao'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
+    | '/api/public/simulation-chat'
     | '/practice'
   id:
     | '__root__'
@@ -210,9 +243,12 @@ export interface FileRouteTypes {
     | '/api/stt'
     | '/api/tts'
     | '/api/tts-stream'
+    | '/simulacao/resultado'
+    | '/simulacao/'
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
     | '/_authenticated/settings/onboarding'
+    | '/api/public/simulation-chat'
     | '/_authenticated/practice/'
   fileRoutesById: FileRoutesById
 }
@@ -225,6 +261,9 @@ export interface RootRouteChildren {
   ApiSttRoute: typeof ApiSttRoute
   ApiTtsRoute: typeof ApiTtsRoute
   ApiTtsStreamRoute: typeof ApiTtsStreamRoute
+  SimulacaoResultadoRoute: typeof SimulacaoResultadoRoute
+  SimulacaoIndexRoute: typeof SimulacaoIndexRoute
+  ApiPublicSimulationChatRoute: typeof ApiPublicSimulationChatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -255,6 +294,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/simulacao/': {
+      id: '/simulacao/'
+      path: '/simulacao'
+      fullPath: '/simulacao/'
+      preLoaderRoute: typeof SimulacaoIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/simulacao/resultado': {
+      id: '/simulacao/resultado'
+      path: '/simulacao/resultado'
+      fullPath: '/simulacao/resultado'
+      preLoaderRoute: typeof SimulacaoResultadoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/tts-stream': {
@@ -319,6 +372,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/practice/'
       preLoaderRoute: typeof AuthenticatedPracticeIndexRouteImport
       parentRoute: typeof AuthenticatedPracticeRoute
+    }
+    '/api/public/simulation-chat': {
+      id: '/api/public/simulation-chat'
+      path: '/api/public/simulation-chat'
+      fullPath: '/api/public/simulation-chat'
+      preLoaderRoute: typeof ApiPublicSimulationChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/settings/onboarding': {
       id: '/_authenticated/settings/onboarding'
@@ -389,6 +449,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSttRoute: ApiSttRoute,
   ApiTtsRoute: ApiTtsRoute,
   ApiTtsStreamRoute: ApiTtsStreamRoute,
+  SimulacaoResultadoRoute: SimulacaoResultadoRoute,
+  SimulacaoIndexRoute: SimulacaoIndexRoute,
+  ApiPublicSimulationChatRoute: ApiPublicSimulationChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
