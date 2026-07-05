@@ -147,7 +147,8 @@ function SimulacaoPage() {
   const diagnosticForChat: LeadDiagnostic = useMemo(
     () => ({
       name: lead.name,
-      area: diag.area,
+      areas: diag.areas,
+      other_area: diag.areas.includes("other") ? diag.other_area.trim() || null : null,
       goal: diag.goal,
       level: diag.level,
       main_block: diag.main_block,
