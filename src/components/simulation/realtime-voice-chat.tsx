@@ -46,8 +46,8 @@ export function RealtimeVoiceChat({
   }, [diagnostic, leadId]);
 
   const {
-    state, errorMsg, responseError, muted, turns, partialUser, partialAssistant, supported,
-    start, stop, toggleMute, retryResponse,
+    state, errorMsg, responseError, audioBlocked, muted, turns, partialUser, partialAssistant, supported,
+    start, stop, toggleMute, retryResponse, resumeAudio,
   } = useRealtimeVoice({ getSession });
 
   const userFinalTurns = useMemo(
