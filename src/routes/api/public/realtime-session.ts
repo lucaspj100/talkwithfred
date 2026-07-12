@@ -1,6 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { createHash } from "crypto";
 import { buildSimulationSystemPrompt, type LeadDiagnostic } from "@/lib/simulation-prompt";
+
+type UpstreamOk = {
+  value?: string;
+  expires_at?: number;
+  session?: { id?: string };
+  client_secret?: { value?: string; expires_at?: number };
+  id?: string;
+};
+type UpstreamErr = { error?: { message?: string; type?: string; code?: string } };
+
+function mapUpstreamError(status: number, body: UpstreamErr): { code: string; message: string; http: number } {
+  const t = body.error?.type ?? ""; const c = body.error?.code ?? "";
+  if (status === 401 || c === "invalid_api_key") return { code: "invalid_api_key", message: "Chave de voz inválida.", http: 502 };
+  if (status === 403 || t === "permission_denied") return { code: "permission_denied", message: "Sem permissão para voz.", http: 502 };
+  if (status === 404 || c === "model_not_found") return { code: "model_not_found", message: "Modelo de voz indisponível.", http: 502 };
+  if (status === 429 || t === "rate_limit_exceeded") return { code: "rate_limit_exceeded", message: "Muitas tentativas. Aguarde.", http: 429 };
+  if (t === "insufficient_quota" || c === "insufficient_quota") return { code: "insufficient_quota", message: "Créditos de voz esgotados.", http: 502 };
+  return { code: "session_failed", message: "Não foi possível iniciar a sessão de voz agora.", http: 502 };
+}
 
 const DiagSchema = z.object({
   name: z.string().max(120).default(""),
