@@ -18,6 +18,7 @@ import {
 } from "@/lib/simulation-options";
 import { createLead, updateLeadSimulation } from "@/lib/leads.functions";
 import type { LeadDiagnostic } from "@/lib/simulation-prompt";
+import { RealtimeVoiceChat } from "@/components/simulation/realtime-voice-chat";
 
 export const Route = createFileRoute("/simulacao/")({
   head: () => ({
@@ -61,6 +62,7 @@ function SimulacaoPage() {
   const updateSim = useServerFn(updateLeadSimulation);
 
   const [step, setStep] = useState<Step>("diag_area");
+  const [chatMode, setChatMode] = useState<"voice" | "text">("voice");
   const [diag, setDiag] = useState<Diag>({
     areas: [],
     other_area: "",
@@ -252,7 +254,25 @@ function SimulacaoPage() {
           </StepShell>
         )}
 
-        {step === "chat" && leadId && (
+        {step === "chat" && leadId && chatMode === "voice" && (
+          <RealtimeVoiceChat
+            leadId={leadId}
+            diagnostic={diagnosticForChat}
+            onSwitchToText={() => setChatMode("text")}
+            onFinish={async (transcriptSummary) => {
+              try {
+                if (transcriptSummary.trim().length > 0) {
+                  await updateSim({ data: { leadId, summary: transcriptSummary } });
+                }
+              } catch (e) {
+                console.error(e);
+              }
+              navigate({ to: "/simulacao/resultado" });
+            }}
+          />
+        )}
+
+        {step === "chat" && leadId && chatMode === "text" && (
           <SimulationChat
             leadId={leadId}
             diagnostic={diagnosticForChat}
