@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { getMyProfile } from "@/lib/profile.functions";
+import { getMyProfile, updateSpeakingSpeed } from "@/lib/profile.functions";
 import { listConversations, createConversation } from "@/lib/conversations.functions";
 import { getMyStats } from "@/lib/learning.functions";
 import { MODES, type Mode } from "@/lib/fred-prompt";
