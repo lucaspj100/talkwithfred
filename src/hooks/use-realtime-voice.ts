@@ -48,6 +48,7 @@ export function useRealtimeVoice({
   const [state, setState] = useState<VoiceState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [responseError, setResponseError] = useState<string | null>(null);
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const [muted, setMuted] = useState(false);
   const [turns, setTurns] = useState<VoiceTurn[]>([]);
   const [partialUser, setPartialUser] = useState<string>("");
