@@ -336,12 +336,34 @@ export function useRealtimeVoice({
         audioEl = document.createElement("audio");
         audioEl.autoplay = true;
         (audioEl as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+        audioEl.muted = false;
+        audioEl.setAttribute("playsinline", "");
+        audioEl.setAttribute("webkit-playsinline", "");
+        audioEl.style.position = "fixed";
+        audioEl.style.width = "1px";
+        audioEl.style.height = "1px";
+        audioEl.style.opacity = "0";
+        audioEl.style.pointerEvents = "none";
+        if (DEV) {
+          audioEl.onplay = () => console.log("[voice-audio] play");
+          audioEl.onpause = () => console.log("[voice-audio] pause");
+          audioEl.onplaying = () => console.log("[voice-audio] playing");
+          audioEl.onwaiting = () => console.log("[voice-audio] waiting");
+          audioEl.onstalled = () => console.log("[voice-audio] stalled");
+          audioEl.onerror = (event) => console.error("[voice-audio] error", event);
+        }
+        document.body.appendChild(audioEl);
         audioElRef.current = audioEl;
       }
       pc.ontrack = (e) => {
         if (!audioEl) return;
         audioEl.srcObject = e.streams[0];
-        void audioEl.play().catch(() => { /* autoplay policy */ });
+        void audioEl.play().then(() => {
+          setAudioBlocked(false);
+        }).catch((err) => {
+          console.warn("[voice] initial play blocked", err);
+          setAudioBlocked(true);
+        });
       };
 
       for (const track of stream.getAudioTracks()) pc.addTrack(track, stream);
