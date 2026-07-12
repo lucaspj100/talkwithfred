@@ -603,6 +603,37 @@ function ChatPage() {
           <ArrowLeft className="mr-1 size-4" /> Dashboard
         </Button>
         <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => { stopAudio(); setChatMode("voice"); }}
+            title="Voltar para conversa por voz"
+          >
+            <Phone className="mr-1 size-4" /> Voz
+          </Button>
+        </div>
+      </header>
+
+      <div className="mb-3 flex justify-end">
+        <Button
+          type="button"
+          variant={autoplayEnabled ? "secondary" : "outline"}
+          size="sm"
+          onClick={() => {
+            const next = !autoplayEnabled;
+            persistAutoplay(next);
+            blockToastShownRef.current = false;
+            toast.message(next ? "Áudio automático ativado." : "Áudio automático desativado.");
+          }}
+          title={autoplayEnabled ? "Desativar áudio automático" : "Ativar áudio automático"}
+        >
+          {autoplayEnabled ? <Volume2 className="mr-1 size-4" /> : <VolumeX className="mr-1 size-4" />}
+          {autoplayEnabled ? "Áudio auto: on" : "Ativar áudio automático"}
+        </Button>
+      </div>
+
         <Button
           type="button"
           variant={autoplayEnabled ? "secondary" : "outline"}
