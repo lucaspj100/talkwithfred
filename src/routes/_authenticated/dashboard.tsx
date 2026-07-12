@@ -187,6 +187,67 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
   );
 }
 
+type SpeedValue = "slower" | "level_adapted" | "natural";
+const SPEED_OPTIONS: { value: SpeedValue; label: string; hint: string }[] = [
+  { value: "slower", label: "Mais devagar", hint: "Fred fala mais devagar que o normal" },
+  { value: "level_adapted", label: "Adaptada ao meu nível", hint: "Padrão — Fred ajusta pelo seu nível" },
+  { value: "natural", label: "Natural", hint: "Ritmo natural de conversa" },
+];
+
+function SpeedPreference({ initial }: { initial: string }) {
+  const [value, setValue] = useState<SpeedValue>(
+    (["slower", "level_adapted", "natural"] as const).includes(initial as SpeedValue)
+      ? (initial as SpeedValue)
+      : "level_adapted",
+  );
+  const [saving, setSaving] = useState(false);
+  const save = useServerFn(updateSpeakingSpeed);
+
+  async function onChange(v: SpeedValue) {
+    const prev = value;
+    setValue(v);
+    setSaving(true);
+    try {
+      await save({ data: { speaking_speed_preference: v } });
+      toast.success("Preferência de fala atualizada");
+    } catch (e) {
+      setValue(prev);
+      toast.error((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const current = SPEED_OPTIONS.find((o) => o.value === value)!;
+
+  return (
+    <div className="mt-4 rounded-2xl border border-border bg-card/60 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs uppercase text-muted-foreground">Velocidade da fala do Fred</p>
+          <p className="text-xs text-muted-foreground">{current.hint}</p>
+        </div>
+        <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-background/60 p-1">
+          {SPEED_OPTIONS.map((o) => (
+            <button
+              key={o.value}
+              onClick={() => onChange(o.value)}
+              disabled={saving || value === o.value}
+              className={`rounded-lg px-3 py-1 text-xs font-medium transition ${
+                value === o.value
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ModeCard({ icon, title, description, cta, onClick, tone }: {
   icon: React.ReactNode; title: string; description: string; cta: string; onClick: () => void; tone: "primary" | "accent";
 }) {
