@@ -208,7 +208,19 @@ User focus (personalization):
 ${focusLines.map((l) => `- ${l}`).join("\n")}
 
 Mode: ${MODE_GUIDANCE[mode]}
+${customTopic ? `
+# Custom Conversation Topic
+The user chose the following topic:
 
+"${customTopic}"
+
+- Keep the conversation focused on this topic.
+- Ask relevant and natural questions.
+- Adapt vocabulary and difficulty to the user's English level.
+- Do not change the topic unless the user asks.
+- Do not mention technical fields such as custom_topic or custom mode.
+- Start with a short contextual sentence and one question.
+` : ""}
 # Learner Level Adaptation
 The learner-level rules below take priority over generic style. They control pace, sentence length, vocabulary, grammar complexity, explanation language, information per turn, correction style and difficulty progression.
 
