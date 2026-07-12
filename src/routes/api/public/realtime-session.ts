@@ -53,9 +53,9 @@ function throttle(key: string): boolean {
   return true;
 }
 
-const REALTIME_MODEL = "gpt-4o-realtime-preview-2024-12-17";
-// Male, warm, natural voice for Fred.
-const VOICE = "ash";
+const REALTIME_MODEL = "gpt-realtime-2.1";
+const VOICE = "marin";
+const TRANSCRIPTION_MODEL = "whisper-1";
 
 export const Route = createFileRoute("/api/public/realtime-session")({
   server: {
@@ -104,63 +104,69 @@ export const Route = createFileRoute("/api/public/realtime-session")({
           ].join("\n");
           const instructions = (basePrompt + "\n" + voiceExtras).slice(0, 6000);
 
-          const upstream = await fetch("https://api.openai.com/v1/realtime/sessions", {
+          const safetyId = createHash("sha256")
+            .update(parsed.data.leadId ?? ip)
+            .digest("hex")
+            .slice(0, 32);
+
+          const upstream = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${key}`,
               "Content-Type": "application/json",
-              "OpenAI-Beta": "realtime=v1",
+              "OpenAI-Safety-Identifier": safetyId,
             },
             body: JSON.stringify({
-              model: REALTIME_MODEL,
-              voice: VOICE,
-              modalities: ["audio", "text"],
-              instructions,
-              input_audio_format: "pcm16",
-              output_audio_format: "pcm16",
-              input_audio_transcription: { model: "whisper-1" },
-              // Server-side voice activity detection with automatic interruption.
-              turn_detection: {
-                type: "server_vad",
-                threshold: 0.5,
-                prefix_padding_ms: 300,
-                silence_duration_ms: 500,
-                create_response: true,
-                interrupt_response: true,
+              session: {
+                type: "realtime",
+                model: REALTIME_MODEL,
+                instructions,
+                audio: {
+                  input: {
+                    transcription: { model: TRANSCRIPTION_MODEL },
+                    turn_detection: {
+                      type: "server_vad",
+                      threshold: 0.5,
+                      prefix_padding_ms: 300,
+                      silence_duration_ms: 500,
+                      create_response: true,
+                      interrupt_response: true,
+                    },
+                  },
+                  output: { voice: VOICE },
+                },
               },
-              // Hard cap so runaway/abandoned sessions don't burn credits.
-              max_response_output_tokens: 400,
             }),
           });
 
           if (!upstream.ok) {
-            const text = await upstream.text().catch(() => "");
-            console.error("[realtime-session] upstream", upstream.status, text.slice(0, 500));
-            return Response.json(
-              { error: "session_failed", message: "Não foi possível iniciar a sessão de voz agora." },
-              { status: 502 },
-            );
+            const bodyText = await upstream.text().catch(() => "");
+            console.error("[realtime-session]", { status: upstream.status, body: bodyText.slice(0, 1000) });
+            let parsedErr: UpstreamErr = {};
+            try { parsedErr = JSON.parse(bodyText) as UpstreamErr; } catch { /* ignore */ }
+            const m = mapUpstreamError(upstream.status, parsedErr);
+            return Response.json({ error: m.code, message: m.message }, { status: m.http });
           }
 
-          const data = (await upstream.json()) as {
-            id?: string;
-            client_secret?: { value: string; expires_at?: number };
-          };
-          if (!data.client_secret?.value) {
-            return Response.json({ error: "session_failed" }, { status: 502 });
+          const data = (await upstream.json()) as UpstreamOk;
+          const ephemeralKey = data.value ?? data.client_secret?.value;
+          if (!ephemeralKey) {
+            console.error("[realtime-session] missing client secret", JSON.stringify(data).slice(0, 500));
+            return Response.json({ error: "session_failed", message: "Resposta inválida do serviço de voz." }, { status: 502 });
           }
 
           return Response.json({
-            client_secret: data.client_secret.value,
-            expires_at: data.client_secret.expires_at ?? null,
-            session_id: data.id ?? null,
+            client_secret: ephemeralKey,
+            expires_at: data.expires_at ?? data.client_secret?.expires_at ?? null,
+            session_id: data.session?.id ?? data.id ?? null,
             model: REALTIME_MODEL,
           });
         } catch (err) {
           console.error("[realtime-session]", err);
-          return Response.json({ error: "server_error" }, { status: 500 });
+          return Response.json({ error: "server_error", message: "Erro interno ao iniciar a voz." }, { status: 500 });
         }
       },
     },
   },
 });
+
