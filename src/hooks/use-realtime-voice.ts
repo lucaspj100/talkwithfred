@@ -100,6 +100,8 @@ export function useRealtimeVoice({
     if (audioElRef.current) {
       try { audioElRef.current.pause(); } catch { /* ignore */ }
       try { audioElRef.current.srcObject = null; } catch { /* ignore */ }
+      try { audioElRef.current.remove(); } catch { /* ignore */ }
+      audioElRef.current = null;
     }
     connectingRef.current = false;
     responseInProgressRef.current = false;
