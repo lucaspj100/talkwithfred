@@ -65,6 +65,7 @@ export function useRealtimeVoice({
   const interruptedRef = useRef(false);
   const assistantAudioStartedAtRef = useRef<number | null>(null);
   const assistantTranscriptFlushedRef = useRef<boolean>(false);
+  const flushedAssistantKeysRef = useRef<Set<string>>(new Set());
   const audioPlaybackCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastAudioPlayingAtRef = useRef<number | null>(null);
   const firstAudioDeltaSeenRef = useRef<boolean>(false);
@@ -119,6 +120,7 @@ export function useRealtimeVoice({
     responseInProgressRef.current = false;
     assistantAudioStartedAtRef.current = null;
     assistantTranscriptFlushedRef.current = false;
+    flushedAssistantKeysRef.current = new Set();
     firstAudioDeltaSeenRef.current = false;
     lastAudioPlayingAtRef.current = null;
     emittedItemIdsRef.current = new Set();
@@ -162,9 +164,16 @@ export function useRealtimeVoice({
     requestResponse();
   }, [requestResponse]);
 
-  const flushAssistantFinal = useCallback((text: string) => {
+  const assistantFlushKey = useCallback((ev: RealtimeEvent) => {
+    return ev.item_id || ev.response_id || ev.response?.id || currentAssistantIdRef.current || "current";
+  }, []);
+
+  const flushAssistantFinal = useCallback((text: string, key?: string) => {
     const clean = text.trim();
     if (!clean) return;
+    const dedupeKey = key || currentAssistantIdRef.current;
+    if (dedupeKey && flushedAssistantKeysRef.current.has(dedupeKey)) return;
+    if (dedupeKey) flushedAssistantKeysRef.current.add(dedupeKey);
     const wasInterrupted = interruptedRef.current;
     setTurns((prev) => [
       ...prev,
@@ -333,7 +342,7 @@ export function useRealtimeVoice({
         const text = (ev.transcript ?? partialAssistantRef.current ?? "").trim();
         setPartialAssistant("");
         if (text && !assistantTranscriptFlushedRef.current) {
-          flushAssistantFinal(text);
+          flushAssistantFinal(text, assistantFlushKey(ev));
           assistantTranscriptFlushedRef.current = true;
         }
         break;
@@ -350,7 +359,7 @@ export function useRealtimeVoice({
         const pending = partialAssistantRef.current.trim();
         if (!assistantTranscriptFlushedRef.current && pending.length > 0) {
           setPartialAssistant("");
-          flushAssistantFinal(pending);
+          flushAssistantFinal(pending, assistantFlushKey(ev));
           assistantTranscriptFlushedRef.current = true;
         } else if (pending.length > 0) {
           setPartialAssistant("");
@@ -385,7 +394,7 @@ export function useRealtimeVoice({
       default:
         break;
     }
-  }, [flushAssistantFinal, scheduleWatchdog, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck]);
+  }, [assistantFlushKey, flushAssistantFinal, scheduleWatchdog, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck]);
 
   const start = useCallback(async () => {
     if (!supported) {
@@ -514,7 +523,7 @@ export function useRealtimeVoice({
       setState("error");
       cleanup();
     }
-  }, [getSession, supported, handleEvent, sendEvent, cleanup]);
+  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
