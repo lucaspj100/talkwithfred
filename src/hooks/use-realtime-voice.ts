@@ -421,10 +421,23 @@ export function useRealtimeVoice({
     });
   }, []);
 
+  const resumeAudio = useCallback(() => {
+    const audio = audioElRef.current;
+    if (!audio) return;
+    audio.muted = false;
+    void audio.play().then(() => {
+      setAudioBlocked(false);
+    }).catch((err) => {
+      console.warn("[voice] resumeAudio failed", err);
+      setAudioBlocked(true);
+    });
+  }, []);
+
   return {
     state,
     errorMsg,
     responseError,
+    audioBlocked,
     muted,
     turns,
     partialUser,
@@ -434,5 +447,6 @@ export function useRealtimeVoice({
     stop,
     toggleMute,
     retryResponse,
+    resumeAudio,
   };
 }
