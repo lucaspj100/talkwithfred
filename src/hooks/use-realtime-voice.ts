@@ -272,21 +272,23 @@ export function useRealtimeVoice({
         if (stateRef.current !== "ended" && stateRef.current !== "error") setState("ended");
       };
 
-      // 7. SDP handshake with OpenAI Realtime
+      // 7. SDP handshake with OpenAI Realtime (current endpoint: /v1/realtime/calls)
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
-      const sdpResp = await fetch(`https://api.openai.com/v1/realtime?model=${encodeURIComponent(model)}`, {
+      const sdpResp = await fetch("https://api.openai.com/v1/realtime/calls", {
         method: "POST",
         body: offer.sdp,
         headers: {
           Authorization: `Bearer ${client_secret}`,
           "Content-Type": "application/sdp",
-          "OpenAI-Beta": "realtime=v1",
         },
       });
       if (!sdpResp.ok) {
         const t = await sdpResp.text().catch(() => "");
-        console.error("[voice] sdp failed", sdpResp.status, t.slice(0, 300));
+        console.error("[voice] webrtc_sdp_exchange failed", {
+          status: sdpResp.status,
+          body: t.slice(0, 500),
+        });
         throw new Error("Não conseguimos conectar ao serviço de voz. Tente novamente.");
       }
       const answerSdp = await sdpResp.text();
