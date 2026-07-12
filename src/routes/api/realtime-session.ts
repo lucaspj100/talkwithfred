@@ -102,24 +102,17 @@ export const Route = createFileRoute("/api/realtime-session")({
             profile?.name ?? null,
           );
 
-          const slow = userProfile?.speaking_speed_preference === "slow"
-            || userProfile?.english_level === "beginner"
-            || userProfile?.english_level === "basic";
-
           const voiceExtras = [
             "",
-            "Voice-mode guidelines:",
+            "# Voice-mode guidelines",
             "- You are speaking in a natural live voice call, not writing.",
             "- Never read symbols, markdown, code blocks or formatting out loud.",
-            "- Speak 1 to 3 short sentences per turn. Never monologue.",
+            "- Follow the Learner Level Adaptation and Pacing sections above for speed, sentence length and vocabulary.",
             "- Ask at most one question per turn, then wait for the user.",
             "- Do not repeat the same question twice in a row.",
             "- If the user interrupts you, briefly acknowledge and continue naturally.",
-            slow
-              ? "- Speak a bit more slowly and clearly so the user can follow."
-              : "- Speak at a natural conversational pace.",
           ].join("\n");
-          const instructions = (basePrompt + "\n" + voiceExtras).slice(0, 6000);
+          const instructions = (basePrompt + "\n" + voiceExtras).slice(0, 8000);
 
           const safetyId = createHash("sha256").update(userId).digest("hex").slice(0, 32);
 
