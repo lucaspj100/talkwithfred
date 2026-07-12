@@ -308,6 +308,7 @@ function stateLabel(s: VoiceState, muted: boolean): string {
     case "connecting": return "Preparando Fred…";
     case "listening": return "Fred está ouvindo você";
     case "user-speaking": return "Estou te ouvindo…";
+    case "fred-thinking": return "Fred está preparando a resposta…";
     case "fred-speaking": return "Fred está falando — você pode interromper";
     case "reconnecting": return "Reconectando…";
     case "ended": return "Conversa encerrada";
