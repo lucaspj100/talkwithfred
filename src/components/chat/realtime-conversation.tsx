@@ -62,6 +62,7 @@ export function RealtimeConversation({
   const {
     state,
     errorMsg,
+    responseError,
     muted,
     turns,
     partialUser,
@@ -70,6 +71,7 @@ export function RealtimeConversation({
     start,
     stop,
     toggleMute,
+    retryResponse,
   } = useRealtimeVoice({ getSession, onUserFinalTurn, onAssistantFinalTurn });
 
   const idle = state === "idle";
@@ -166,6 +168,15 @@ export function RealtimeConversation({
         </Button>
       </div>
 
+      {responseError && (
+        <div className="mb-3 flex flex-col items-center gap-2 rounded-md bg-destructive/10 p-3 text-center text-sm text-destructive">
+          <span>{responseError}</span>
+          <Button variant="secondary" size="sm" onClick={retryResponse}>
+            Tentar resposta novamente
+          </Button>
+        </div>
+      )}
+
       <TranscriptPanel
         history={history}
         turns={turns}
@@ -183,6 +194,7 @@ function ringState(s: VoiceState): "neutral" | "listening" | "responding" | "spe
       return "listening";
     case "fred-speaking":
       return "speaking";
+    case "fred-thinking":
     case "connecting":
     case "reconnecting":
       return "responding";
@@ -199,6 +211,7 @@ function stateLabel(s: VoiceState, muted: boolean): string {
     case "connecting": return "Preparando Fred…";
     case "listening": return "Fred está ouvindo";
     case "user-speaking": return "Você está falando…";
+    case "fred-thinking": return "Fred está preparando a resposta…";
     case "fred-speaking": return "Fred está falando — pode interromper";
     case "reconnecting": return "Reconectando…";
     case "ended": return "Conversa encerrada";

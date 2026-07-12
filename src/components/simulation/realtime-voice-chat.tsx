@@ -46,8 +46,8 @@ export function RealtimeVoiceChat({
   }, [diagnostic, leadId]);
 
   const {
-    state, errorMsg, muted, turns, partialUser, partialAssistant, supported,
-    start, stop, toggleMute,
+    state, errorMsg, responseError, muted, turns, partialUser, partialAssistant, supported,
+    start, stop, toggleMute, retryResponse,
   } = useRealtimeVoice({ getSession });
 
   const userFinalTurns = useMemo(
@@ -190,6 +190,15 @@ export function RealtimeVoiceChat({
         </Button>
       </div>
 
+      {responseError && (
+        <div className="mb-3 flex flex-col items-center gap-2 rounded-md bg-destructive/10 p-3 text-center text-sm text-destructive">
+          <span>{responseError}</span>
+          <Button variant="secondary" size="sm" onClick={retryResponse}>
+            Tentar resposta novamente
+          </Button>
+        </div>
+      )}
+
       <TranscriptPanel
         turns={turns}
         partialUser={partialUser}
@@ -299,6 +308,7 @@ function stateLabel(s: VoiceState, muted: boolean): string {
     case "connecting": return "Preparando Fred…";
     case "listening": return "Fred está ouvindo você";
     case "user-speaking": return "Estou te ouvindo…";
+    case "fred-thinking": return "Fred está preparando a resposta…";
     case "fred-speaking": return "Fred está falando — você pode interromper";
     case "reconnecting": return "Reconectando…";
     case "ended": return "Conversa encerrada";

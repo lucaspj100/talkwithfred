@@ -5,6 +5,7 @@ export type VoiceState =
   | "connecting"
   | "listening"
   | "user-speaking"
+  | "fred-thinking"
   | "fred-speaking"
   | "reconnecting"
   | "ended"
@@ -27,24 +28,18 @@ type RealtimeEvent = {
   item_id?: string;
   response_id?: string;
   response?: { id?: string };
-  error?: { message?: string };
+  error?: { message?: string; type?: string; code?: string; param?: string };
 };
 
 type UseVoiceOpts = {
-  /** Called when the hook needs to mint a fresh ephemeral session credential. */
   getSession: () => Promise<SessionCredential>;
-  /** Fires when a user turn's transcript is final (whisper-completed). */
   onUserFinalTurn?: (text: string) => void;
-  /** Fires when a Fred turn is complete. `interrupted` = user cut Fred off. */
   onAssistantFinalTurn?: (text: string, opts: { interrupted: boolean }) => void;
 };
 
-/**
- * Real-time bidirectional voice conversation via OpenAI Realtime + WebRTC.
- * The main OpenAI key never leaves the server; the browser only holds
- * a short-lived ephemeral `client_secret` returned by the caller-supplied
- * `getSession()`.
- */
+const DEV = typeof import.meta !== "undefined" && (import.meta as { env?: { DEV?: boolean } }).env?.DEV;
+const dlog = (...args: unknown[]) => { if (DEV) console.log("[voice]", ...args); };
+
 export function useRealtimeVoice({
   getSession,
   onUserFinalTurn,
@@ -52,6 +47,7 @@ export function useRealtimeVoice({
 }: UseVoiceOpts) {
   const [state, setState] = useState<VoiceState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [responseError, setResponseError] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const [turns, setTurns] = useState<VoiceTurn[]>([]);
   const [partialUser, setPartialUser] = useState<string>("");
@@ -66,6 +62,11 @@ export function useRealtimeVoice({
   const currentAssistantIdRef = useRef<string | null>(null);
   const partialAssistantRef = useRef<string>("");
   const interruptedRef = useRef(false);
+  const responseInProgressRef = useRef(false);
+  const responseWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const emittedItemIdsRef = useRef<Set<string>>(new Set());
+  const partialUserItemIdRef = useRef<string | null>(null);
+  const lastSentEventRef = useRef<string>("");
   const onUserFinalRef = useRef(onUserFinalTurn);
   const onAssistantFinalRef = useRef(onAssistantFinalTurn);
 
@@ -79,7 +80,15 @@ export function useRealtimeVoice({
     typeof RTCPeerConnection !== "undefined" &&
     !!navigator.mediaDevices?.getUserMedia;
 
+  const clearWatchdog = useCallback(() => {
+    if (responseWatchdogRef.current) {
+      clearTimeout(responseWatchdogRef.current);
+      responseWatchdogRef.current = null;
+    }
+  }, []);
+
   const cleanup = useCallback(() => {
+    clearWatchdog();
     try { dcRef.current?.close(); } catch { /* ignore */ }
     dcRef.current = null;
     try { pcRef.current?.getSenders().forEach((s) => s.track?.stop()); } catch { /* ignore */ }
@@ -92,22 +101,47 @@ export function useRealtimeVoice({
       try { audioElRef.current.srcObject = null; } catch { /* ignore */ }
     }
     connectingRef.current = false;
-  }, []);
+    responseInProgressRef.current = false;
+    emittedItemIdsRef.current = new Set();
+    partialUserItemIdRef.current = null;
+  }, [clearWatchdog]);
 
   const stop = useCallback(() => {
     cleanup();
     setState("ended");
   }, [cleanup]);
 
-  // Full cleanup on unmount (leaving the page ends the call).
   useEffect(() => () => cleanup(), [cleanup]);
 
   const sendEvent = useCallback((payload: Record<string, unknown>) => {
     const dc = dcRef.current;
     if (!dc || dc.readyState !== "open") return;
-    try { dc.send(JSON.stringify(payload)); }
-    catch (err) { console.warn("[voice] send failed", err); }
+    try {
+      const json = JSON.stringify(payload);
+      lastSentEventRef.current = json;
+      dc.send(json);
+    } catch (err) { console.warn("[voice] send failed", err); }
   }, []);
+
+  const requestResponse = useCallback(() => {
+    if (responseInProgressRef.current) return;
+    sendEvent({ type: "response.create", response: { output_modalities: ["audio"] } });
+  }, [sendEvent]);
+
+  const scheduleWatchdog = useCallback(() => {
+    clearWatchdog();
+    responseWatchdogRef.current = setTimeout(() => {
+      if (!responseInProgressRef.current) {
+        dlog("watchdog fired, sending response.create");
+        requestResponse();
+      }
+    }, 1300);
+  }, [clearWatchdog, requestResponse]);
+
+  const retryResponse = useCallback(() => {
+    setResponseError(null);
+    requestResponse();
+  }, [requestResponse]);
 
   const flushAssistantFinal = useCallback((text: string) => {
     const clean = text.trim();
@@ -129,11 +163,11 @@ export function useRealtimeVoice({
   const handleEvent = useCallback((raw: string) => {
     let ev: RealtimeEvent;
     try { ev = JSON.parse(raw) as RealtimeEvent; } catch { return; }
+    dlog("←", ev.type, ev);
 
     switch (ev.type) {
       case "input_audio_buffer.speech_started": {
         setState("user-speaking");
-        // Interruption: if Fred was mid-response, stop playback and cancel server-side.
         if (currentAssistantIdRef.current) {
           interruptedRef.current = true;
           try { audioElRef.current?.pause(); } catch { /* ignore */ }
@@ -142,52 +176,68 @@ export function useRealtimeVoice({
         break;
       }
       case "input_audio_buffer.speech_stopped": {
-        if (stateRef.current === "user-speaking") setState("listening");
+        if (stateRef.current === "user-speaking") setState("fred-thinking");
         break;
       }
       case "conversation.item.input_audio_transcription.delta": {
-        if (ev.delta) setPartialUser((p) => p + ev.delta);
+        if (ev.delta) {
+          if (ev.item_id) partialUserItemIdRef.current = ev.item_id;
+          setPartialUser((p) => p + ev.delta);
+        }
         break;
       }
       case "conversation.item.input_audio_transcription.completed": {
         const text = (ev.transcript ?? "").trim();
         setPartialUser("");
-        if (text.length > 0) {
+        partialUserItemIdRef.current = null;
+        const id = ev.item_id || `u_${Date.now()}`;
+        if (text.length > 0 && !emittedItemIdsRef.current.has(id)) {
+          emittedItemIdsRef.current.add(id);
           setTurns((prev) => [
             ...prev,
-            {
-              id: ev.item_id || `u_${Date.now()}`,
-              role: "user",
-              text,
-              final: true,
-              timestamp: Date.now(),
-            },
+            { id, role: "user", text, final: true, timestamp: Date.now() },
           ]);
           onUserFinalRef.current?.(text);
         }
+        // Server VAD should auto-create a response; watchdog is a safety net.
+        scheduleWatchdog();
         break;
       }
       case "response.created": {
         currentAssistantIdRef.current = ev.response?.id ?? `a_${Date.now()}`;
         interruptedRef.current = false;
-        setState("fred-speaking");
+        responseInProgressRef.current = true;
+        clearWatchdog();
+        setResponseError(null);
+        setState("fred-thinking");
         setPartialAssistant("");
         break;
       }
+      case "response.output_audio.delta":
+      case "response.audio.delta": {
+        // First audio chunk arriving → Fred is actually speaking.
+        if (stateRef.current !== "fred-speaking") setState("fred-speaking");
+        break;
+      }
+      case "response.output_audio.done":
+      case "response.audio.done": {
+        // audio stream ended; keep state until response.done for transcript flush
+        break;
+      }
+      case "response.output_audio_transcript.delta":
       case "response.audio_transcript.delta": {
         if (ev.delta) setPartialAssistant((p) => p + ev.delta);
         break;
       }
+      case "response.output_audio_transcript.done":
       case "response.audio_transcript.done": {
         const text = (ev.transcript ?? partialAssistantRef.current ?? "").trim();
         setPartialAssistant("");
-        flushAssistantFinal(text);
+        if (text) flushAssistantFinal(text);
         break;
       }
       case "response.done":
       case "response.cancelled": {
-        // Flush any partial assistant text that never received a done event
-        // (e.g. cancelled mid-stream) so we don't lose the truncated turn.
         const pending = partialAssistantRef.current.trim();
         if (pending.length > 0) {
           setPartialAssistant("");
@@ -195,17 +245,32 @@ export function useRealtimeVoice({
         }
         currentAssistantIdRef.current = null;
         interruptedRef.current = false;
+        responseInProgressRef.current = false;
+        clearWatchdog();
         if (stateRef.current !== "ended") setState("listening");
         break;
       }
       case "error": {
-        console.error("[voice] server error", ev);
+        console.error("[voice] server error", {
+          type: ev.error?.type,
+          code: ev.error?.code,
+          message: ev.error?.message,
+          param: ev.error?.param,
+          lastSent: lastSentEventRef.current.slice(0, 500),
+          state: stateRef.current,
+        });
+        responseInProgressRef.current = false;
+        clearWatchdog();
+        if (stateRef.current === "fred-thinking" || stateRef.current === "fred-speaking") {
+          setResponseError("Fred teve um problema para responder. Toque para tentar novamente.");
+          setState("listening");
+        }
         break;
       }
       default:
         break;
     }
-  }, [flushAssistantFinal, sendEvent]);
+  }, [flushAssistantFinal, sendEvent, scheduleWatchdog, clearWatchdog]);
 
   const start = useCallback(async () => {
     if (!supported) {
@@ -216,14 +281,13 @@ export function useRealtimeVoice({
     if (connectingRef.current || pcRef.current) return;
     connectingRef.current = true;
     setErrorMsg(null);
+    setResponseError(null);
     setState("connecting");
 
     try {
-      // 1. Ask our backend for an ephemeral session credential.
       const { client_secret, model } = await getSession();
       if (!client_secret || !model) throw new Error("Sessão de voz inválida.");
 
-      // 2. Microphone (requires an explicit user gesture — that's what triggered start()).
       let stream: MediaStream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -235,11 +299,9 @@ export function useRealtimeVoice({
       }
       streamRef.current = stream;
 
-      // 3. Peer connection
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
 
-      // 4. Remote audio → dedicated <audio> element (autoplay + playsInline for iOS Safari).
       let audioEl = audioElRef.current;
       if (!audioEl) {
         audioEl = document.createElement("audio");
@@ -250,29 +312,23 @@ export function useRealtimeVoice({
       pc.ontrack = (e) => {
         if (!audioEl) return;
         audioEl.srcObject = e.streams[0];
-        void audioEl.play().catch(() => { /* autoplay policy; user gesture already happened */ });
+        void audioEl.play().catch(() => { /* autoplay policy */ });
       };
 
-      // 5. Attach mic
       for (const track of stream.getAudioTracks()) pc.addTrack(track, stream);
 
-      // 6. Data channel for events
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
       dc.onopen = () => {
         setState("listening");
-        // Ask Fred to open the scene. No synthetic user message goes into the transcript.
-        sendEvent({
-          type: "response.create",
-          response: { modalities: ["audio", "text"] },
-        });
+        // Open the scene with an audio-only response.
+        sendEvent({ type: "response.create", response: { output_modalities: ["audio"] } });
       };
       dc.onmessage = (ev) => handleEvent(typeof ev.data === "string" ? ev.data : "");
       dc.onclose = () => {
         if (stateRef.current !== "ended" && stateRef.current !== "error") setState("ended");
       };
 
-      // 7. SDP handshake with OpenAI Realtime (current endpoint: /v1/realtime/calls)
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       const sdpResp = await fetch("https://api.openai.com/v1/realtime/calls", {
@@ -285,10 +341,7 @@ export function useRealtimeVoice({
       });
       if (!sdpResp.ok) {
         const t = await sdpResp.text().catch(() => "");
-        console.error("[voice] webrtc_sdp_exchange failed", {
-          status: sdpResp.status,
-          body: t.slice(0, 500),
-        });
+        console.error("[voice] webrtc_sdp_exchange failed", { status: sdpResp.status, body: t.slice(0, 500) });
         throw new Error("Não conseguimos conectar ao serviço de voz. Tente novamente.");
       }
       const answerSdp = await sdpResp.text();
@@ -320,6 +373,7 @@ export function useRealtimeVoice({
   return {
     state,
     errorMsg,
+    responseError,
     muted,
     turns,
     partialUser,
@@ -328,5 +382,6 @@ export function useRealtimeVoice({
     start,
     stop,
     toggleMute,
+    retryResponse,
   };
 }

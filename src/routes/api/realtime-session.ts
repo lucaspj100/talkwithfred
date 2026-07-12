@@ -10,7 +10,7 @@ const BodySchema = z.object({
 });
 
 const REALTIME_MODEL = "gpt-realtime-2.1";
-const VOICE = "marin";
+const VOICE = "cedar";
 const TRANSCRIPTION_MODEL = "whisper-1";
 
 type UpstreamOk = {
