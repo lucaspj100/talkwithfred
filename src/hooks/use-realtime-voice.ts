@@ -173,7 +173,11 @@ export function useRealtimeVoice({
         setState("user-speaking");
         if (currentAssistantIdRef.current) {
           interruptedRef.current = true;
-          try { audioElRef.current?.pause(); } catch { /* ignore */ }
+          // Do NOT pause the remote audio element — on iOS Safari that can
+          // silence the MediaStream permanently. Mute instead, then cancel
+          // the response on the server.
+          const audio = audioElRef.current;
+          if (audio) audio.muted = true;
           sendEvent({ type: "response.cancel" });
         }
         break;
@@ -218,7 +222,29 @@ export function useRealtimeVoice({
       }
       case "response.output_audio.delta":
       case "response.audio.delta": {
-        // First audio chunk arriving → Fred is actually speaking.
+        const audio = audioElRef.current;
+        if (audio) {
+          if (DEV) {
+            console.log("[voice-audio]", {
+              paused: audio.paused,
+              muted: audio.muted,
+              readyState: audio.readyState,
+              networkState: audio.networkState,
+              hasSrcObject: Boolean(audio.srcObject),
+            });
+          }
+          audio.muted = false;
+          if (audio.paused) {
+            void audio.play().then(() => {
+              setAudioBlocked(false);
+            }).catch((error) => {
+              console.warn("[voice] failed to resume remote audio", error);
+              setAudioBlocked(true);
+            });
+          } else {
+            setAudioBlocked(false);
+          }
+        }
         if (stateRef.current !== "fred-speaking") setState("fred-speaking");
         break;
       }
