@@ -46,6 +46,55 @@ function ChatPage() {
   const [token, setToken] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [inputType, setInputType] = useState<"text" | "voice">("text");
+  const [chatMode, setChatMode] = useState<"voice" | "text">("voice");
+  const pendingUserRef = useRef<string>("");
+  const [voiceHistory, setVoiceHistory] = useState<HistoryMessage[]>(() =>
+    (initialMsgs as DBMessage[]).map((m) => ({ id: m.id, role: m.role, content: m.content })),
+  );
+
+  const handleVoiceUserFinal = useCallback((text: string) => {
+    const clean = text.trim();
+    if (!clean) return;
+    pendingUserRef.current = clean;
+  }, []);
+
+  const handleVoiceAssistantFinal = useCallback(
+    async (text: string, _opts: { interrupted: boolean }) => {
+      const assistantText = text.trim();
+      if (!assistantText) return;
+      const userText = pendingUserRef.current.trim();
+      pendingUserRef.current = "";
+      // No paired user turn (e.g. Fred's opening greeting) → skip DB persistence
+      // (persistTurn requires both sides) but still keep it in the voice transcript.
+      if (!userText) return;
+      try {
+        await persist({
+          data: {
+            conversationId: conversation.id,
+            userMessage: userText,
+            assistantMessage: assistantText,
+            inputType: "voice",
+          },
+        });
+        setVoiceHistory((h) => [
+          ...h,
+          { id: `vu_${Date.now()}`, role: "user", content: userText },
+          { id: `va_${Date.now() + 1}`, role: "assistant", content: assistantText },
+        ]);
+        void extract({
+          data: {
+            conversationId: conversation.id,
+            userMessage: userText,
+            assistantMessage: assistantText,
+          },
+        }).catch((e) => console.error("[extract]", e));
+      } catch (e) {
+        console.error("[voice persist]", e);
+      }
+    },
+    [conversation.id, persist, extract],
+  );
+
 
   useEffect(() => {
     let mounted = true;
