@@ -84,7 +84,7 @@ export const Route = createFileRoute("/api/realtime-session")({
 
           const { data: conv } = await supa
             .from("conversations")
-            .select("id, mode, user_id")
+            .select("id, mode, user_id, custom_topic")
             .eq("id", parsed.data.conversationId)
             .maybeSingle();
           if (!conv || conv.user_id !== userId) {
@@ -100,6 +100,7 @@ export const Route = createFileRoute("/api/realtime-session")({
             (userProfile ?? null) as Tables<"user_profiles"> | null,
             conv.mode as Mode,
             profile?.name ?? null,
+            { customTopic: (conv as { custom_topic?: string | null }).custom_topic ?? null },
           );
 
           const voiceExtras = [
