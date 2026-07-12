@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { createHash } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "@/integrations/supabase/types";
 import { buildFredSystemPrompt, type Mode } from "@/lib/fred-prompt";
@@ -8,8 +9,42 @@ const BodySchema = z.object({
   conversationId: z.string().uuid(),
 });
 
-const REALTIME_MODEL = "gpt-4o-realtime-preview-2024-12-17";
-const VOICE = "ash";
+const REALTIME_MODEL = "gpt-realtime-2.1";
+const VOICE = "marin";
+const TRANSCRIPTION_MODEL = "whisper-1";
+
+type UpstreamOk = {
+  value?: string;
+  expires_at?: number;
+  session?: { id?: string };
+  client_secret?: { value?: string; expires_at?: number };
+  id?: string;
+};
+
+type UpstreamErr = {
+  error?: { message?: string; type?: string; code?: string };
+};
+
+function mapUpstreamError(status: number, body: UpstreamErr): { code: string; message: string; http: number } {
+  const t = body.error?.type ?? "";
+  const c = body.error?.code ?? "";
+  if (status === 401 || t === "invalid_api_key" || c === "invalid_api_key") {
+    return { code: "invalid_api_key", message: "Chave de voz inválida. Avise o suporte.", http: 502 };
+  }
+  if (status === 403 || t === "permission_denied") {
+    return { code: "permission_denied", message: "Sem permissão para usar voz nesta conta.", http: 502 };
+  }
+  if (status === 404 || c === "model_not_found") {
+    return { code: "model_not_found", message: "Modelo de voz indisponível no momento.", http: 502 };
+  }
+  if (status === 429 || t === "rate_limit_exceeded") {
+    return { code: "rate_limit_exceeded", message: "Muitas tentativas. Aguarde alguns segundos.", http: 429 };
+  }
+  if (t === "insufficient_quota" || c === "insufficient_quota") {
+    return { code: "insufficient_quota", message: "Créditos de voz esgotados. Avise o suporte.", http: 502 };
+  }
+  return { code: "session_failed", message: "Não foi possível iniciar a sessão de voz agora.", http: 502 };
+}
 
 export const Route = createFileRoute("/api/realtime-session")({
   server: {
@@ -86,59 +121,63 @@ export const Route = createFileRoute("/api/realtime-session")({
           ].join("\n");
           const instructions = (basePrompt + "\n" + voiceExtras).slice(0, 6000);
 
-          const upstream = await fetch("https://api.openai.com/v1/realtime/sessions", {
+          const safetyId = createHash("sha256").update(userId).digest("hex").slice(0, 32);
+
+          const upstream = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
             method: "POST",
             headers: {
               Authorization: `Bearer ${key}`,
               "Content-Type": "application/json",
-              "OpenAI-Beta": "realtime=v1",
+              "OpenAI-Safety-Identifier": safetyId,
             },
             body: JSON.stringify({
-              model: REALTIME_MODEL,
-              voice: VOICE,
-              modalities: ["audio", "text"],
-              instructions,
-              input_audio_format: "pcm16",
-              output_audio_format: "pcm16",
-              input_audio_transcription: { model: "whisper-1" },
-              turn_detection: {
-                type: "server_vad",
-                threshold: 0.5,
-                prefix_padding_ms: 300,
-                silence_duration_ms: 500,
-                create_response: true,
-                interrupt_response: true,
+              session: {
+                type: "realtime",
+                model: REALTIME_MODEL,
+                instructions,
+                audio: {
+                  input: {
+                    transcription: { model: TRANSCRIPTION_MODEL },
+                    turn_detection: {
+                      type: "server_vad",
+                      threshold: 0.5,
+                      prefix_padding_ms: 300,
+                      silence_duration_ms: 500,
+                      create_response: true,
+                      interrupt_response: true,
+                    },
+                  },
+                  output: { voice: VOICE },
+                },
               },
-              max_response_output_tokens: 400,
             }),
           });
 
           if (!upstream.ok) {
-            const text = await upstream.text().catch(() => "");
-            console.error("[realtime-session-auth] upstream", upstream.status, text.slice(0, 500));
-            return Response.json(
-              { error: "session_failed", message: "Não foi possível iniciar a sessão de voz agora." },
-              { status: 502 },
-            );
+            const bodyText = await upstream.text().catch(() => "");
+            console.error("[realtime-session-auth]", { status: upstream.status, body: bodyText.slice(0, 1000) });
+            let parsedErr: UpstreamErr = {};
+            try { parsedErr = JSON.parse(bodyText) as UpstreamErr; } catch { /* ignore */ }
+            const m = mapUpstreamError(upstream.status, parsedErr);
+            return Response.json({ error: m.code, message: m.message }, { status: m.http });
           }
 
-          const data = (await upstream.json()) as {
-            id?: string;
-            client_secret?: { value: string; expires_at?: number };
-          };
-          if (!data.client_secret?.value) {
-            return Response.json({ error: "session_failed" }, { status: 502 });
+          const data = (await upstream.json()) as UpstreamOk;
+          const ephemeralKey = data.value ?? data.client_secret?.value;
+          if (!ephemeralKey) {
+            console.error("[realtime-session-auth] missing client secret", JSON.stringify(data).slice(0, 500));
+            return Response.json({ error: "session_failed", message: "Resposta inválida do serviço de voz." }, { status: 502 });
           }
 
           return Response.json({
-            client_secret: data.client_secret.value,
-            expires_at: data.client_secret.expires_at ?? null,
-            session_id: data.id ?? null,
+            client_secret: ephemeralKey,
+            expires_at: data.expires_at ?? data.client_secret?.expires_at ?? null,
+            session_id: data.session?.id ?? data.id ?? null,
             model: REALTIME_MODEL,
           });
         } catch (err) {
           console.error("[realtime-session-auth]", err);
-          return Response.json({ error: "server_error" }, { status: 500 });
+          return Response.json({ error: "server_error", message: "Erro interno ao iniciar a voz." }, { status: 500 });
         }
       },
     },
