@@ -18,6 +18,7 @@ import {
 } from "@/lib/simulation-options";
 import { createLead, updateLeadSimulation } from "@/lib/leads.functions";
 import type { LeadDiagnostic } from "@/lib/simulation-prompt";
+import { RealtimeVoiceChat } from "@/components/simulation/realtime-voice-chat";
 
 export const Route = createFileRoute("/simulacao/")({
   head: () => ({

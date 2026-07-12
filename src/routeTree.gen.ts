@@ -25,6 +25,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
 import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public/simulation-chat'
+import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/public/realtime-session'
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
@@ -110,6 +111,12 @@ const ApiPublicSimulationChatRoute = ApiPublicSimulationChatRouteImport.update({
   path: '/api/public/simulation-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRealtimeSessionRoute =
+  ApiPublicRealtimeSessionRouteImport.update({
+    id: '/api/public/realtime-session',
+    path: '/api/public/realtime-session',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedSettingsOnboardingRoute =
   AuthenticatedSettingsOnboardingRouteImport.update({
     id: '/settings/onboarding',
@@ -152,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
 }
@@ -172,6 +180,7 @@ export interface FileRoutesByTo {
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
 }
@@ -195,6 +204,7 @@ export interface FileRoutesById {
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
 }
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
+    | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
     | '/practice/'
   fileRoutesByTo: FileRoutesByTo
@@ -238,6 +249,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
+    | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
     | '/practice'
   id:
@@ -260,6 +272,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
     | '/_authenticated/settings/onboarding'
+    | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
     | '/_authenticated/practice/'
   fileRoutesById: FileRoutesById
@@ -275,6 +288,7 @@ export interface RootRouteChildren {
   ApiTtsStreamRoute: typeof ApiTtsStreamRoute
   SimulacaoResultadoRoute: typeof SimulacaoResultadoRoute
   SimulacaoIndexRoute: typeof SimulacaoIndexRoute
+  ApiPublicRealtimeSessionRoute: typeof ApiPublicRealtimeSessionRoute
   ApiPublicSimulationChatRoute: typeof ApiPublicSimulationChatRoute
 }
 
@@ -392,6 +406,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSimulationChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/realtime-session': {
+      id: '/api/public/realtime-session'
+      path: '/api/public/realtime-session'
+      fullPath: '/api/public/realtime-session'
+      preLoaderRoute: typeof ApiPublicRealtimeSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/settings/onboarding': {
       id: '/_authenticated/settings/onboarding'
       path: '/settings/onboarding'
@@ -481,6 +502,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTtsStreamRoute: ApiTtsStreamRoute,
   SimulacaoResultadoRoute: SimulacaoResultadoRoute,
   SimulacaoIndexRoute: SimulacaoIndexRoute,
+  ApiPublicRealtimeSessionRoute: ApiPublicRealtimeSessionRoute,
   ApiPublicSimulationChatRoute: ApiPublicSimulationChatRoute,
 }
 export const routeTree = rootRouteImport
