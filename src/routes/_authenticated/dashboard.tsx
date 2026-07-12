@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import fredAvatar from "@/assets/fred-avatar.jpg";
 import {
   labelGoal,
