@@ -37,14 +37,48 @@ function Dashboard() {
   const navigate = useNavigate();
   const create = useServerFn(createConversation);
   const [picking, setPicking] = useState(false);
+  const [customMode, setCustomMode] = useState(false);
+  const [customTopic, setCustomTopic] = useState("");
+  const [creating, setCreating] = useState(false);
+  const customFieldRef = useRef<HTMLDivElement | null>(null);
+  const customInputRef = useRef<HTMLTextAreaElement | null>(null);
 
   async function startChat(mode: Mode) {
+    if (creating) return;
+    setCreating(true);
     try {
       const { id } = await create({ data: { mode } });
       navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
     } catch (e) {
       toast.error((e as Error).message);
+      setCreating(false);
     }
+  }
+
+  async function startCustomChat() {
+    const topic = customTopic.trim();
+    if (topic.length < 3 || creating) return;
+    setCreating(true);
+    try {
+      const { id } = await create({ data: { mode: "custom", customTopic: topic } });
+      navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
+    } catch (e) {
+      toast.error((e as Error).message);
+      setCreating(false);
+    }
+  }
+
+  function handleModeClick(mode: Mode) {
+    if (mode === "custom") {
+      setCustomMode(true);
+      setTimeout(() => {
+        customFieldRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        customInputRef.current?.focus();
+      }, 60);
+      return;
+    }
+    setCustomMode(false);
+    startChat(mode);
   }
 
   async function signOut() {
