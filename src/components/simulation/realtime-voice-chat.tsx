@@ -190,6 +190,15 @@ export function RealtimeVoiceChat({
         </Button>
       </div>
 
+      {responseError && (
+        <div className="mb-3 flex flex-col items-center gap-2 rounded-md bg-destructive/10 p-3 text-center text-sm text-destructive">
+          <span>{responseError}</span>
+          <Button variant="secondary" size="sm" onClick={retryResponse}>
+            Tentar resposta novamente
+          </Button>
+        </div>
+      )}
+
       <TranscriptPanel
         turns={turns}
         partialUser={partialUser}
