@@ -9,9 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import fredAvatar from "@/assets/fred-avatar.jpg";
-import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square, VolumeX } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square, VolumeX, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { MODES, type Mode } from "@/lib/fred-prompt";
+import { RealtimeConversation, type HistoryMessage } from "@/components/chat/realtime-conversation";
+
 
 export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
   loader: async ({ params }) => {
