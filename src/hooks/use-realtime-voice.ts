@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { LeadDiagnostic } from "@/lib/simulation-prompt";
 
 export type VoiceState =
   | "idle"
@@ -19,6 +18,8 @@ export type VoiceTurn = {
   timestamp: number;
 };
 
+export type SessionCredential = { client_secret: string; model: string };
+
 type RealtimeEvent = {
   type: string;
   delta?: string;
@@ -30,17 +31,25 @@ type RealtimeEvent = {
 };
 
 type UseVoiceOpts = {
-  diagnostic: LeadDiagnostic;
-  leadId: string;
+  /** Called when the hook needs to mint a fresh ephemeral session credential. */
+  getSession: () => Promise<SessionCredential>;
+  /** Fires when a user turn's transcript is final (whisper-completed). */
   onUserFinalTurn?: (text: string) => void;
+  /** Fires when a Fred turn is complete. `interrupted` = user cut Fred off. */
+  onAssistantFinalTurn?: (text: string, opts: { interrupted: boolean }) => void;
 };
 
 /**
- * Real-time bidirectional voice conversation with Fred via OpenAI Realtime + WebRTC.
- * The main OpenAI key never leaves the server; the browser only ever holds a short-lived
- * ephemeral `client_secret` returned by `/api/public/realtime-session`.
+ * Real-time bidirectional voice conversation via OpenAI Realtime + WebRTC.
+ * The main OpenAI key never leaves the server; the browser only holds
+ * a short-lived ephemeral `client_secret` returned by the caller-supplied
+ * `getSession()`.
  */
-export function useRealtimeVoice({ diagnostic, leadId, onUserFinalTurn }: UseVoiceOpts) {
+export function useRealtimeVoice({
+  getSession,
+  onUserFinalTurn,
+  onAssistantFinalTurn,
+}: UseVoiceOpts) {
   const [state, setState] = useState<VoiceState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
@@ -55,12 +64,15 @@ export function useRealtimeVoice({ diagnostic, leadId, onUserFinalTurn }: UseVoi
   const connectingRef = useRef(false);
   const stateRef = useRef<VoiceState>("idle");
   const currentAssistantIdRef = useRef<string | null>(null);
-  const partialUserRef = useRef<string>("");
   const partialAssistantRef = useRef<string>("");
+  const interruptedRef = useRef(false);
+  const onUserFinalRef = useRef(onUserFinalTurn);
+  const onAssistantFinalRef = useRef(onAssistantFinalTurn);
 
   useEffect(() => { stateRef.current = state; }, [state]);
-  useEffect(() => { partialUserRef.current = partialUser; }, [partialUser]);
   useEffect(() => { partialAssistantRef.current = partialAssistant; }, [partialAssistant]);
+  useEffect(() => { onUserFinalRef.current = onUserFinalTurn; }, [onUserFinalTurn]);
+  useEffect(() => { onAssistantFinalRef.current = onAssistantFinalTurn; }, [onAssistantFinalTurn]);
 
   const supported =
     typeof window !== "undefined" &&
@@ -93,11 +105,25 @@ export function useRealtimeVoice({ diagnostic, leadId, onUserFinalTurn }: UseVoi
   const sendEvent = useCallback((payload: Record<string, unknown>) => {
     const dc = dcRef.current;
     if (!dc || dc.readyState !== "open") return;
-    try {
-      dc.send(JSON.stringify(payload));
-    } catch (err) {
-      console.warn("[voice] send failed", err);
-    }
+    try { dc.send(JSON.stringify(payload)); }
+    catch (err) { console.warn("[voice] send failed", err); }
+  }, []);
+
+  const flushAssistantFinal = useCallback((text: string) => {
+    const clean = text.trim();
+    if (!clean) return;
+    const wasInterrupted = interruptedRef.current;
+    setTurns((prev) => [
+      ...prev,
+      {
+        id: `a_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        role: "assistant",
+        text: clean,
+        final: true,
+        timestamp: Date.now(),
+      },
+    ]);
+    onAssistantFinalRef.current?.(clean, { interrupted: wasInterrupted });
   }, []);
 
   const handleEvent = useCallback((raw: string) => {
@@ -109,6 +135,7 @@ export function useRealtimeVoice({ diagnostic, leadId, onUserFinalTurn }: UseVoi
         setState("user-speaking");
         // Interruption: if Fred was mid-response, stop playback and cancel server-side.
         if (currentAssistantIdRef.current) {
+          interruptedRef.current = true;
           try { audioElRef.current?.pause(); } catch { /* ignore */ }
           sendEvent({ type: "response.cancel" });
         }
@@ -136,12 +163,13 @@ export function useRealtimeVoice({ diagnostic, leadId, onUserFinalTurn }: UseVoi
               timestamp: Date.now(),
             },
           ]);
-          onUserFinalTurn?.(text);
+          onUserFinalRef.current?.(text);
         }
         break;
       }
       case "response.created": {
         currentAssistantIdRef.current = ev.response?.id ?? `a_${Date.now()}`;
+        interruptedRef.current = false;
         setState("fred-speaking");
         setPartialAssistant("");
         break;
@@ -153,39 +181,20 @@ export function useRealtimeVoice({ diagnostic, leadId, onUserFinalTurn }: UseVoi
       case "response.audio_transcript.done": {
         const text = (ev.transcript ?? partialAssistantRef.current ?? "").trim();
         setPartialAssistant("");
-        if (text.length > 0) {
-          setTurns((prev) => [
-            ...prev,
-            {
-              id: ev.response_id || `a_${Date.now()}`,
-              role: "assistant",
-              text,
-              final: true,
-              timestamp: Date.now(),
-            },
-          ]);
-        }
+        flushAssistantFinal(text);
         break;
       }
       case "response.done":
       case "response.cancelled": {
-        currentAssistantIdRef.current = null;
         // Flush any partial assistant text that never received a done event
-        // (e.g. cancelled mid-stream) so we don't lose the turn.
+        // (e.g. cancelled mid-stream) so we don't lose the truncated turn.
         const pending = partialAssistantRef.current.trim();
         if (pending.length > 0) {
-          setTurns((prev) => [
-            ...prev,
-            {
-              id: `a_${Date.now()}`,
-              role: "assistant",
-              text: pending,
-              final: true,
-              timestamp: Date.now(),
-            },
-          ]);
           setPartialAssistant("");
+          flushAssistantFinal(pending);
         }
+        currentAssistantIdRef.current = null;
+        interruptedRef.current = false;
         if (stateRef.current !== "ended") setState("listening");
         break;
       }
@@ -194,10 +203,9 @@ export function useRealtimeVoice({ diagnostic, leadId, onUserFinalTurn }: UseVoi
         break;
       }
       default:
-        // ignore other event types
         break;
     }
-  }, [onUserFinalTurn, sendEvent]);
+  }, [flushAssistantFinal, sendEvent]);
 
   const start = useCallback(async () => {
     if (!supported) {
@@ -212,20 +220,8 @@ export function useRealtimeVoice({ diagnostic, leadId, onUserFinalTurn }: UseVoi
 
     try {
       // 1. Ask our backend for an ephemeral session credential.
-      const resp = await fetch("/api/public/realtime-session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ diagnostic, leadId }),
-      });
-      if (!resp.ok) {
-        const j = (await resp.json().catch(() => ({}))) as { message?: string; error?: string };
-        const msg = j.message ||
-          (resp.status === 429 ? "Muitas tentativas. Aguarde alguns segundos."
-            : resp.status === 503 ? "A conversa por voz não está disponível neste ambiente. Você pode continuar digitando."
-            : "Não foi possível iniciar a conversa por voz.");
-        throw new Error(msg);
-      }
-      const { client_secret, model } = (await resp.json()) as { client_secret: string; model: string };
+      const { client_secret, model } = await getSession();
+      if (!client_secret || !model) throw new Error("Sessão de voz inválida.");
 
       // 2. Microphone (requires an explicit user gesture — that's what triggered start()).
       let stream: MediaStream;
@@ -309,7 +305,7 @@ export function useRealtimeVoice({ diagnostic, leadId, onUserFinalTurn }: UseVoi
       setState("error");
       cleanup();
     }
-  }, [diagnostic, leadId, supported, handleEvent, sendEvent, cleanup]);
+  }, [getSession, supported, handleEvent, sendEvent, cleanup]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {

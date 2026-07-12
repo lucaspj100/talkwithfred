@@ -25,10 +25,30 @@ export function RealtimeVoiceChat({
   const startedAtRef = useRef<number | null>(null);
   const finishedRef = useRef(false);
 
+  const getSession = useCallback(async () => {
+    const resp = await fetch("/api/public/realtime-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ diagnostic, leadId }),
+    });
+    if (!resp.ok) {
+      const j = (await resp.json().catch(() => ({}))) as { message?: string };
+      throw new Error(
+        j.message ||
+          (resp.status === 429
+            ? "Muitas tentativas. Aguarde alguns segundos."
+            : resp.status === 503
+              ? "A conversa por voz não está disponível neste ambiente. Você pode continuar digitando."
+              : "Não foi possível iniciar a conversa por voz."),
+      );
+    }
+    return (await resp.json()) as { client_secret: string; model: string };
+  }, [diagnostic, leadId]);
+
   const {
     state, errorMsg, muted, turns, partialUser, partialAssistant, supported,
     start, stop, toggleMute,
-  } = useRealtimeVoice({ diagnostic, leadId });
+  } = useRealtimeVoice({ getSession });
 
   const userFinalTurns = useMemo(
     () => turns.filter((t) => t.role === "user" && t.final && t.text.trim().length > 0).length,

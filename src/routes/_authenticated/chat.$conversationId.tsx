@@ -9,9 +9,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import fredAvatar from "@/assets/fred-avatar.jpg";
-import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square, VolumeX } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square, VolumeX, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { MODES, type Mode } from "@/lib/fred-prompt";
+import { RealtimeConversation, type HistoryMessage } from "@/components/chat/realtime-conversation";
+
 
 export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
   loader: async ({ params }) => {
@@ -44,6 +46,55 @@ function ChatPage() {
   const [token, setToken] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [inputType, setInputType] = useState<"text" | "voice">("text");
+  const [chatMode, setChatMode] = useState<"voice" | "text">("voice");
+  const pendingUserRef = useRef<string>("");
+  const [voiceHistory, setVoiceHistory] = useState<HistoryMessage[]>(() =>
+    (initialMsgs as DBMessage[]).map((m) => ({ id: m.id, role: m.role, content: m.content })),
+  );
+
+  const handleVoiceUserFinal = useCallback((text: string) => {
+    const clean = text.trim();
+    if (!clean) return;
+    pendingUserRef.current = clean;
+  }, []);
+
+  const handleVoiceAssistantFinal = useCallback(
+    async (text: string, _opts: { interrupted: boolean }) => {
+      const assistantText = text.trim();
+      if (!assistantText) return;
+      const userText = pendingUserRef.current.trim();
+      pendingUserRef.current = "";
+      // No paired user turn (e.g. Fred's opening greeting) → skip DB persistence
+      // (persistTurn requires both sides) but still keep it in the voice transcript.
+      if (!userText) return;
+      try {
+        await persist({
+          data: {
+            conversationId: conversation.id,
+            userMessage: userText,
+            assistantMessage: assistantText,
+            inputType: "voice",
+          },
+        });
+        setVoiceHistory((h) => [
+          ...h,
+          { id: `vu_${Date.now()}`, role: "user", content: userText },
+          { id: `va_${Date.now() + 1}`, role: "assistant", content: assistantText },
+        ]);
+        void extract({
+          data: {
+            conversationId: conversation.id,
+            userMessage: userText,
+            assistantMessage: assistantText,
+          },
+        }).catch((e) => console.error("[extract]", e));
+      } catch (e) {
+        console.error("[voice persist]", e);
+      }
+    },
+    [conversation.id, persist, extract],
+  );
+
 
   useEffect(() => {
     let mounted = true;
@@ -514,6 +565,37 @@ function ChatPage() {
 
   const modeLabel = MODES.find((m) => m.id === conversation.mode)?.label ?? conversation.mode;
 
+  if (chatMode === "voice") {
+    // Ensure any old TTS from a previous text-mode turn is silenced before we
+    // open the mic — no double playback across modes.
+    return (
+      <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6">
+        <header className="mb-4 flex items-center justify-between gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
+            <ArrowLeft className="mr-1 size-4" /> Dashboard
+          </Button>
+          <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setChatMode("text")}
+          >
+            Modo digitado
+          </Button>
+        </header>
+        <RealtimeConversation
+          conversationId={conversation.id}
+          userName="Você"
+          history={voiceHistory}
+          onUserFinalTurn={handleVoiceUserFinal}
+          onAssistantFinalTurn={handleVoiceAssistantFinal}
+          onSwitchToText={() => setChatMode("text")}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-6">
       <header className="mb-4 flex items-center justify-between gap-2">
@@ -521,6 +603,20 @@ function ChatPage() {
           <ArrowLeft className="mr-1 size-4" /> Dashboard
         </Button>
         <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => { stopAudio(); setChatMode("voice"); }}
+            title="Voltar para conversa por voz"
+          >
+            <Phone className="mr-1 size-4" /> Voz
+          </Button>
+        </div>
+      </header>
+
+      <div className="mb-3 flex justify-end">
         <Button
           type="button"
           variant={autoplayEnabled ? "secondary" : "outline"}
@@ -536,7 +632,9 @@ function ChatPage() {
           {autoplayEnabled ? <Volume2 className="mr-1 size-4" /> : <VolumeX className="mr-1 size-4" />}
           {autoplayEnabled ? "Áudio auto: on" : "Ativar áudio automático"}
         </Button>
-      </header>
+      </div>
+
+
 
       <div className="grid flex-1 gap-6 md:grid-cols-[260px,1fr]">
         {/* Fred panel */}
