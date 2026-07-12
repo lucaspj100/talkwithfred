@@ -101,3 +101,22 @@ export const updateLastLogin = createServerFn({ method: "POST" })
       .eq("id", context.userId);
     return { ok: true };
   });
+
+const speakingSpeedSchema = z.object({
+  speaking_speed_preference: z.enum(["slower", "level_adapted", "natural"]),
+});
+
+export const updateSpeakingSpeed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => speakingSpeedSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("user_profiles")
+      .update({
+        speaking_speed_preference: data.speaking_speed_preference,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
