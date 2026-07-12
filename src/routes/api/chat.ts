@@ -48,14 +48,19 @@ export const Route = createFileRoute("/api/chat")({
           const userId = userData.user.id;
 
           const tProfile = Date.now();
-          const [{ data: userProfile }, { data: profile }] = await Promise.all([
+          const [{ data: userProfile }, { data: profile }, { data: conv }] = await Promise.all([
             supabase.from("user_profiles").select("*").eq("user_id", userId).maybeSingle(),
             supabase.from("profiles").select("name").eq("id", userId).maybeSingle(),
+            body.conversationId
+              ? supabase.from("conversations").select("custom_topic, mode").eq("id", body.conversationId).eq("user_id", userId).maybeSingle()
+              : Promise.resolve({ data: null as { custom_topic: string | null; mode: string } | null }),
           ]);
           mark("profile fetch", tProfile);
 
-          const mode: Mode = body.mode ?? "free_conversation";
-          const system = buildFredSystemPrompt(userProfile, mode, profile?.name);
+          const mode: Mode = (conv?.mode as Mode | undefined) ?? body.mode ?? "free_conversation";
+          const system = buildFredSystemPrompt(userProfile, mode, profile?.name, {
+            customTopic: conv?.custom_topic ?? null,
+          });
 
           // Trim history: keep only the last HISTORY_WINDOW messages.
           const trimmed = body.messages.slice(-HISTORY_WINDOW);

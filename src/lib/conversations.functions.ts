@@ -9,7 +9,24 @@ const modeEnum = z.enum([
   "business_english",
   "daily_life",
   "beginner_practice",
+  "custom",
 ]);
+
+const createConversationSchema = z
+  .object({
+    mode: modeEnum,
+    customTopic: z.string().trim().min(3).max(300).optional(),
+  })
+  .refine((v) => v.mode !== "custom" || (v.customTopic && v.customTopic.length >= 3), {
+    message: "customTopic is required for custom mode",
+    path: ["customTopic"],
+  });
+
+function titleFromTopic(topic: string): string {
+  const clean = topic.replace(/\s+/g, " ").trim();
+  if (clean.length <= 50) return clean;
+  return clean.slice(0, 47).trimEnd() + "…";
+}
 
 export const listConversations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -26,11 +43,19 @@ export const listConversations = createServerFn({ method: "GET" })
 
 export const createConversation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => z.object({ mode: modeEnum }).parse(i))
+  .inputValidator((i: unknown) => createConversationSchema.parse(i))
   .handler(async ({ data, context }) => {
+    const isCustom = data.mode === "custom";
+    const customTopic = isCustom ? data.customTopic!.trim() : null;
+    const title = isCustom && customTopic ? titleFromTopic(customTopic) : "New conversation";
     const { data: row, error } = await context.supabase
       .from("conversations")
-      .insert({ user_id: context.userId, mode: data.mode, title: "New conversation" })
+      .insert({
+        user_id: context.userId,
+        mode: data.mode,
+        title,
+        custom_topic: customTopic,
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);

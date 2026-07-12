@@ -17,6 +17,7 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
+          custom_topic: string | null
           id: string
           mode: string
           title: string
@@ -25,6 +26,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_topic?: string | null
           id?: string
           mode?: string
           title?: string
@@ -33,6 +35,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_topic?: string | null
           id?: string
           mode?: string
           title?: string

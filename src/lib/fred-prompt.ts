@@ -7,7 +7,8 @@ export type Mode =
   | "job_interview"
   | "business_english"
   | "daily_life"
-  | "beginner_practice";
+  | "beginner_practice"
+  | "custom";
 
 export const MODES: { id: Mode; label: string; description: string }[] = [
   { id: "free_conversation", label: "Conversa livre", description: "Bate-papo aberto em inglês" },
@@ -16,6 +17,7 @@ export const MODES: { id: Mode; label: string; description: string }[] = [
   { id: "business_english", label: "Inglês corporativo", description: "Reuniões, e-mails, carreira" },
   { id: "daily_life", label: "Dia a dia", description: "Situações cotidianas" },
   { id: "beginner_practice", label: "Prática iniciante", description: "Frases simples e devagar" },
+  { id: "custom", label: "Outro assunto", description: "Escolha o tema da conversa" },
 ];
 
 const MODE_GUIDANCE: Record<Mode, string> = {
@@ -25,6 +27,7 @@ const MODE_GUIDANCE: Record<Mode, string> = {
   business_english: "The user picked Business English. Stay in workplace contexts: meetings, emails, presentations, negotiations.",
   daily_life: "The user picked Daily Life. Keep topics in everyday Brazilian-American daily life: groceries, family, weather, weekend plans.",
   beginner_practice: "The user picked Beginner Practice. Use very short, very simple sentences. Repeat key vocabulary often.",
+  custom: "The user picked a custom topic (see the Custom Conversation Topic section below).",
 };
 
 type LevelKey = "beginner" | "basic" | "intermediate" | "advanced" | "unknown";
@@ -149,7 +152,9 @@ export function buildFredSystemPrompt(
   profile: Tables<"user_profiles"> | null,
   mode: Mode,
   userName?: string | null,
+  opts?: { customTopic?: string | null },
 ) {
+  const customTopic = (opts?.customTopic ?? "").trim();
   const level = normalizeLevel(profile?.english_level);
   const speed = normalizeSpeed(profile?.speaking_speed_preference);
   const correction = profile?.correction_preference ?? "sometimes";
@@ -203,7 +208,19 @@ User focus (personalization):
 ${focusLines.map((l) => `- ${l}`).join("\n")}
 
 Mode: ${MODE_GUIDANCE[mode]}
+${customTopic ? `
+# Custom Conversation Topic
+The user chose the following topic:
 
+"${customTopic}"
+
+- Keep the conversation focused on this topic.
+- Ask relevant and natural questions.
+- Adapt vocabulary and difficulty to the user's English level.
+- Do not change the topic unless the user asks.
+- Do not mention technical fields such as custom_topic or custom mode.
+- Start with a short contextual sentence and one question.
+` : ""}
 # Learner Level Adaptation
 The learner-level rules below take priority over generic style. They control pace, sentence length, vocabulary, grammar complexity, explanation language, information per turn, correction style and difficulty progression.
 
