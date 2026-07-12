@@ -54,7 +54,7 @@ function throttle(key: string): boolean {
 }
 
 const REALTIME_MODEL = "gpt-realtime-2.1";
-const VOICE = "marin";
+const VOICE = "cedar";
 const TRANSCRIPTION_MODEL = "whisper-1";
 
 export const Route = createFileRoute("/api/public/realtime-session")({
