@@ -225,14 +225,12 @@ export function useRealtimeVoice({
         const startedAt = assistantAudioStartedAtRef.current;
         const msSinceAssistantAudio = startedAt === null ? null : Date.now() - startedAt;
         const probablyEcho = msSinceAssistantAudio !== null && msSinceAssistantAudio < 500;
-        if (DEV) {
-          console.log("[voice-event] input_audio_buffer.speech_started", {
-            at: new Date().toISOString(),
-            currentAssistantId: currentAssistantIdRef.current,
-            msSinceAssistantAudio,
-            probablyEcho,
-          });
-        }
+        console.log("[voice-event] input_audio_buffer.speech_started", {
+          at: new Date().toISOString(),
+          currentAssistantId: currentAssistantIdRef.current,
+          msSinceAssistantAudio,
+          probablyEcho,
+        });
         setState("user-speaking");
         if (currentAssistantIdRef.current && !probablyEcho) {
           interruptedRef.current = true;
@@ -278,12 +276,10 @@ export function useRealtimeVoice({
         setResponseError(null);
         setState("fred-thinking");
         setPartialAssistant("");
-        if (DEV) {
-          console.log("[voice-event] response.created", {
-            at: new Date().toISOString(),
-            responseId: currentAssistantIdRef.current,
-          });
-        }
+        console.log("[voice-event] response.created", {
+          at: new Date().toISOString(),
+          responseId: currentAssistantIdRef.current,
+        });
         break;
       }
       case "response.output_audio.delta":
@@ -292,12 +288,10 @@ export function useRealtimeVoice({
         if (!firstAudioDeltaSeenRef.current) {
           firstAudioDeltaSeenRef.current = true;
           assistantAudioStartedAtRef.current = Date.now();
-          if (DEV) {
-            console.log("[voice-event] first response.output_audio.delta", {
-              at: new Date().toISOString(),
-              responseId: currentAssistantIdRef.current,
-            });
-          }
+          console.log("[voice-event] first response.output_audio.delta", {
+            at: new Date().toISOString(),
+            responseId: currentAssistantIdRef.current,
+          });
         }
         if (audio) {
           markAudioPlayable(audio);
@@ -334,7 +328,10 @@ export function useRealtimeVoice({
       }
       case "response.output_audio_transcript.delta":
       case "response.audio_transcript.delta": {
-        if (ev.delta) setPartialAssistant((p) => p + ev.delta);
+        if (ev.delta) {
+          setPartialAssistant((p) => p + ev.delta);
+          schedulePlaybackCheck();
+        }
         break;
       }
       case "response.output_audio_transcript.done":
@@ -349,13 +346,11 @@ export function useRealtimeVoice({
       }
       case "response.done":
       case "response.cancelled": {
-        if (DEV) {
-          console.log(`[voice-event] ${ev.type}`, {
-            at: new Date().toISOString(),
-            responseId: currentAssistantIdRef.current,
-            transcriptFlushed: assistantTranscriptFlushedRef.current,
-          });
-        }
+        console.log(`[voice-event] ${ev.type}`, {
+          at: new Date().toISOString(),
+          responseId: currentAssistantIdRef.current,
+          transcriptFlushed: assistantTranscriptFlushedRef.current,
+        });
         const pending = partialAssistantRef.current.trim();
         if (!assistantTranscriptFlushedRef.current && pending.length > 0) {
           setPartialAssistant("");
