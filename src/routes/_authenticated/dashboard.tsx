@@ -152,20 +152,72 @@ function Dashboard() {
         <div className="mt-4 rounded-2xl border border-border bg-card/60 p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">Escolha um modo de conversa:</p>
-            <button onClick={() => setPicking(false)} className="text-xs text-muted-foreground hover:text-foreground">Fechar</button>
+            <button
+              onClick={() => { setPicking(false); setCustomMode(false); }}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Fechar
+            </button>
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-            {MODES.map((m) => (
-              <button
-                key={m.id}
-                onClick={() => startChat(m.id)}
-                className="group rounded-xl border border-border bg-background p-4 text-left transition hover:border-primary/60"
-              >
-                <p className="font-display text-sm font-semibold">{m.label}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{m.description}</p>
-              </button>
-            ))}
+            {MODES.map((m) => {
+              const active = m.id === "custom" && customMode;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => handleModeClick(m.id)}
+                  disabled={creating}
+                  className={`group rounded-xl border p-4 text-left transition disabled:opacity-60 ${
+                    active
+                      ? "border-primary bg-primary/10"
+                      : "border-border bg-background hover:border-primary/60"
+                  }`}
+                >
+                  <p className="font-display text-sm font-semibold">{m.label}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{m.description}</p>
+                </button>
+              );
+            })}
           </div>
+
+          {customMode && (
+            <div ref={customFieldRef} className="mt-4 rounded-xl border border-primary/40 bg-background/70 p-4">
+              <label htmlFor="custom-topic" className="block text-sm font-medium">
+                Sobre o que você quer conversar?
+              </label>
+              <textarea
+                id="custom-topic"
+                ref={customInputRef}
+                value={customTopic}
+                onChange={(e) => setCustomTopic(e.target.value.slice(0, 300))}
+                maxLength={300}
+                rows={3}
+                placeholder="Ex.: tecnologia, futebol, minha profissão, uma viagem, uma reunião específica..."
+                className="mt-2 block w-full max-w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+              <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                <span>{customTopic.trim().length < 3 ? "Digite ao menos 3 caracteres" : "\u00a0"}</span>
+                <span>{customTopic.length}/300</span>
+              </div>
+              <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setCustomMode(false); setCustomTopic(""); }}
+                  disabled={creating}
+                >
+                  Voltar
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={startCustomChat}
+                  disabled={customTopic.trim().length < 3 || creating}
+                >
+                  {creating ? "Iniciando..." : "Começar conversa"}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
