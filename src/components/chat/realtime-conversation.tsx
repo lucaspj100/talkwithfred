@@ -194,6 +194,7 @@ function ringState(s: VoiceState): "neutral" | "listening" | "responding" | "spe
       return "listening";
     case "fred-speaking":
       return "speaking";
+    case "fred-thinking":
     case "connecting":
     case "reconnecting":
       return "responding";
@@ -210,6 +211,7 @@ function stateLabel(s: VoiceState, muted: boolean): string {
     case "connecting": return "Preparando Fred…";
     case "listening": return "Fred está ouvindo";
     case "user-speaking": return "Você está falando…";
+    case "fred-thinking": return "Fred está preparando a resposta…";
     case "fred-speaking": return "Fred está falando — pode interromper";
     case "reconnecting": return "Reconectando…";
     case "ended": return "Conversa encerrada";
