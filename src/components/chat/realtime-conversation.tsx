@@ -63,6 +63,7 @@ export function RealtimeConversation({
     state,
     errorMsg,
     responseError,
+    audioBlocked,
     muted,
     turns,
     partialUser,
@@ -72,6 +73,7 @@ export function RealtimeConversation({
     stop,
     toggleMute,
     retryResponse,
+    resumeAudio,
   } = useRealtimeVoice({ getSession, onUserFinalTurn, onAssistantFinalTurn });
 
   const idle = state === "idle";
@@ -173,6 +175,15 @@ export function RealtimeConversation({
           <span>{responseError}</span>
           <Button variant="secondary" size="sm" onClick={retryResponse}>
             Tentar resposta novamente
+          </Button>
+        </div>
+      )}
+
+      {audioBlocked && (
+        <div className="mb-3 flex flex-col items-center gap-2 rounded-md bg-amber-500/10 p-3 text-center text-sm">
+          <span>Seu iPhone pausou o áudio. Toque para continuar ouvindo Fred.</span>
+          <Button variant="secondary" size="sm" onClick={resumeAudio}>
+            Reativar áudio
           </Button>
         </div>
       )}

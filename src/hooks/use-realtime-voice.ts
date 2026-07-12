@@ -48,6 +48,7 @@ export function useRealtimeVoice({
   const [state, setState] = useState<VoiceState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [responseError, setResponseError] = useState<string | null>(null);
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const [muted, setMuted] = useState(false);
   const [turns, setTurns] = useState<VoiceTurn[]>([]);
   const [partialUser, setPartialUser] = useState<string>("");
@@ -99,6 +100,8 @@ export function useRealtimeVoice({
     if (audioElRef.current) {
       try { audioElRef.current.pause(); } catch { /* ignore */ }
       try { audioElRef.current.srcObject = null; } catch { /* ignore */ }
+      try { audioElRef.current.remove(); } catch { /* ignore */ }
+      audioElRef.current = null;
     }
     connectingRef.current = false;
     responseInProgressRef.current = false;
@@ -170,7 +173,11 @@ export function useRealtimeVoice({
         setState("user-speaking");
         if (currentAssistantIdRef.current) {
           interruptedRef.current = true;
-          try { audioElRef.current?.pause(); } catch { /* ignore */ }
+          // Do NOT pause the remote audio element — on iOS Safari that can
+          // silence the MediaStream permanently. Mute instead, then cancel
+          // the response on the server.
+          const audio = audioElRef.current;
+          if (audio) audio.muted = true;
           sendEvent({ type: "response.cancel" });
         }
         break;
@@ -215,7 +222,29 @@ export function useRealtimeVoice({
       }
       case "response.output_audio.delta":
       case "response.audio.delta": {
-        // First audio chunk arriving → Fred is actually speaking.
+        const audio = audioElRef.current;
+        if (audio) {
+          if (DEV) {
+            console.log("[voice-audio]", {
+              paused: audio.paused,
+              muted: audio.muted,
+              readyState: audio.readyState,
+              networkState: audio.networkState,
+              hasSrcObject: Boolean(audio.srcObject),
+            });
+          }
+          audio.muted = false;
+          if (audio.paused) {
+            void audio.play().then(() => {
+              setAudioBlocked(false);
+            }).catch((error) => {
+              console.warn("[voice] failed to resume remote audio", error);
+              setAudioBlocked(true);
+            });
+          } else {
+            setAudioBlocked(false);
+          }
+        }
         if (stateRef.current !== "fred-speaking") setState("fred-speaking");
         break;
       }
@@ -307,12 +336,34 @@ export function useRealtimeVoice({
         audioEl = document.createElement("audio");
         audioEl.autoplay = true;
         (audioEl as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+        audioEl.muted = false;
+        audioEl.setAttribute("playsinline", "");
+        audioEl.setAttribute("webkit-playsinline", "");
+        audioEl.style.position = "fixed";
+        audioEl.style.width = "1px";
+        audioEl.style.height = "1px";
+        audioEl.style.opacity = "0";
+        audioEl.style.pointerEvents = "none";
+        if (DEV) {
+          audioEl.onplay = () => console.log("[voice-audio] play");
+          audioEl.onpause = () => console.log("[voice-audio] pause");
+          audioEl.onplaying = () => console.log("[voice-audio] playing");
+          audioEl.onwaiting = () => console.log("[voice-audio] waiting");
+          audioEl.onstalled = () => console.log("[voice-audio] stalled");
+          audioEl.onerror = (event) => console.error("[voice-audio] error", event);
+        }
+        document.body.appendChild(audioEl);
         audioElRef.current = audioEl;
       }
       pc.ontrack = (e) => {
         if (!audioEl) return;
         audioEl.srcObject = e.streams[0];
-        void audioEl.play().catch(() => { /* autoplay policy */ });
+        void audioEl.play().then(() => {
+          setAudioBlocked(false);
+        }).catch((err) => {
+          console.warn("[voice] initial play blocked", err);
+          setAudioBlocked(true);
+        });
       };
 
       for (const track of stream.getAudioTracks()) pc.addTrack(track, stream);
@@ -370,10 +421,23 @@ export function useRealtimeVoice({
     });
   }, []);
 
+  const resumeAudio = useCallback(() => {
+    const audio = audioElRef.current;
+    if (!audio) return;
+    audio.muted = false;
+    void audio.play().then(() => {
+      setAudioBlocked(false);
+    }).catch((err) => {
+      console.warn("[voice] resumeAudio failed", err);
+      setAudioBlocked(true);
+    });
+  }, []);
+
   return {
     state,
     errorMsg,
     responseError,
+    audioBlocked,
     muted,
     turns,
     partialUser,
@@ -383,5 +447,6 @@ export function useRealtimeVoice({
     stop,
     toggleMute,
     retryResponse,
+    resumeAudio,
   };
 }

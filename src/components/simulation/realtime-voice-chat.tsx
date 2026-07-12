@@ -46,8 +46,8 @@ export function RealtimeVoiceChat({
   }, [diagnostic, leadId]);
 
   const {
-    state, errorMsg, responseError, muted, turns, partialUser, partialAssistant, supported,
-    start, stop, toggleMute, retryResponse,
+    state, errorMsg, responseError, audioBlocked, muted, turns, partialUser, partialAssistant, supported,
+    start, stop, toggleMute, retryResponse, resumeAudio,
   } = useRealtimeVoice({ getSession });
 
   const userFinalTurns = useMemo(
@@ -195,6 +195,15 @@ export function RealtimeVoiceChat({
           <span>{responseError}</span>
           <Button variant="secondary" size="sm" onClick={retryResponse}>
             Tentar resposta novamente
+          </Button>
+        </div>
+      )}
+
+      {audioBlocked && (
+        <div className="mb-3 flex flex-col items-center gap-2 rounded-md bg-amber-500/10 p-3 text-center text-sm">
+          <span>Seu iPhone pausou o áudio. Toque para continuar ouvindo Fred.</span>
+          <Button variant="secondary" size="sm" onClick={resumeAudio}>
+            Reativar áudio
           </Button>
         </div>
       )}
