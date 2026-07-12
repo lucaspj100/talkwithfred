@@ -90,6 +90,7 @@ function Dashboard() {
 
       {/* Focus card */}
       <FocusCard profile={me.userProfile!} />
+      <SpeedPreference initial={(me.userProfile!.speaking_speed_preference as string | null) ?? "level_adapted"} />
 
       {/* Two main modes */}
       <h2 className="mt-10 font-display text-xl font-bold">Como você quer praticar?</h2>
