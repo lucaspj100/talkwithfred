@@ -565,6 +565,37 @@ function ChatPage() {
 
   const modeLabel = MODES.find((m) => m.id === conversation.mode)?.label ?? conversation.mode;
 
+  if (chatMode === "voice") {
+    // Ensure any old TTS from a previous text-mode turn is silenced before we
+    // open the mic — no double playback across modes.
+    return (
+      <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6">
+        <header className="mb-4 flex items-center justify-between gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
+            <ArrowLeft className="mr-1 size-4" /> Dashboard
+          </Button>
+          <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setChatMode("text")}
+          >
+            Modo digitado
+          </Button>
+        </header>
+        <RealtimeConversation
+          conversationId={conversation.id}
+          userName="Você"
+          history={voiceHistory}
+          onUserFinalTurn={handleVoiceUserFinal}
+          onAssistantFinalTurn={handleVoiceAssistantFinal}
+          onSwitchToText={() => setChatMode("text")}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-6">
       <header className="mb-4 flex items-center justify-between gap-2">
