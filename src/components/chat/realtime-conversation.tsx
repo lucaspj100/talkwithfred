@@ -62,6 +62,7 @@ export function RealtimeConversation({
   const {
     state,
     errorMsg,
+    responseError,
     muted,
     turns,
     partialUser,
@@ -70,6 +71,7 @@ export function RealtimeConversation({
     start,
     stop,
     toggleMute,
+    retryResponse,
   } = useRealtimeVoice({ getSession, onUserFinalTurn, onAssistantFinalTurn });
 
   const idle = state === "idle";
