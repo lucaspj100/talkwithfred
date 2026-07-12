@@ -152,7 +152,9 @@ export function buildFredSystemPrompt(
   profile: Tables<"user_profiles"> | null,
   mode: Mode,
   userName?: string | null,
+  opts?: { customTopic?: string | null },
 ) {
+  const customTopic = (opts?.customTopic ?? "").trim();
   const level = normalizeLevel(profile?.english_level);
   const speed = normalizeSpeed(profile?.speaking_speed_preference);
   const correction = profile?.correction_preference ?? "sometimes";
