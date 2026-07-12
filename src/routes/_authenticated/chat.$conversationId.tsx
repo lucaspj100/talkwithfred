@@ -634,22 +634,7 @@ function ChatPage() {
         </Button>
       </div>
 
-        <Button
-          type="button"
-          variant={autoplayEnabled ? "secondary" : "outline"}
-          size="sm"
-          onClick={() => {
-            const next = !autoplayEnabled;
-            persistAutoplay(next);
-            blockToastShownRef.current = false;
-            toast.message(next ? "Áudio automático ativado." : "Áudio automático desativado.");
-          }}
-          title={autoplayEnabled ? "Desativar áudio automático" : "Ativar áudio automático"}
-        >
-          {autoplayEnabled ? <Volume2 className="mr-1 size-4" /> : <VolumeX className="mr-1 size-4" />}
-          {autoplayEnabled ? "Áudio auto: on" : "Ativar áudio automático"}
-        </Button>
-      </header>
+
 
       <div className="grid flex-1 gap-6 md:grid-cols-[260px,1fr]">
         {/* Fred panel */}
