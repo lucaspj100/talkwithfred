@@ -199,6 +199,15 @@ export function RealtimeVoiceChat({
         </div>
       )}
 
+      {audioBlocked && (
+        <div className="mb-3 flex flex-col items-center gap-2 rounded-md bg-amber-500/10 p-3 text-center text-sm">
+          <span>Seu iPhone pausou o áudio. Toque para continuar ouvindo Fred.</span>
+          <Button variant="secondary" size="sm" onClick={resumeAudio}>
+            Reativar áudio
+          </Button>
+        </div>
+      )}
+
       <TranscriptPanel
         turns={turns}
         partialUser={partialUser}
