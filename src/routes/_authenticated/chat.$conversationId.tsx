@@ -652,7 +652,7 @@ function ChatPage() {
         <section className="flex flex-col rounded-3xl border border-border bg-card/40">
           <div className="flex items-center gap-3 border-b border-border px-4 py-3 md:hidden">
             <div className="fred-ring h-10 w-10" data-state={fredState}>
-              <img src={fredAvatar} alt="Lucas" width={128} height={128} loading="lazy" className="h-10 w-10 rounded-full object-cover" />
+              <LucasAvatar alt="Lucas" className="h-10 w-10 ring-0" />
             </div>
             <div>
               <p className="text-sm font-semibold">Lucas</p>
