@@ -96,7 +96,7 @@ export const getAdminMetrics = createServerFn({ method: "POST" })
       { start_date: data.start, end_date: data.end },
     );
     if (error) throw new Error(error.message);
-    return res as Record<string, unknown>;
+    return res as AdminMetrics;
   });
 
 export const getAdminUsers = createServerFn({ method: "GET" })
