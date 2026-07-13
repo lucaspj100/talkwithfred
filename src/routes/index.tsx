@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import fredAvatar from "@/assets/fred-avatar.jpg";
 import { Button } from "@/components/ui/button";
+import { LucasBrand } from "@/components/LucasBrand";
 import { ArrowRight, Sparkle, Target, MessageCircle, Globe2, ClipboardList, MapIcon } from "lucide-react";
 
 export const Route = createFileRoute("/")({
