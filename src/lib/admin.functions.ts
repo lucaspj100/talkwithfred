@@ -46,6 +46,40 @@ export type UserRow = {
   engagement_status: EngagementStatus;
 };
 
+export type Point = { day: string; value: number };
+export type LabelValue = { label: string; value: number };
+export type AdminMetrics = {
+  total_users: number;
+  new_users: number;
+  onboarded: number;
+  convs: number;
+  msgs: number;
+  practices: number;
+  voice_min: number;
+  active_period: number;
+  active_today: number;
+  new_users_by_day: Point[];
+  active_by_day: Point[];
+  convs_by_day: Point[];
+  msgs_by_day: Point[];
+  prac_by_day: Point[];
+  voice_by_day: Point[];
+  modes: LabelValue[];
+  levels: LabelValue[];
+};
+
+export type RetentionMetrics = {
+  d1: number; d7: number; d14: number; d30: number;
+  total_activated: number; one_shot: number; multi: number;
+  avg_days_active_30d: number;
+};
+
+export type ActivityEvent = {
+  kind: string;
+  ts: string;
+  meta: Record<string, string | number | boolean | null>;
+};
+
 const dateRange = z.object({
   start: z.string().datetime(),
   end: z.string().datetime(),
