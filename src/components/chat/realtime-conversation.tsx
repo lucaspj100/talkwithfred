@@ -136,13 +136,7 @@ export function RealtimeConversation({
 
       <div className="my-6 flex justify-center">
         <div className="fred-ring h-32 w-32 md:h-40 md:w-40" data-state={ringState(state)}>
-          <img
-            src={fredAvatar}
-            alt="Lucas"
-            width={1024}
-            height={1024}
-            className="h-full w-full rounded-full object-cover"
-          />
+          <LucasAvatar alt="Lucas" className="h-full w-full text-5xl ring-0" />
         </div>
       </div>
 
