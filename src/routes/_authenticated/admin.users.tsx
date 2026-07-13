@@ -38,13 +38,13 @@ function AdminUsersPage() {
 
   const levels = useMemo(() => {
     const s = new Set<string>();
-    for (const u of users) if (u.english_level) s.add(u.english_level);
+    for (const u of users as UserRow[]) if (u.english_level) s.add(u.english_level);
     return Array.from(s);
   }, [users]);
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
-    let list = users.filter((u) => {
+    let list = users.filter((u: UserRow) => {
       if (term && !((u.name ?? "").toLowerCase().includes(term) || (u.email ?? "").toLowerCase().includes(term))) return false;
       if (status !== "all" && u.engagement_status !== status) return false;
       if (level !== "all" && u.english_level !== level) return false;
@@ -54,7 +54,7 @@ function AdminUsersPage() {
       if (toDate && new Date(u.created_at) > new Date(toDate + "T23:59:59")) return false;
       return true;
     });
-    list = [...list].sort((a, b) => {
+    list = [...list].sort((a: UserRow, b: UserRow) => {
       const av = (a[sort] ?? 0) as number | string;
       const bv = (b[sort] ?? 0) as number | string;
       const cmp = av > bv ? 1 : av < bv ? -1 : 0;
@@ -73,7 +73,7 @@ function AdminUsersPage() {
 
   function exportCsv() {
     const headers = ["nome", "email", "cadastro", "onboarding", "nivel", "ultimo_login", "ultima_atividade", "conversas", "mensagens", "praticas", "voz_min", "xp", "streak", "maior_streak", "status"];
-    const rows = filtered.map((u) => [
+    const rows = filtered.map((u: UserRow) => [
       u.name ?? "", u.email ?? "", u.created_at, u.onboarding_completed ? "sim" : "nao", u.english_level ?? "",
       u.last_login ?? "", u.last_activity_at ?? "", u.conversations_count, u.messages_count, u.practice_sessions_count,
       Number(u.voice_minutes_total).toFixed(2), u.xp, u.streak_days, u.longest_streak, u.engagement_status,
@@ -145,7 +145,7 @@ function AdminUsersPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {pageItems.map((u) => (
+            {pageItems.map((u: UserRow) => (
               <tr key={u.user_id} className="hover:bg-accent/20">
                 <td className="px-3 py-3">
                   <Link to="/admin/users/$userId" params={{ userId: u.user_id }} className="font-medium hover:underline">
@@ -174,7 +174,7 @@ function AdminUsersPage() {
 
       {/* Mobile cards */}
       <div className="grid grid-cols-1 gap-3 md:hidden">
-        {pageItems.map((u) => (
+        {pageItems.map((u: UserRow) => (
           <Link key={u.user_id} to="/admin/users/$userId" params={{ userId: u.user_id }}
             className="rounded-2xl border border-border bg-card/40 p-4 hover:bg-accent/20">
             <div className="flex items-start justify-between gap-2">
