@@ -37,7 +37,8 @@ function RetentionPage() {
   const goals = Array.from(goalAgg.entries()).map(([label, value]) => ({ label, value }));
 
   return (
-    <AdminShell title="Retenção">
+    <>
+
       <p className="mb-4 text-sm text-muted-foreground">
         Retenção D7: usuário que voltou entre o 7º e o 13º dia após sua primeira atividade real.
       </p>
@@ -62,6 +63,6 @@ function RetentionPage() {
       <p className="mt-4 text-xs text-muted-foreground">
         Assuntos personalizados não são exibidos individualmente para preservar a privacidade.
       </p>
-    </AdminShell>
+    </>
   );
 }
