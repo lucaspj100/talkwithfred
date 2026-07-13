@@ -81,10 +81,7 @@ function ResultadoPage() {
   return (
     <div className="min-h-[100dvh]">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
-        <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">F</span>
-          Speak With Lucas
-        </Link>
+        <LucasBrand linkTo="/" />
         <Link to="/simulacao" className="text-xs text-muted-foreground hover:text-foreground">
           <ArrowLeft className="mr-1 inline size-3" /> Refazer simulação
         </Link>
