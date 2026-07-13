@@ -179,7 +179,7 @@ export const getAdminUserDetail = createServerFn({ method: "POST" })
         practice_sessions: prac ?? 0,
         voice_minutes: voiceMin,
       },
-      activity: (activity ?? []) as Array<{ kind: string; ts: string; meta: Record<string, unknown> }>,
+      activity: (activity ?? []) as ActivityEvent[],
       now: nowIso,
     };
   });
