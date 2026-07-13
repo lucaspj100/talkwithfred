@@ -1,14 +1,10 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
-import { getMyProfile } from "@/lib/profile.functions";
+import { createFileRoute } from "@tanstack/react-router";
 import { getAdminRetention, getAdminUsers, getAdminMetrics } from "@/lib/admin.functions";
-import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
 import { BarDistribution } from "@/components/admin/EngagementChart";
 
 export const Route = createFileRoute("/_authenticated/admin/retention")({
   loader: async () => {
-    const me = await getMyProfile();
-    if (!me.isAdmin) throw redirect({ to: "/dashboard" });
     const start = new Date(); start.setDate(start.getDate() - 29); start.setHours(0, 0, 0, 0);
     const end = new Date(); end.setHours(23, 59, 59, 999);
     const [ret, users, metrics] = await Promise.all([
