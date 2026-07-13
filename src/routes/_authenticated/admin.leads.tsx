@@ -269,7 +269,8 @@ function AdminLeadsPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
+
   );
 }
 
