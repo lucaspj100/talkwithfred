@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles } from "lucide-react";
 import { useRef, useState } from "react";
 import fredAvatar from "@/assets/fred-avatar.jpg";
+import { LucasBrand } from "@/components/LucasBrand";
 import {
   labelGoal,
   labelArea,
