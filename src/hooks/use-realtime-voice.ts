@@ -150,15 +150,9 @@ export function useRealtimeVoice({
     sendEvent({ type: "response.create", response: { output_modalities: ["audio"] } });
   }, [sendEvent]);
 
-  const scheduleWatchdog = useCallback(() => {
-    clearWatchdog();
-    responseWatchdogRef.current = setTimeout(() => {
-      if (!responseInProgressRef.current) {
-        dlog("watchdog fired, sending response.create");
-        requestResponse();
-      }
-    }, 1300);
-  }, [clearWatchdog, requestResponse]);
+  // (Watchdog for auto response.create was removed: the client now explicitly
+  //  calls requestResponse() only after transcription passes validation, so
+  //  ambient noise never triggers a spurious response.)
 
   const retryResponse = useCallback(() => {
     setResponseError(null);
