@@ -381,7 +381,7 @@ export function useRealtimeVoice({
         responseInProgressRef.current = false;
         clearWatchdog();
         if (stateRef.current === "fred-thinking" || stateRef.current === "fred-speaking") {
-          setResponseError("Fred teve um problema para responder. Toque para tentar novamente.");
+          setResponseError("Lucas teve um problema para responder. Toque para tentar novamente.");
           setState("listening");
         }
         break;

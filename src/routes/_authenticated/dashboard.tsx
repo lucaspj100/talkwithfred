@@ -91,7 +91,7 @@ function Dashboard() {
       <header className="mb-8 flex items-center justify-between">
         <Link to="/dashboard" className="flex items-center gap-2 font-display text-lg font-bold">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">F</span>
-          Talk With Fred
+          Speak With Lucas
         </Link>
         <div className="flex items-center gap-2">
           {me.isAdmin && (
@@ -111,7 +111,7 @@ function Dashboard() {
           </p>
         </div>
         <div className="fred-ring h-24 w-24 justify-self-end" data-state="neutral">
-          <img src={fredAvatar} alt="Fred" width={1024} height={1024} loading="lazy" className="h-24 w-24 rounded-full object-cover" />
+          <img src={fredAvatar} alt="Lucas" width={1024} height={1024} loading="lazy" className="h-24 w-24 rounded-full object-cover" />
         </div>
       </div>
 
@@ -132,7 +132,7 @@ function Dashboard() {
         <ModeCard
           icon={<Mic className="size-6" />}
           tone="primary"
-          title="Conversar com Fred"
+          title="Conversar com Lucas"
           description="Fale ou digite em inglês com seu parceiro de conversação."
           cta={picking ? "Escolha um modo..." : "Iniciar conversa"}
           onClick={() => setPicking(true)}
@@ -147,7 +147,7 @@ function Dashboard() {
         />
       </div>
 
-      {/* Mode picker for "Conversar com Fred" */}
+      {/* Mode picker for "Conversar com Lucas" */}
       {picking && (
         <div className="mt-4 rounded-2xl border border-border bg-card/60 p-4">
           <div className="flex items-center justify-between">
@@ -229,7 +229,7 @@ function Dashboard() {
             <p className="mt-1 font-display text-lg font-semibold">
               {stats.last_practice_date === new Date().toISOString().slice(0, 10)
                 ? `Streak ativo! ${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"} 🔥`
-                : "Complete um treino ou converse com Fred para manter seu streak."}
+                : "Complete um treino ou converse com Lucas para manter seu streak."}
             </p>
           </div>
           <Link to="/practice">
@@ -275,8 +275,8 @@ function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; va
 
 type SpeedValue = "slower" | "level_adapted" | "natural";
 const SPEED_OPTIONS: { value: SpeedValue; label: string; hint: string }[] = [
-  { value: "slower", label: "Mais devagar", hint: "Fred fala mais devagar que o normal" },
-  { value: "level_adapted", label: "Adaptada ao meu nível", hint: "Padrão — Fred ajusta pelo seu nível" },
+  { value: "slower", label: "Mais devagar", hint: "Lucas fala mais devagar que o normal" },
+  { value: "level_adapted", label: "Adaptada ao meu nível", hint: "Padrão — Lucas ajusta pelo seu nível" },
   { value: "natural", label: "Natural", hint: "Ritmo natural de conversa" },
 ];
 
@@ -310,7 +310,7 @@ function SpeedPreference({ initial }: { initial: string }) {
     <div className="mt-4 rounded-2xl border border-border bg-card/60 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs uppercase text-muted-foreground">Velocidade da fala do Fred</p>
+          <p className="text-xs uppercase text-muted-foreground">Velocidade da fala do Lucas</p>
           <p className="text-xs text-muted-foreground">{current.hint}</p>
         </div>
         <div className="flex flex-wrap gap-1 rounded-xl border border-border bg-background/60 p-1">
@@ -369,10 +369,10 @@ function FocusCard({ profile }: { profile: NonNullable<ReturnType<typeof Route.u
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="flex items-center gap-2 text-xs uppercase text-primary">
-              <Sparkles className="size-3.5" /> Atualize seu foco com Fred
+              <Sparkles className="size-3.5" /> Atualize seu foco com Lucas
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Conte para Fred seus objetivos atuais para personalizar conversas e treinos.
+              Conte para Lucas seus objetivos atuais para personalizar conversas e treinos.
             </p>
           </div>
           <Link to="/settings/onboarding">

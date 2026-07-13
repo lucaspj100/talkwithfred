@@ -29,7 +29,7 @@ export const Route = createFileRoute("/simulacao/")({
         content:
           "Faça uma simulação gratuita com IA, veja onde seu inglês trava e descubra quais oportunidades podem estar ficando fora do seu radar.",
       },
-      { property: "og:title", content: "Simulador de Inglês para Carreira — Fred" },
+      { property: "og:title", content: "Simulador de Inglês para Carreira — Lucas" },
       {
         property: "og:description",
         content: "Simulação gratuita com IA para profissionais que querem destravar carreira e oportunidades internacionais.",
@@ -163,7 +163,7 @@ function SimulacaoPage() {
       <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
         <a href="/" className="flex items-center gap-2 font-display text-lg font-bold">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">F</span>
-          Talk With Fred
+          Speak With Lucas
         </a>
         <span className="text-xs text-muted-foreground">Simulação gratuita</span>
       </header>
@@ -206,7 +206,7 @@ function SimulacaoPage() {
         {step === "diag_goal" && (
           <StepShell
             title="Qual seu principal objetivo com inglês?"
-            subtitle="Fred vai simular uma situação de carreira ligada a isso."
+            subtitle="Lucas vai simular uma situação de carreira ligada a isso."
           >
             <Grid options={GOALS as unknown as { value: string; label: string }[]} value={diag.goal} onChange={(v) => set({ goal: v })} />
           </StepShell>
@@ -239,7 +239,7 @@ function SimulacaoPage() {
             <div className="space-y-3">
               <div>
                 <label className="mb-1 block text-sm">Seu nome</label>
-                <Input value={lead.name} onChange={(e) => setLead((p) => ({ ...p, name: e.target.value }))} placeholder="Como Fred pode te chamar?" />
+                <Input value={lead.name} onChange={(e) => setLead((p) => ({ ...p, name: e.target.value }))} placeholder="Como Lucas pode te chamar?" />
               </div>
               <div>
                 <label className="mb-1 block text-sm">Email</label>
@@ -294,7 +294,7 @@ function SimulacaoPage() {
             </Button>
             {step === "lead" ? (
               <Button onClick={submitLead} disabled={submitting}>
-                {submitting ? "Preparando Fred..." : "Iniciar simulação"} <ArrowRight className="ml-1 size-4" />
+                {submitting ? "Preparando Lucas..." : "Iniciar simulação"} <ArrowRight className="ml-1 size-4" />
               </Button>
             ) : (
               <Button onClick={goNext} disabled={!canNext}>
@@ -413,7 +413,7 @@ function SimulationChat({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const kickedOff = useRef(false);
 
-  // Kick off with a synthetic user "hi" so Fred opens the scene.
+  // Kick off with a synthetic user "hi" so Lucas opens the scene.
   useEffect(() => {
     if (kickedOff.current) return;
     kickedOff.current = true;
@@ -439,7 +439,7 @@ function SimulationChat({
   function finish() {
     const transcript = messages
       .filter((m) => textOf(m).length > 0)
-      .map((m) => `${m.role === "user" ? diagnostic.name || "User" : "Fred"}: ${textOf(m)}`)
+      .map((m) => `${m.role === "user" ? diagnostic.name || "User" : "Lucas"}: ${textOf(m)}`)
       .join("\n");
     onFinish(transcript.slice(0, 4000));
   }
@@ -450,7 +450,7 @@ function SimulationChat({
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-bold">F</span>
           <div>
-            <p className="text-sm font-semibold">Simulação com Fred</p>
+            <p className="text-sm font-semibold">Simulação com Lucas</p>
             <p className="text-xs text-muted-foreground">
               {userTurns < MIN_USER_TURNS
                 ? `Turno ${Math.max(userTurns, 0)}/${MIN_USER_TURNS} para gerar seu mapa`
@@ -488,7 +488,7 @@ function SimulationChat({
         {busy && messages[messages.length - 1]?.role === "user" && (
           <div className="flex justify-start">
             <div className="rounded-2xl border border-border bg-card px-4 py-2 text-sm text-muted-foreground">
-              <MessageCircle className="mr-1 inline size-3 animate-pulse" /> Fred está pensando...
+              <MessageCircle className="mr-1 inline size-3 animate-pulse" /> Lucas está pensando...
             </div>
           </div>
         )}

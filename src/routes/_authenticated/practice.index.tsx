@@ -61,9 +61,9 @@ function PracticeIndex() {
       </div>
 
       <div className="mt-10 grid gap-4 md:grid-cols-2">
-        <Panel title={`Meus erros (${stats.errors_count})`} subtitle="Capturados nas conversas com Fred.">
+        <Panel title={`Meus erros (${stats.errors_count})`} subtitle="Capturados nas conversas com Lucas.">
           {errors.length === 0 ? (
-            <Empty text="Sem erros registrados ainda. Converse com Fred para começarmos a capturar." />
+            <Empty text="Sem erros registrados ainda. Converse com Lucas para começarmos a capturar." />
           ) : (
             <ul className="divide-y divide-border">
               {errors.map((e: typeof errors[number]) => (
@@ -76,7 +76,7 @@ function PracticeIndex() {
             </ul>
           )}
         </Panel>
-        <Panel title={`Vocabulário (${stats.vocabulary_count})`} subtitle="Palavras novas que Fred usou com você.">
+        <Panel title={`Vocabulário (${stats.vocabulary_count})`} subtitle="Palavras novas que Lucas usou com você.">
           {vocab.length === 0 ? (
             <Empty text="Sem vocabulário ainda. Quanto mais conversas, mais palavras." />
           ) : (

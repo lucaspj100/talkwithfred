@@ -87,16 +87,16 @@ export function RealtimeConversation({
           <div className="fred-ring h-full w-full" data-state="neutral">
             <img
               src={fredAvatar}
-              alt="Fred"
+              alt="Lucas"
               width={1024}
               height={1024}
               className="h-full w-full rounded-full object-cover"
             />
           </div>
         </div>
-        <h2 className="font-display text-2xl font-bold">Conversa por voz com Fred</h2>
+        <h2 className="font-display text-2xl font-bold">Conversa por voz com Lucas</h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Fale naturalmente. Fred escuta, responde e pode ser interrompido a qualquer momento.
+          Fale naturalmente. Lucas escuta, responde e pode ser interrompido a qualquer momento.
         </p>
         {isError && errorMsg && (
           <p className="mx-auto mt-4 max-w-md rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -131,14 +131,14 @@ export function RealtimeConversation({
           <div className={cn("fred-ring h-12 w-12")} data-state={ringState(state)}>
             <img
               src={fredAvatar}
-              alt="Fred"
+              alt="Lucas"
               width={128}
               height={128}
               className="h-12 w-12 rounded-full object-cover"
             />
           </div>
           <div>
-            <p className="text-sm font-semibold">Fred</p>
+            <p className="text-sm font-semibold">Lucas</p>
             <p className="text-xs text-muted-foreground">{stateLabel(state, muted)}</p>
           </div>
         </div>
@@ -149,7 +149,7 @@ export function RealtimeConversation({
         <div className="fred-ring h-32 w-32 md:h-40 md:w-40" data-state={ringState(state)}>
           <img
             src={fredAvatar}
-            alt="Fred"
+            alt="Lucas"
             width={1024}
             height={1024}
             className="h-full w-full rounded-full object-cover"
@@ -181,7 +181,7 @@ export function RealtimeConversation({
 
       {audioBlocked && (
         <div className="mb-3 flex flex-col items-center gap-2 rounded-md bg-amber-500/10 p-3 text-center text-sm">
-          <span>Seu iPhone pausou o áudio. Toque para continuar ouvindo Fred.</span>
+          <span>Seu iPhone pausou o áudio. Toque para continuar ouvindo Lucas.</span>
           <Button variant="secondary" size="sm" onClick={resumeAudio}>
             Reativar áudio
           </Button>
@@ -219,11 +219,11 @@ function stateLabel(s: VoiceState, muted: boolean): string {
     return "Microfone silenciado";
   }
   switch (s) {
-    case "connecting": return "Preparando Fred…";
-    case "listening": return "Fred está ouvindo";
+    case "connecting": return "Preparando Lucas…";
+    case "listening": return "Lucas está ouvindo";
     case "user-speaking": return "Você está falando…";
-    case "fred-thinking": return "Fred está preparando a resposta…";
-    case "fred-speaking": return "Fred está falando — pode interromper";
+    case "fred-thinking": return "Lucas está preparando a resposta…";
+    case "fred-speaking": return "Lucas está falando — pode interromper";
     case "reconnecting": return "Reconectando…";
     case "ended": return "Conversa encerrada";
     case "error": return "Não foi possível iniciar a conversa por voz";
@@ -314,7 +314,7 @@ function Bubble({
         )}
       >
         <span className="mr-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-          {mine ? userName : "Fred"}
+          {mine ? userName : "Lucas"}
         </span>
         {text}
       </div>

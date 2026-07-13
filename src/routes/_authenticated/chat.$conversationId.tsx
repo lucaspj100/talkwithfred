@@ -64,7 +64,7 @@ function ChatPage() {
       if (!assistantText) return;
       const userText = pendingUserRef.current.trim();
       pendingUserRef.current = "";
-      // No paired user turn (e.g. Fred's opening greeting) → skip DB persistence
+      // No paired user turn (e.g. Lucas's opening greeting) → skip DB persistence
       // (persistTurn requires both sides) but still keep it in the voice transcript.
       if (!userText) return;
       try {
@@ -322,7 +322,7 @@ function ChatPage() {
         if ((err as Error)?.name === "NotAllowedError") {
           if (!blockToastShownRef.current) {
             blockToastShownRef.current = true;
-            toast.message("O navegador bloqueou o áudio. Clique novamente em qualquer lugar ou no botão Ouvir Fred para liberar.");
+            toast.message("O navegador bloqueou o áudio. Clique novamente em qualquer lugar ou no botão Ouvir Lucas para liberar.");
           }
         } else if (opts.manual) {
           toast.error("Falha ao reproduzir áudio.");
@@ -376,10 +376,10 @@ function ChatPage() {
       console.error("[chat]", e);
       const msg = (e as Error)?.message ?? "";
       if (/unauthorized|401/i.test(msg)) {
-        toast.error("Sua sessão expirou. Faça login novamente para conversar com Fred.");
+        toast.error("Sua sessão expirou. Faça login novamente para conversar com Lucas.");
         navigate({ to: "/auth" });
       } else {
-        toast.error("Fred teve um problema para responder agora. Tente novamente em alguns segundos.");
+        toast.error("Lucas teve um problema para responder agora. Tente novamente em alguns segundos.");
       }
     },
   });
@@ -397,7 +397,7 @@ function ChatPage() {
     }
     const { data } = await supabase.auth.getSession();
     if (!data.session) {
-      toast.error("Sua sessão expirou. Faça login novamente para conversar com Fred.");
+      toast.error("Sua sessão expirou. Faça login novamente para conversar com Lucas.");
       navigate({ to: "/auth" });
       return;
     }
@@ -537,7 +537,7 @@ function ChatPage() {
   }
 
 
-  // ============= Fred state =============
+  // ============= Lucas state =============
   const fredState: "neutral" | "listening" | "thinking" | "responding" | "preparing" | "speaking" =
     recording ? "listening"
     : transcribing || status === "submitted" ? "thinking"
@@ -552,7 +552,7 @@ function ChatPage() {
     thinking: "Pensando...",
     responding: "Respondendo...",
     preparing: "Preparando áudio...",
-    speaking: "Fred está falando...",
+    speaking: "Lucas está falando...",
   };
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -637,12 +637,12 @@ function ChatPage() {
 
 
       <div className="grid flex-1 gap-6 md:grid-cols-[260px,1fr]">
-        {/* Fred panel */}
+        {/* Lucas panel */}
         <aside className="hidden flex-col items-center justify-start gap-4 rounded-3xl border border-border bg-card/40 p-6 md:flex">
           <div className="fred-ring h-44 w-44" data-state={fredState}>
-            <img src={fredAvatar} alt="Fred" width={1024} height={1024} loading="lazy" className="h-44 w-44 rounded-full object-cover" />
+            <img src={fredAvatar} alt="Lucas" width={1024} height={1024} loading="lazy" className="h-44 w-44 rounded-full object-cover" />
           </div>
-          <p className="font-display text-lg font-semibold">Fred</p>
+          <p className="font-display text-lg font-semibold">Lucas</p>
           <p className="text-center text-xs text-muted-foreground">{stateLabel[fredState]}</p>
           <p className="mt-2 text-center text-[11px] text-muted-foreground">Seu parceiro de conversação em inglês</p>
         </aside>
@@ -651,10 +651,10 @@ function ChatPage() {
         <section className="flex flex-col rounded-3xl border border-border bg-card/40">
           <div className="flex items-center gap-3 border-b border-border px-4 py-3 md:hidden">
             <div className="fred-ring h-10 w-10" data-state={fredState}>
-              <img src={fredAvatar} alt="Fred" width={128} height={128} loading="lazy" className="h-10 w-10 rounded-full object-cover" />
+              <img src={fredAvatar} alt="Lucas" width={128} height={128} loading="lazy" className="h-10 w-10 rounded-full object-cover" />
             </div>
             <div>
-              <p className="text-sm font-semibold">Fred</p>
+              <p className="text-sm font-semibold">Lucas</p>
               <p className="text-[11px] text-muted-foreground">{stateLabel[fredState]}</p>
             </div>
           </div>
@@ -662,7 +662,7 @@ function ChatPage() {
           <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-5" style={{ maxHeight: "calc(100vh - 240px)" }}>
             {messages.length === 0 && (
               <div className="rounded-2xl border border-dashed border-border bg-background/40 p-6 text-center">
-                <p className="text-sm text-muted-foreground">Diga oi para o Fred em inglês para começar 👋</p>
+                <p className="text-sm text-muted-foreground">Diga oi para o Lucas em inglês para começar 👋</p>
                 <p className="mt-1 text-xs text-muted-foreground">Use o microfone ou digite abaixo.</p>
               </div>
             )}
@@ -704,7 +704,7 @@ function ChatPage() {
                         className="mt-1 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
                       >
                         {isPreparing ? <Loader2 className="size-3 animate-spin" /> : isPlaying ? <Square className="size-3" /> : <Volume2 className="size-3" />}
-                        {isPreparing ? "Preparando áudio..." : isPlaying ? "Parar" : "Ouvir Fred"}
+                        {isPreparing ? "Preparando áudio..." : isPlaying ? "Parar" : "Ouvir Lucas"}
                       </button>
                     )}
                   </div>
