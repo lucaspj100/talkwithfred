@@ -1,19 +1,16 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { getMyProfile } from "@/lib/profile.functions";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { getAdminUserDetail, type ActivityEvent } from "@/lib/admin.functions";
-import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
 import { ArrowLeft, MessageCircle, Mic, ClipboardCheck, Flame, Zap, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/users/$userId")({
   loader: async ({ params }) => {
-    const me = await getMyProfile();
-    if (!me.isAdmin) throw redirect({ to: "/dashboard" });
     const detail = await getAdminUserDetail({ data: { userId: params.userId } });
     return { detail };
   },
   component: UserDetailPage,
 });
+
 
 function KindLabel(kind: string) {
   switch (kind) {
@@ -32,7 +29,8 @@ function UserDetailPage() {
   const st = detail.stats;
 
   return (
-    <AdminShell title="Detalhes do usuário">
+    <>
+
       <div className="mb-4">
         <Link to="/admin/users" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="mr-1 size-4" /> Voltar aos usuários
@@ -123,7 +121,7 @@ function UserDetailPage() {
       <p className="mt-3 text-xs text-muted-foreground">
         Por privacidade, o conteúdo das mensagens não é exibido aqui.
       </p>
-    </AdminShell>
+    </>
   );
 }
 
