@@ -78,7 +78,7 @@ function AdminUsersPage() {
       u.last_login ?? "", u.last_activity_at ?? "", u.conversations_count, u.messages_count, u.practice_sessions_count,
       Number(u.voice_minutes_total).toFixed(2), u.xp, u.streak_days, u.longest_streak, u.engagement_status,
     ]);
-    const csv = [headers, ...rows].map((r) => r.map((v) => `"${String(v).replaceAll('"', '""')}"`).join(",")).join("\n");
+    const csv = [headers, ...rows].map((r: (string | number)[]) => r.map((v: string | number) => `"${String(v).replaceAll('"', '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
