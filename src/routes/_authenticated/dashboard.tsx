@@ -108,7 +108,7 @@ function Dashboard() {
           </p>
         </div>
         <div className="fred-ring h-24 w-24 justify-self-end" data-state="neutral">
-          <img src={fredAvatar} alt="Lucas" width={1024} height={1024} loading="lazy" className="h-24 w-24 rounded-full object-cover" />
+          <LucasAvatar alt="Lucas" className="h-24 w-24 text-4xl ring-0" />
         </div>
       </div>
 
