@@ -95,7 +95,7 @@ function Dashboard() {
         </Link>
         <div className="flex items-center gap-2">
           {me.isAdmin && (
-            <Link to="/admin"><Button variant="ghost" size="sm"><ShieldAlert className="mr-1 size-4" />Admin</Button></Link>
+            <Link to="/admin"><Button variant="ghost" size="sm"><ShieldAlert className="mr-1 size-4" />Administração</Button></Link>
           )}
           <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="mr-1 size-4" />Sair</Button>
         </div>
