@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isLikelyNoiseTranscript } from "@/lib/voice-config";
 
 export type VoiceState =
   | "idle"
@@ -149,15 +150,9 @@ export function useRealtimeVoice({
     sendEvent({ type: "response.create", response: { output_modalities: ["audio"] } });
   }, [sendEvent]);
 
-  const scheduleWatchdog = useCallback(() => {
-    clearWatchdog();
-    responseWatchdogRef.current = setTimeout(() => {
-      if (!responseInProgressRef.current) {
-        dlog("watchdog fired, sending response.create");
-        requestResponse();
-      }
-    }, 1300);
-  }, [clearWatchdog, requestResponse]);
+  // (Watchdog for auto response.create was removed: the client now explicitly
+  //  calls requestResponse() only after transcription passes validation, so
+  //  ambient noise never triggers a spurious response.)
 
   const retryResponse = useCallback(() => {
     setResponseError(null);
@@ -253,7 +248,16 @@ export function useRealtimeVoice({
         setPartialUser("");
         partialUserItemIdRef.current = null;
         const id = ev.item_id || `u_${Date.now()}`;
-        if (text.length > 0 && !emittedItemIdsRef.current.has(id)) {
+        // Validate: skip empty/noise-only transcriptions. Server VAD is set to
+        // create_response=false, so nothing is sent to Lucas unless we ask.
+        if (text.length === 0 || isLikelyNoiseTranscript(text)) {
+          dlog("dropped noise/empty transcript", text);
+          if (stateRef.current === "user-speaking" || stateRef.current === "fred-thinking") {
+            setState("listening");
+          }
+          break;
+        }
+        if (!emittedItemIdsRef.current.has(id)) {
           emittedItemIdsRef.current.add(id);
           setTurns((prev) => [
             ...prev,
@@ -261,8 +265,8 @@ export function useRealtimeVoice({
           ]);
           onUserFinalRef.current?.(text);
         }
-        // Server VAD should auto-create a response; watchdog is a safety net.
-        scheduleWatchdog();
+        // Now that we have validated speech, ask Lucas to respond.
+        requestResponse();
         break;
       }
       case "response.created": {
@@ -389,7 +393,7 @@ export function useRealtimeVoice({
       default:
         break;
     }
-  }, [assistantFlushKey, flushAssistantFinal, scheduleWatchdog, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck]);
+  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck]);
 
   const start = useCallback(async () => {
     if (!supported) {

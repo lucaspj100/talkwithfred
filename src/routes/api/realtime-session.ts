@@ -4,6 +4,11 @@ import { createHash } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "@/integrations/supabase/types";
 import { buildFredSystemPrompt, type Mode } from "@/lib/fred-prompt";
+import {
+  END_OF_SPEECH_SILENCE_MS,
+  VAD_PREFIX_PADDING_MS,
+  VAD_THRESHOLD,
+} from "@/lib/voice-config";
 
 const BodySchema = z.object({
   conversationId: z.string().uuid(),
@@ -134,10 +139,12 @@ export const Route = createFileRoute("/api/realtime-session")({
                     transcription: { model: TRANSCRIPTION_MODEL },
                     turn_detection: {
                       type: "server_vad",
-                      threshold: 0.5,
-                      prefix_padding_ms: 300,
-                      silence_duration_ms: 500,
-                      create_response: true,
+                      threshold: VAD_THRESHOLD,
+                      prefix_padding_ms: VAD_PREFIX_PADDING_MS,
+                      silence_duration_ms: END_OF_SPEECH_SILENCE_MS,
+                      // The client validates the transcription before asking
+                      // for a response, so noise never triggers Lucas.
+                      create_response: false,
                       interrupt_response: true,
                     },
                   },
