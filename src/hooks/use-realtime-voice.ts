@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { isLikelyNoiseTranscript } from "@/lib/voice-config";
 
 export type VoiceState =
   | "idle"
