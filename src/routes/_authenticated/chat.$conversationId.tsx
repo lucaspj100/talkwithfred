@@ -641,7 +641,7 @@ function ChatPage() {
         {/* Lucas panel */}
         <aside className="hidden flex-col items-center justify-start gap-4 rounded-3xl border border-border bg-card/40 p-6 md:flex">
           <div className="fred-ring h-44 w-44" data-state={fredState}>
-            <img src={fredAvatar} alt="Lucas" width={1024} height={1024} loading="lazy" className="h-44 w-44 rounded-full object-cover" />
+            <LucasAvatar alt="Lucas" className="h-44 w-44 text-5xl ring-0" />
           </div>
           <p className="font-display text-lg font-semibold">Lucas</p>
           <p className="text-center text-xs text-muted-foreground">{stateLabel[fredState]}</p>
