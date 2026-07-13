@@ -39,7 +39,7 @@
   --color-success: var(--success);
 }
 
-/* Dark, modern, premium. Deep navy with warm amber for Fred. */
+/* Dark, modern, premium. Deep navy with warm amber for Lucas. */
 :root {
   --radius: 0.875rem;
   --background: oklch(0.16 0.03 260);
@@ -48,7 +48,7 @@
   --card-foreground: oklch(0.98 0.01 250);
   --popover: oklch(0.22 0.035 262);
   --popover-foreground: oklch(0.98 0.01 250);
-  --primary: oklch(0.78 0.15 70);            /* warm amber — Fred */
+  --primary: oklch(0.78 0.15 70);            /* warm amber — Lucas */
   --primary-foreground: oklch(0.18 0.03 260);
   --secondary: oklch(0.28 0.04 262);
   --secondary-foreground: oklch(0.98 0.01 250);

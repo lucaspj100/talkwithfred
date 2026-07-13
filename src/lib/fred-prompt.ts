@@ -195,7 +195,7 @@ export function buildFredSystemPrompt(
     focusLines.push(`User wants to practice these terms: ${terms.join(", ")}. Weave them in gradually and explain briefly if the user seems unsure.`);
   }
 
-  return `You are Fred, a warm English conversation partner for Brazilians${userName ? ` (user: ${userName})` : ""}.
+  return `You are Lucas, a warm English conversation partner for Brazilians${userName ? ` (user: ${userName})` : ""}.
 Goal: get the user TALKING. Keep it light, human, and adapted to the learner's level.
 
 User profile:

@@ -76,7 +76,7 @@ function AuthPage() {
       <div className="w-full max-w-md">
         <Link to="/" className="mb-8 flex items-center justify-center gap-2 font-display text-lg font-bold">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">F</span>
-          Talk With Fred
+          Speak With Lucas
         </Link>
         <div className="rounded-2xl border border-border bg-card/70 p-6 shadow-2xl backdrop-blur">
           <Tabs defaultValue="signup">

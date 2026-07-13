@@ -97,7 +97,7 @@ export const ENGLISH_LEVELS: { value: string; label: string; hint?: string }[] =
   { value: "basic", label: "Básico", hint: "Frases simples" },
   { value: "intermediate", label: "Intermediário", hint: "Dia a dia" },
   { value: "advanced", label: "Avançado", hint: "Falo com fluência" },
-  { value: "unknown", label: "Não sei", hint: "Fred descobre comigo" },
+  { value: "unknown", label: "Não sei", hint: "Lucas descobre comigo" },
 ];
 
 export const CORRECTION_PREFS: { value: string; label: string; hint: string }[] = [

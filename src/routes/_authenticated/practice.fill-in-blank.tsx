@@ -109,7 +109,7 @@ function FillInBlankPage() {
             <RotateCcw className="mr-2 size-4" /> Continuar praticando
           </Button>
           <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>
-            <MessageCircle className="mr-2 size-4" /> Conversar com Fred
+            <MessageCircle className="mr-2 size-4" /> Conversar com Lucas
           </Button>
           <Link to="/practice" className="text-sm text-muted-foreground hover:text-foreground">Voltar ao treino</Link>
         </div>

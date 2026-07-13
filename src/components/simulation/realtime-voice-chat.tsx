@@ -77,7 +77,7 @@ export function RealtimeVoiceChat({
     const name = diagnostic.name?.trim() || "Você";
     const transcript = turns
       .filter((t) => t.final && t.text.trim().length > 0)
-      .map((t) => `${t.role === "user" ? name : "Fred"}: ${t.text.trim()}`)
+      .map((t) => `${t.role === "user" ? name : "Lucas"}: ${t.text.trim()}`)
       .join("\n")
       .slice(0, 4000);
     try {
@@ -95,7 +95,7 @@ export function RealtimeVoiceChat({
     if (elapsed > MAX_DURATION_MS && !finishedRef.current) void finish();
   }, [elapsed, finish]);
 
-  // Wrap up naturally once Fred returns to listening after MAX turns.
+  // Wrap up naturally once Lucas returns to listening after MAX turns.
   useEffect(() => {
     if (userFinalTurns >= MAX_USER_TURNS && state === "listening" && !finishedRef.current) {
       void finish();
@@ -111,9 +111,9 @@ export function RealtimeVoiceChat({
         <div className="mx-auto mb-4 grid size-16 place-items-center rounded-full bg-primary/10">
           <Mic className="size-8 text-primary" />
         </div>
-        <h2 className="font-display text-2xl font-bold">Converse com Fred</h2>
+        <h2 className="font-display text-2xl font-bold">Converse com Lucas</h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          Fred vai simular uma situação profissional em inglês. Fale naturalmente — você pode interrompê-lo a qualquer momento.
+          Lucas vai simular uma situação profissional em inglês. Fale naturalmente — você pode interrompê-lo a qualquer momento.
         </p>
         {isError && errorMsg && (
           <p className="mx-auto mt-4 max-w-md rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -154,7 +154,7 @@ export function RealtimeVoiceChat({
             F
           </div>
           <div>
-            <p className="text-sm font-semibold">Fred</p>
+            <p className="text-sm font-semibold">Lucas</p>
             <p className="text-xs text-muted-foreground">{stateLabel(state, muted)}</p>
           </div>
         </div>
@@ -201,7 +201,7 @@ export function RealtimeVoiceChat({
 
       {audioBlocked && (
         <div className="mb-3 flex flex-col items-center gap-2 rounded-md bg-amber-500/10 p-3 text-center text-sm">
-          <span>Seu iPhone pausou o áudio. Toque para continuar ouvindo Fred.</span>
+          <span>Seu iPhone pausou o áudio. Toque para continuar ouvindo Lucas.</span>
           <Button variant="secondary" size="sm" onClick={resumeAudio}>
             Reativar áudio
           </Button>
@@ -301,7 +301,7 @@ function Bubble({
         )}
       >
         <span className="mr-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-          {mine ? userName : "Fred"}
+          {mine ? userName : "Lucas"}
         </span>
         {text}
       </div>
@@ -314,11 +314,11 @@ function stateLabel(s: VoiceState, muted: boolean): string {
     return "Seu microfone está silenciado";
   }
   switch (s) {
-    case "connecting": return "Preparando Fred…";
-    case "listening": return "Fred está ouvindo você";
+    case "connecting": return "Preparando Lucas…";
+    case "listening": return "Lucas está ouvindo você";
     case "user-speaking": return "Estou te ouvindo…";
-    case "fred-thinking": return "Fred está preparando a resposta…";
-    case "fred-speaking": return "Fred está falando — você pode interromper";
+    case "fred-thinking": return "Lucas está preparando a resposta…";
+    case "fred-speaking": return "Lucas está falando — você pode interromper";
     case "reconnecting": return "Reconectando…";
     case "ended": return "Conversa encerrada";
     case "error": return "Não foi possível iniciar a conversa por voz";

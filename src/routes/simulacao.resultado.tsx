@@ -14,7 +14,7 @@ import { ArrowLeft, MessageCircle, Sparkle, Target, Globe2, TrendingUp } from "l
 export const Route = createFileRoute("/simulacao/resultado")({
   head: () => ({
     meta: [
-      { title: "Seu Mapa de Oportunidades — Fred" },
+      { title: "Seu Mapa de Oportunidades — Lucas" },
       { name: "description", content: "Veja onde seu inglês trava e quais oportunidades podem estar fora do seu radar hoje." },
       { name: "robots", content: "noindex" },
     ],
@@ -68,7 +68,7 @@ function ResultadoPage() {
 
   const wa = import.meta.env.VITE_WHATSAPP_NUMBER as string | undefined;
   const waMessage = encodeURIComponent(
-    `Oi! Sou ${name}. Acabei de fazer a simulação com o Fred.\n\nMinha área: ${area || "—"}\nObjetivo: ${goal || "—"}\nOnde mais travo: ${block}\nNível: ${level || "—"}\n\nQuero continuar minha análise e entender se me encaixo na bolsa parcial.`,
+    `Oi! Sou ${name}. Acabei de fazer a simulação com o Lucas.\n\nMinha área: ${area || "—"}\nObjetivo: ${goal || "—"}\nOnde mais travo: ${block}\nNível: ${level || "—"}\n\nQuero continuar minha análise e entender se me encaixo na bolsa parcial.`,
   );
   const waHref = wa ? `https://wa.me/${wa.replace(/\D/g, "")}?text=${waMessage}` : null;
 
@@ -82,7 +82,7 @@ function ResultadoPage() {
       <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
         <Link to="/" className="flex items-center gap-2 font-display text-lg font-bold">
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">F</span>
-          Talk With Fred
+          Speak With Lucas
         </Link>
         <Link to="/simulacao" className="text-xs text-muted-foreground hover:text-foreground">
           <ArrowLeft className="mr-1 inline size-3" /> Refazer simulação
@@ -98,7 +98,7 @@ function ResultadoPage() {
         </h1>
         <p className="mt-3 text-muted-foreground">
           Você parece ter clareza da importância do inglês, mas ainda sente insegurança para usar o idioma em situações
-          profissionais reais. Abaixo, um resumo do que Fred percebeu e por onde seu inglês pode estar te limitando.
+          profissionais reais. Abaixo, um resumo do que Lucas percebeu e por onde seu inglês pode estar te limitando.
         </p>
 
         <section className="mt-8 grid gap-4 md:grid-cols-2">
