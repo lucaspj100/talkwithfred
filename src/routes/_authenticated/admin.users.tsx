@@ -1,16 +1,19 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { getMyProfile } from "@/lib/profile.functions";
+import { zodValidator, fallback } from "@tanstack/zod-adapter";
+import { z } from "zod";
 import { getAdminUsers, type UserRow, type EngagementStatus } from "@/lib/admin.functions";
-import { AdminShell } from "@/components/admin/AdminShell";
 import { EngagementBadge, ENGAGEMENT_LABELS } from "@/components/admin/EngagementBadge";
 import { Button } from "@/components/ui/button";
 import { Download, Search } from "lucide-react";
 
+const usersSearchSchema = z.object({
+  status: fallback(z.string(), "all").default("all"),
+});
+
 export const Route = createFileRoute("/_authenticated/admin/users")({
+  validateSearch: zodValidator(usersSearchSchema),
   loader: async () => {
-    const me = await getMyProfile();
-    if (!me.isAdmin) throw redirect({ to: "/dashboard" });
     const users = await getAdminUsers();
     return { users };
   },
@@ -23,11 +26,17 @@ function fmt(d: string | null) { return d ? new Date(d).toLocaleDateString("pt-B
 function fmtDT(d: string | null) { return d ? new Date(d).toLocaleString("pt-BR") : "—"; }
 
 const PAGE_SIZE = 25;
+const STATUS_KEYS: EngagementStatus[] = ["very_active", "active", "at_risk", "inactive", "never_activated"];
 
 function AdminUsersPage() {
   const { users } = Route.useLoaderData();
+  const search = Route.useSearch();
+  const initialStatus: EngagementStatus | "all" = (STATUS_KEYS as string[]).includes(search.status)
+    ? (search.status as EngagementStatus)
+    : "all";
+
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<EngagementStatus | "all">("all");
+  const [status, setStatus] = useState<EngagementStatus | "all">(initialStatus);
   const [level, setLevel] = useState<string>("all");
   const [onb, setOnb] = useState<"all" | "yes" | "no">("all");
   const [fromDate, setFromDate] = useState("");
@@ -87,7 +96,7 @@ function AdminUsersPage() {
   }
 
   return (
-    <AdminShell title="Usuários">
+    <>
       <div className="mb-4 flex flex-wrap items-end gap-2">
         <div className="relative min-w-[220px] flex-1">
           <Search className="pointer-events-none absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -100,7 +109,7 @@ function AdminUsersPage() {
         <select value={status} onChange={(e) => { setStatus(e.target.value as EngagementStatus | "all"); setPage(1); }}
           className="rounded-md border border-border bg-background px-2 py-2 text-sm">
           <option value="all">Todos os status</option>
-          {(["very_active", "active", "at_risk", "inactive", "never_activated"] as const).map((s) => (
+          {STATUS_KEYS.map((s) => (
             <option key={s} value={s}>{ENGAGEMENT_LABELS[s]}</option>
           ))}
         </select>
@@ -206,6 +215,6 @@ function AdminUsersPage() {
           <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Próxima</Button>
         </div>
       </div>
-    </AdminShell>
+    </>
   );
 }
