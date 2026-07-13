@@ -1,10 +1,9 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getMyProfile } from "@/lib/profile.functions";
 import {
   listLeads,
   updateLeadStatus,
@@ -21,17 +20,16 @@ import {
   labelBlock,
   labelLostOpp,
 } from "@/lib/simulation-options";
-import { ArrowLeft, Download, MessageCircle, Search, X } from "lucide-react";
+import { Download, MessageCircle, Search, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/leads")({
   loader: async () => {
-    const me = await getMyProfile();
-    if (!me.isAdmin) throw redirect({ to: "/dashboard" });
     const leads = await listLeads();
     return { leads };
   },
   component: AdminLeadsPage,
 });
+
 
 function statusLabel(v: string) {
   return LEAD_STATUSES.find((s) => s.value === v)?.label ?? v;
