@@ -446,7 +446,7 @@ function SimulationChat({
     <div className="rounded-2xl border border-border bg-card/60 p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-bold">F</span>
+          <LucasAvatar size="sm" />
           <div>
             <p className="text-sm font-semibold">Simulação com Lucas</p>
             <p className="text-xs text-muted-foreground">
