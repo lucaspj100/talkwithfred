@@ -30,7 +30,7 @@ function RetentionPage() {
   // Average messages per mode (from users we can't get per-mode msgs easily,
   // so we approximate using conversations counted per mode from `modes` and
   // total messages in the period).
-  const totalConv = modes.reduce((a, m) => a + m.value, 0);
+  const totalConv = modes.reduce((a: number, m: { value: number }) => a + m.value, 0);
   const avgMsgsPerConv = totalConv > 0 ? (metrics.msgs / totalConv).toFixed(1) : "0";
 
   const goalAgg = new Map<string, number>();
