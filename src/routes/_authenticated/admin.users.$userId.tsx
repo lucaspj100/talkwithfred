@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { getMyProfile } from "@/lib/profile.functions";
-import { getAdminUserDetail } from "@/lib/admin.functions";
+import { getAdminUserDetail, type ActivityEvent } from "@/lib/admin.functions";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { AdminMetricCard } from "@/components/admin/AdminMetricCard";
 import { ArrowLeft, MessageCircle, Mic, ClipboardCheck, Flame, Zap, Sparkles } from "lucide-react";
