@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { LucasBrand } from "@/components/LucasBrand";
 import { markLeadConverted } from "@/lib/leads.functions";
 import {
   labelArea,
