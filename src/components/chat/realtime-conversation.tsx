@@ -124,13 +124,7 @@ export function RealtimeConversation({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className={cn("fred-ring h-12 w-12")} data-state={ringState(state)}>
-            <img
-              src={fredAvatar}
-              alt="Lucas"
-              width={128}
-              height={128}
-              className="h-12 w-12 rounded-full object-cover"
-            />
+            <LucasAvatar alt="Lucas" className="h-12 w-12 ring-0" />
           </div>
           <div>
             <p className="text-sm font-semibold">Lucas</p>
