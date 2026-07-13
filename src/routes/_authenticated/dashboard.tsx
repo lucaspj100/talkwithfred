@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles } from "lucide-react";
 import { useRef, useState } from "react";
-import fredAvatar from "@/assets/fred-avatar.jpg";
+import { LucasAvatar, LucasBrand } from "@/components/LucasBrand";
 import {
   labelGoal,
   labelArea,
@@ -89,10 +89,7 @@ function Dashboard() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <header className="mb-8 flex items-center justify-between">
-        <Link to="/dashboard" className="flex items-center gap-2 font-display text-lg font-bold">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">F</span>
-          Speak With Lucas
-        </Link>
+        <LucasBrand linkTo="/dashboard" />
         <div className="flex items-center gap-2">
           {me.isAdmin && (
             <Link to="/admin"><Button variant="ghost" size="sm"><ShieldAlert className="mr-1 size-4" />Administração</Button></Link>
@@ -111,7 +108,7 @@ function Dashboard() {
           </p>
         </div>
         <div className="fred-ring h-24 w-24 justify-self-end" data-state="neutral">
-          <img src={fredAvatar} alt="Lucas" width={1024} height={1024} loading="lazy" className="h-24 w-24 rounded-full object-cover" />
+          <LucasAvatar alt="Lucas" className="h-24 w-24 text-4xl ring-0" />
         </div>
       </div>
 

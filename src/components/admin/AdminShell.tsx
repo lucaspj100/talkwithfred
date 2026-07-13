@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, BarChart3, Users, Repeat, ClipboardList } from "lucide-react";
+import { ArrowLeft, BarChart3, Users, Repeat, ClipboardList, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
 
@@ -8,6 +8,7 @@ const NAV = [
   { to: "/admin/users", label: "Usuários", icon: Users, exact: false },
   { to: "/admin/retention", label: "Retenção", icon: Repeat, exact: true },
   { to: "/admin/leads", label: "Leads", icon: ClipboardList, exact: true },
+  { to: "/admin/identity", label: "Identidade visual", icon: ImageIcon, exact: true },
 ] as const;
 
 function titleFromPath(pathname: string): string {
@@ -16,6 +17,7 @@ function titleFromPath(pathname: string): string {
   if (pathname === "/admin/users") return "Usuários";
   if (pathname === "/admin/retention") return "Retenção";
   if (pathname === "/admin/leads") return "Leads";
+  if (pathname === "/admin/identity") return "Identidade visual";
   return "Área administrativa";
 }
 

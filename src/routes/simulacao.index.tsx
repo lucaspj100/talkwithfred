@@ -5,6 +5,7 @@ import { DefaultChatTransport, type UIMessage } from "ai";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { LucasAvatar, LucasBrand } from "@/components/LucasBrand";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -161,10 +162,7 @@ function SimulacaoPage() {
   return (
     <div className="min-h-[100dvh] bg-background">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
-        <a href="/" className="flex items-center gap-2 font-display text-lg font-bold">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">F</span>
-          Speak With Lucas
-        </a>
+        <LucasBrand linkTo="/" />
         <span className="text-xs text-muted-foreground">Simulação gratuita</span>
       </header>
 
@@ -448,7 +446,7 @@ function SimulationChat({
     <div className="rounded-2xl border border-border bg-card/60 p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-primary text-primary-foreground text-sm font-bold">F</span>
+          <LucasAvatar size="sm" />
           <div>
             <p className="text-sm font-semibold">Simulação com Lucas</p>
             <p className="text-xs text-muted-foreground">

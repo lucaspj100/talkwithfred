@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import fredAvatar from "@/assets/fred-avatar.jpg";
 import { Button } from "@/components/ui/button";
+import { LucasBrand } from "@/components/LucasBrand";
 import { ArrowRight, Sparkle, Target, MessageCircle, Globe2, ClipboardList, MapIcon } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -28,10 +29,8 @@ function Landing() {
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <div className="flex items-center gap-2 font-display text-lg font-bold">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">F</span>
-          Speak With Lucas
-        </div>
+        <LucasBrand linkTo="/" />
+
         <div className="flex items-center gap-3">
           <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">Entrar</Link>
           <Link to="/simulacao"><Button>Ver meu mapa de oportunidades</Button></Link>

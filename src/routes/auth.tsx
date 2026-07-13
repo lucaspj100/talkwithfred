@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, redirect, Link } from "@tanstack/react-router";
+import { LucasBrand } from "@/components/LucasBrand";
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,10 +75,9 @@ function AuthPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
-        <Link to="/" className="mb-8 flex items-center justify-center gap-2 font-display text-lg font-bold">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">F</span>
-          Speak With Lucas
-        </Link>
+        <div className="mb-8 flex justify-center">
+          <LucasBrand linkTo="/" />
+        </div>
         <div className="rounded-2xl border border-border bg-card/70 p-6 shadow-2xl backdrop-blur">
           <Tabs defaultValue="signup">
             <TabsList className="grid w-full grid-cols-2">

@@ -34,6 +34,7 @@ import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminRetentionRouteImport } from './routes/_authenticated/admin.retention'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
+import { Route as AuthenticatedAdminIdentityRouteImport } from './routes/_authenticated/admin.identity'
 import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -166,6 +167,12 @@ const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminIdentityRoute =
+  AuthenticatedAdminIdentityRouteImport.update({
+    id: '/identity',
+    path: '/identity',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminUsersUserIdRoute =
   AuthenticatedAdminUsersUserIdRouteImport.update({
     id: '/$userId',
@@ -188,6 +195,7 @@ export interface FileRoutesByFullPath {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
+  '/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
@@ -213,6 +221,7 @@ export interface FileRoutesByTo {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao': typeof SimulacaoIndexRoute
+  '/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
@@ -242,6 +251,7 @@ export interface FileRoutesById {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
+  '/_authenticated/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/simulacao/resultado'
     | '/simulacao/'
+    | '/admin/identity'
     | '/admin/leads'
     | '/admin/retention'
     | '/admin/users'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/simulacao/resultado'
     | '/simulacao'
+    | '/admin/identity'
     | '/admin/leads'
     | '/admin/retention'
     | '/admin/users'
@@ -324,6 +336,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/simulacao/resultado'
     | '/simulacao/'
+    | '/_authenticated/admin/identity'
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/retention'
     | '/_authenticated/admin/users'
@@ -530,6 +543,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/identity': {
+      id: '/_authenticated/admin/identity'
+      path: '/identity'
+      fullPath: '/admin/identity'
+      preLoaderRoute: typeof AuthenticatedAdminIdentityRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/users/$userId': {
       id: '/_authenticated/admin/users/$userId'
       path: '/$userId'
@@ -555,6 +575,7 @@ const AuthenticatedAdminUsersRouteWithChildren =
   )
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminIdentityRoute: typeof AuthenticatedAdminIdentityRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
   AuthenticatedAdminRetentionRoute: typeof AuthenticatedAdminRetentionRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRouteWithChildren
@@ -562,6 +583,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminIdentityRoute: AuthenticatedAdminIdentityRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
   AuthenticatedAdminRetentionRoute: AuthenticatedAdminRetentionRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRouteWithChildren,

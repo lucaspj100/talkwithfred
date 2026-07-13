@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Keyboard, Mic, MicOff, Phone, PhoneOff, Loader2 } from "lucide-react";
-import fredAvatar from "@/assets/fred-avatar.jpg";
+import { LucasAvatar } from "@/components/LucasBrand";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useRealtimeVoice,
@@ -85,13 +85,7 @@ export function RealtimeConversation({
       <div className="rounded-3xl border border-border bg-card/60 p-6 text-center md:p-10">
         <div className="mx-auto mb-4 h-28 w-28 md:h-36 md:w-36">
           <div className="fred-ring h-full w-full" data-state="neutral">
-            <img
-              src={fredAvatar}
-              alt="Lucas"
-              width={1024}
-              height={1024}
-              className="h-full w-full rounded-full object-cover"
-            />
+            <LucasAvatar alt="Lucas" className="h-full w-full text-5xl ring-0" />
           </div>
         </div>
         <h2 className="font-display text-2xl font-bold">Conversa por voz com Lucas</h2>
@@ -129,13 +123,7 @@ export function RealtimeConversation({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className={cn("fred-ring h-12 w-12")} data-state={ringState(state)}>
-            <img
-              src={fredAvatar}
-              alt="Lucas"
-              width={128}
-              height={128}
-              className="h-12 w-12 rounded-full object-cover"
-            />
+            <LucasAvatar alt="Lucas" className="h-12 w-12 ring-0" />
           </div>
           <div>
             <p className="text-sm font-semibold">Lucas</p>
@@ -147,13 +135,7 @@ export function RealtimeConversation({
 
       <div className="my-6 flex justify-center">
         <div className="fred-ring h-32 w-32 md:h-40 md:w-40" data-state={ringState(state)}>
-          <img
-            src={fredAvatar}
-            alt="Lucas"
-            width={1024}
-            height={1024}
-            className="h-full w-full rounded-full object-cover"
-          />
+          <LucasAvatar alt="Lucas" className="h-full w-full text-5xl ring-0" />
         </div>
       </div>
 
