@@ -693,7 +693,7 @@ function ChatPage() {
               const showPlaceholder = isPending && captionN == null;
               return (
                 <div key={m.id} className="flex items-start gap-3">
-                  <img src={fredAvatar} alt="" width={64} height={64} loading="lazy" className="h-8 w-8 shrink-0 rounded-full object-cover" />
+                  <LucasAvatar alt="" className="shrink-0" />
                   <div className="max-w-[85%]">
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">
                       {showPlaceholder ? "..." : display || (status === "streaming" ? "..." : "")}
