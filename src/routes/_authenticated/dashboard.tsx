@@ -89,10 +89,7 @@ function Dashboard() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <header className="mb-8 flex items-center justify-between">
-        <Link to="/dashboard" className="flex items-center gap-2 font-display text-lg font-bold">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary text-primary-foreground">F</span>
-          Speak With Lucas
-        </Link>
+        <LucasBrand linkTo="/dashboard" />
         <div className="flex items-center gap-2">
           {me.isAdmin && (
             <Link to="/admin"><Button variant="ghost" size="sm"><ShieldAlert className="mr-1 size-4" />Administração</Button></Link>
