@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, redirect, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,20 +8,42 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 
+const searchSchema = z.object({
+  redirect: z.string().optional(),
+});
+
+function safeRedirect(target: string | undefined): string {
+  if (!target) return "/dashboard";
+  try {
+    // Only allow same-origin paths
+    if (target.startsWith("/") && !target.startsWith("//")) return target;
+    const u = new URL(target, window.location.origin);
+    if (u.origin === window.location.origin) return u.pathname + u.search + u.hash;
+  } catch { /* ignore */ }
+  return "/dashboard";
+}
+
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  beforeLoad: async () => {
+  validateSearch: searchSchema,
+  beforeLoad: async ({ search }) => {
     const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/dashboard" });
+    if (data.session) {
+      const target = typeof window !== "undefined" ? safeRedirect(search.redirect) : "/dashboard";
+      throw redirect({ to: target });
+    }
   },
   component: AuthPage,
 });
 
 function AuthPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const [loading, setLoading] = useState(false);
   const [signupData, setSignupData] = useState({ name: "", email: "", password: "" });
   const [loginData, setLoginData] = useState({ email: "", password: "" });
+
+  const redirectTarget = safeRedirect(search.redirect);
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -30,7 +53,7 @@ function AuthPage() {
       password: signupData.password,
       options: {
         data: { name: signupData.name },
-        emailRedirectTo: window.location.origin + "/dashboard",
+        emailRedirectTo: window.location.origin + redirectTarget,
       },
     });
     setLoading(false);
@@ -45,7 +68,7 @@ function AuthPage() {
     const { error } = await supabase.auth.signInWithPassword(loginData);
     setLoading(false);
     if (error) return toast.error(error.message);
-    navigate({ to: "/dashboard" });
+    navigate({ to: redirectTarget });
   }
 
   return (

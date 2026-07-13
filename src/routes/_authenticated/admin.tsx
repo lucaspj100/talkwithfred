@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { getMyProfile } from "@/lib/profile.functions";
 import { getAdminMetrics, getAdminUsers, type AdminMetrics, type UserRow, type EngagementStatus } from "@/lib/admin.functions";
 import { AdminShell } from "@/components/admin/AdminShell";
@@ -13,7 +14,10 @@ import { Users, UserPlus, MessageCircle, Mic, ClipboardCheck, Activity, Sparkles
 export const Route = createFileRoute("/_authenticated/admin")({
   loader: async () => {
     const me = await getMyProfile();
-    if (!me.isAdmin) throw redirect({ to: "/dashboard" });
+    if (!me.isAdmin) {
+      toast.error("Você não possui permissão para acessar a área administrativa.");
+      throw redirect({ to: "/dashboard" });
+    }
     return { me };
   },
   component: AdminOverview,
