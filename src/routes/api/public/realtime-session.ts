@@ -2,6 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { createHash } from "crypto";
 import { buildSimulationSystemPrompt, type LeadDiagnostic } from "@/lib/simulation-prompt";
+import {
+  END_OF_SPEECH_SILENCE_MS,
+  VAD_PREFIX_PADDING_MS,
+  VAD_THRESHOLD,
+} from "@/lib/voice-config";
 
 type UpstreamOk = {
   value?: string;
