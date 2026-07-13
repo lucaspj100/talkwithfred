@@ -423,6 +423,41 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_user_engagement_summary: {
+        Args: never
+        Returns: {
+          conversations_count: number
+          convs_7d: number
+          created_at: string
+          email: string
+          engagement_status: string
+          english_level: string
+          last_activity_at: string
+          last_login: string
+          learning_items_count: number
+          longest_streak: number
+          main_goal: string
+          mastered_items_count: number
+          messages_count: number
+          name: string
+          onboarding_completed: boolean
+          practice_7d: number
+          practice_sessions_count: number
+          streak_days: number
+          user_id: string
+          voice_minutes_total: number
+          xp: number
+        }[]
+      }
+      get_admin_dashboard_metrics: {
+        Args: { end_date: string; start_date: string }
+        Returns: Json
+      }
+      get_admin_retention_metrics: { Args: never; Returns: Json }
+      get_admin_user_activity: {
+        Args: { max_items?: number; target_user: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
