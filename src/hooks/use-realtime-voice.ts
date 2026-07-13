@@ -393,7 +393,7 @@ export function useRealtimeVoice({
       default:
         break;
     }
-  }, [assistantFlushKey, flushAssistantFinal, scheduleWatchdog, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck]);
+  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck]);
 
   const start = useCallback(async () => {
     if (!supported) {
