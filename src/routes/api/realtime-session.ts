@@ -4,6 +4,11 @@ import { createHash } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { Database, Tables } from "@/integrations/supabase/types";
 import { buildFredSystemPrompt, type Mode } from "@/lib/fred-prompt";
+import {
+  END_OF_SPEECH_SILENCE_MS,
+  VAD_PREFIX_PADDING_MS,
+  VAD_THRESHOLD,
+} from "@/lib/voice-config";
 
 const BodySchema = z.object({
   conversationId: z.string().uuid(),
