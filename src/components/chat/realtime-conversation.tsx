@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Keyboard, Mic, MicOff, Phone, PhoneOff, Loader2 } from "lucide-react";
 import fredAvatar from "@/assets/fred-avatar.jpg";
+import { LucasAvatar } from "@/components/LucasBrand";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useRealtimeVoice,
