@@ -93,7 +93,7 @@ function UserDetailPage() {
           <div className="p-6 text-center text-sm text-muted-foreground">Sem atividade registrada.</div>
         ) : (
           <ul className="divide-y divide-border">
-            {detail.activity.map((e, i) => (
+            {detail.activity.map((e: ActivityEvent, i: number) => (
               <li key={i} className="flex items-start justify-between gap-3 py-3 text-sm">
                 <div>
                   <div className="font-medium">{KindLabel(e.kind)}</div>
