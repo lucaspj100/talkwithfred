@@ -254,7 +254,16 @@ export function useRealtimeVoice({
         setPartialUser("");
         partialUserItemIdRef.current = null;
         const id = ev.item_id || `u_${Date.now()}`;
-        if (text.length > 0 && !emittedItemIdsRef.current.has(id)) {
+        // Validate: skip empty/noise-only transcriptions. Server VAD is set to
+        // create_response=false, so nothing is sent to Lucas unless we ask.
+        if (text.length === 0 || isLikelyNoiseTranscript(text)) {
+          dlog("dropped noise/empty transcript", text);
+          if (stateRef.current === "user-speaking" || stateRef.current === "fred-thinking") {
+            setState("listening");
+          }
+          break;
+        }
+        if (!emittedItemIdsRef.current.has(id)) {
           emittedItemIdsRef.current.add(id);
           setTurns((prev) => [
             ...prev,
@@ -262,8 +271,8 @@ export function useRealtimeVoice({
           ]);
           onUserFinalRef.current?.(text);
         }
-        // Server VAD should auto-create a response; watchdog is a safety net.
-        scheduleWatchdog();
+        // Now that we have validated speech, ask Lucas to respond.
+        requestResponse();
         break;
       }
       case "response.created": {
