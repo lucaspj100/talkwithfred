@@ -17,6 +17,7 @@ function titleFromPath(pathname: string): string {
   if (pathname === "/admin/users") return "Usuários";
   if (pathname === "/admin/retention") return "Retenção";
   if (pathname === "/admin/leads") return "Leads";
+  if (pathname === "/admin/identity") return "Identidade visual";
   return "Área administrativa";
 }
 
