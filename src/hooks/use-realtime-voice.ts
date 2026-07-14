@@ -86,6 +86,7 @@ export function useRealtimeVoice({
   const mouthRafRef = useRef<number | null>(null);
   const smoothedMouthRef = useRef<number>(0);
   const fallbackMouthRef = useRef<number | null>(null);
+  const lastRealMouthSignalAtRef = useRef<number>(0);
 
   useEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => { partialAssistantRef.current = partialAssistant; }, [partialAssistant]);
@@ -111,81 +112,157 @@ export function useRealtimeVoice({
     }
   }, []);
 
-  const stopMouthAnalyser = useCallback(() => {
+  const stopMouthFallback = useCallback(() => {
+    if (fallbackMouthRef.current !== null) {
+      window.clearTimeout(fallbackMouthRef.current);
+      fallbackMouthRef.current = null;
+    }
+  }, []);
+
+  const stopMouthMotion = useCallback(() => {
     if (mouthRafRef.current !== null) {
       cancelAnimationFrame(mouthRafRef.current);
       mouthRafRef.current = null;
     }
-    if (fallbackMouthRef.current !== null) {
-      clearInterval(fallbackMouthRef.current);
-      fallbackMouthRef.current = null;
-    }
+    stopMouthFallback();
     smoothedMouthRef.current = 0;
+    lastRealMouthSignalAtRef.current = 0;
     setMouthLevel(0);
-  }, []);
+  }, [stopMouthFallback]);
 
   const startMouthFallback = useCallback(() => {
     if (fallbackMouthRef.current !== null) return;
-    // Natural-looking sequence used only when analyser isn't available.
-    const seq = [10, 30, 55, 70, 45, 20, 5, 25, 60, 40];
+    const seq = [10, 35, 65, 20];
     let i = 0;
-    fallbackMouthRef.current = window.setInterval(() => {
-      setMouthLevel(seq[i % seq.length]);
+    const tick = () => {
+      if (stateRef.current !== "fred-speaking") {
+        fallbackMouthRef.current = null;
+        smoothedMouthRef.current = 0;
+        setMouthLevel(0);
+        return;
+      }
+      const next = seq[i % seq.length];
+      smoothedMouthRef.current = next;
+      setMouthLevel(next);
       i++;
-    }, 120) as unknown as number;
+      fallbackMouthRef.current = window.setTimeout(tick, 90 + Math.round(Math.random() * 90));
+    };
+    tick();
   }, []);
+
+  const startMouthLoop = useCallback(() => {
+    if (mouthRafRef.current !== null) return;
+
+    const analyser = analyserRef.current;
+    if (!analyser) {
+      if (stateRef.current === "fred-speaking") startMouthFallback();
+      return;
+    }
+
+    const frequencyBins = new Uint8Array(analyser.frequencyBinCount);
+    const waveform = new Uint8Array(analyser.fftSize);
+
+    const tick = () => {
+      const activeAnalyser = analyserRef.current;
+      if (!activeAnalyser) {
+        mouthRafRef.current = null;
+        if (stateRef.current === "fred-speaking") startMouthFallback();
+        return;
+      }
+
+      if (stateRef.current !== "fred-speaking") {
+        mouthRafRef.current = null;
+        stopMouthFallback();
+        smoothedMouthRef.current = 0;
+        setMouthLevel(0);
+        return;
+      }
+
+      if (activeAnalyser.context.state === "suspended") {
+        void (activeAnalyser.context as AudioContext).resume().catch(() => { /* ignore */ });
+      }
+
+      activeAnalyser.getByteTimeDomainData(waveform);
+      activeAnalyser.getByteFrequencyData(frequencyBins);
+
+      let sumSquares = 0;
+      let peak = 0;
+      for (let i = 0; i < waveform.length; i++) {
+        const centered = (waveform[i] - 128) / 128;
+        const abs = Math.abs(centered);
+        sumSquares += centered * centered;
+        if (abs > peak) peak = abs;
+      }
+      const rms = Math.sqrt(sumSquares / waveform.length);
+
+      let speechBandTotal = 0;
+      const upperBin = Math.min(frequencyBins.length, 96);
+      for (let i = 2; i < upperBin; i++) speechBandTotal += frequencyBins[i];
+      const speechBandAvg = speechBandTotal / Math.max(1, upperBin - 2);
+
+      const rmsLevel = Math.max(0, (rms - 0.006) * 900);
+      const peakLevel = Math.max(0, (peak - 0.02) * 240);
+      const frequencyLevel = speechBandAvg * 1.35;
+      const rawLevel = Math.min(100, Math.max(rmsLevel, peakLevel, frequencyLevel));
+
+      if (rawLevel >= 4) {
+        lastRealMouthSignalAtRef.current = Date.now();
+        stopMouthFallback();
+        const next = smoothedMouthRef.current * 0.45 + rawLevel * 0.55;
+        smoothedMouthRef.current = next;
+        setMouthLevel(Math.round(Math.max(0, Math.min(100, next))));
+      } else if (Date.now() - lastRealMouthSignalAtRef.current > 220) {
+        startMouthFallback();
+      }
+
+      mouthRafRef.current = requestAnimationFrame(tick);
+    };
+
+    mouthRafRef.current = requestAnimationFrame(tick);
+  }, [startMouthFallback, stopMouthFallback]);
+
+  const beginMouthMotion = useCallback(() => {
+    startMouthFallback();
+    startMouthLoop();
+  }, [startMouthFallback, startMouthLoop]);
 
   const startMouthAnalyser = useCallback((stream: MediaStream) => {
     try {
       const AudioCtx: typeof AudioContext | undefined =
         window.AudioContext ||
         (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtx) { startMouthFallback(); return; }
+      if (!AudioCtx) { beginMouthMotion(); return; }
       if (!audioContextRef.current) audioContextRef.current = new AudioCtx();
       const ctx = audioContextRef.current;
       if (ctx.state === "suspended") { void ctx.resume().catch(() => { /* ignore */ }); }
 
       // Recreate the analyser + source for this stream.
+      if (mouthRafRef.current !== null) {
+        cancelAnimationFrame(mouthRafRef.current);
+        mouthRafRef.current = null;
+      }
       try { analyserSourceRef.current?.disconnect(); } catch { /* ignore */ }
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.3;
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.18;
       source.connect(analyser);
       // Do NOT connect analyser to ctx.destination — the <audio> element already plays it.
       analyserSourceRef.current = source;
       analyserRef.current = analyser;
-
-      const bins = new Uint8Array(analyser.frequencyBinCount);
-      const tick = () => {
-        const a = analyserRef.current;
-        if (!a) { mouthRafRef.current = null; return; }
-        a.getByteFrequencyData(bins);
-        // Focus on speech band (~85 Hz - 4 kHz). Use the whole buffer as a fair proxy.
-        let sum = 0;
-        for (let i = 0; i < bins.length; i++) sum += bins[i];
-        const avg = sum / bins.length; // 0..255
-        // Amplify — spoken audio averages are low; then clamp to 0..100.
-        const current = Math.min(100, Math.max(0, (avg / 255) * 100 * 2.2));
-        const prev = smoothedMouthRef.current;
-        const next = prev * 0.65 + current * 0.35;
-        smoothedMouthRef.current = next;
-        setMouthLevel(Math.round(next));
-        mouthRafRef.current = requestAnimationFrame(tick);
-      };
-      if (mouthRafRef.current !== null) cancelAnimationFrame(mouthRafRef.current);
-      mouthRafRef.current = requestAnimationFrame(tick);
+      lastRealMouthSignalAtRef.current = 0;
+      startMouthLoop();
     } catch (err) {
       console.warn("[voice] mouth analyser failed, using fallback", err);
-      startMouthFallback();
+      beginMouthMotion();
     }
-  }, [startMouthFallback]);
+  }, [beginMouthMotion, startMouthLoop]);
 
 
   const cleanup = useCallback(() => {
     clearWatchdog();
     clearPlaybackCheck();
-    stopMouthAnalyser();
+    stopMouthMotion();
     try { analyserSourceRef.current?.disconnect(); } catch { /* ignore */ }
     analyserSourceRef.current = null;
     analyserRef.current = null;
@@ -212,7 +289,7 @@ export function useRealtimeVoice({
     lastAudioPlayingAtRef.current = null;
     emittedItemIdsRef.current = new Set();
     partialUserItemIdRef.current = null;
-  }, [clearWatchdog, clearPlaybackCheck, stopMouthAnalyser]);
+  }, [clearWatchdog, clearPlaybackCheck, stopMouthMotion]);
 
   const stop = useCallback(() => {
     cleanup();
@@ -408,12 +485,17 @@ export function useRealtimeVoice({
           }
           schedulePlaybackCheck();
         }
-        if (stateRef.current !== "fred-speaking") setState("fred-speaking");
+        if (stateRef.current !== "fred-speaking") {
+          stateRef.current = "fred-speaking";
+          setState("fred-speaking");
+        }
+        beginMouthMotion();
         break;
       }
       case "response.output_audio.done":
       case "response.audio.done": {
         // audio stream ended; keep state until response.done for transcript flush
+        stopMouthMotion();
         break;
       }
       case "response.output_audio_transcript.delta":
@@ -454,12 +536,7 @@ export function useRealtimeVoice({
         assistantAudioStartedAtRef.current = null;
         firstAudioDeltaSeenRef.current = false;
         responseInProgressRef.current = false;
-        smoothedMouthRef.current = 0;
-        setMouthLevel(0);
-        if (fallbackMouthRef.current !== null) {
-          clearInterval(fallbackMouthRef.current);
-          fallbackMouthRef.current = null;
-        }
+        stopMouthMotion();
         clearWatchdog();
         clearPlaybackCheck();
         if (stateRef.current !== "ended") setState("listening");
@@ -485,7 +562,7 @@ export function useRealtimeVoice({
       default:
         break;
     }
-  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck]);
+  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion]);
 
   const start = useCallback(async () => {
     if (!supported) {
@@ -617,7 +694,7 @@ export function useRealtimeVoice({
       setState("error");
       cleanup();
     }
-  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable]);
+  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
