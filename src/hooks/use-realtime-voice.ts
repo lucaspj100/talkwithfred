@@ -185,6 +185,12 @@ export function useRealtimeVoice({
   const cleanup = useCallback(() => {
     clearWatchdog();
     clearPlaybackCheck();
+    stopMouthAnalyser();
+    try { analyserSourceRef.current?.disconnect(); } catch { /* ignore */ }
+    analyserSourceRef.current = null;
+    analyserRef.current = null;
+    try { void audioContextRef.current?.close(); } catch { /* ignore */ }
+    audioContextRef.current = null;
     try { dcRef.current?.close(); } catch { /* ignore */ }
     dcRef.current = null;
     try { pcRef.current?.getSenders().forEach((s) => s.track?.stop()); } catch { /* ignore */ }
@@ -206,7 +212,7 @@ export function useRealtimeVoice({
     lastAudioPlayingAtRef.current = null;
     emittedItemIdsRef.current = new Set();
     partialUserItemIdRef.current = null;
-  }, [clearWatchdog, clearPlaybackCheck]);
+  }, [clearWatchdog, clearPlaybackCheck, stopMouthAnalyser]);
 
   const stop = useCallback(() => {
     cleanup();
