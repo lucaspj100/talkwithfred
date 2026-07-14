@@ -181,6 +181,22 @@ export function RealtimeConversation({
   );
 }
 
+function avatarStatus(s: VoiceState): LucasAvatarStatus {
+  switch (s) {
+    case "listening":
+    case "user-speaking":
+      return "listening";
+    case "fred-thinking":
+    case "connecting":
+    case "reconnecting":
+      return "thinking";
+    case "fred-speaking":
+      return "speaking";
+    default:
+      return "idle";
+  }
+}
+
 function ringState(s: VoiceState): "neutral" | "listening" | "responding" | "speaking" {
   switch (s) {
     case "user-speaking":
