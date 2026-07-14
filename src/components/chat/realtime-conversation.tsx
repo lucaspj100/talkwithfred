@@ -83,6 +83,9 @@ export function RealtimeConversation({
   const idle = state === "idle";
   const isError = state === "error";
   const connecting = state === "connecting";
+  const effectiveAvatarStatus: LucasAvatarStatus = audioPlaying ? "speaking" : avatarStatus(state);
+  const effectiveRingState = audioPlaying ? "speaking" : ringState(state);
+  const effectiveStateLabel = audioPlaying ? "Lucas está falando — pode interromper" : stateLabel(state, muted);
 
   if (idle || isError) {
     return (
@@ -127,21 +130,21 @@ export function RealtimeConversation({
     <div className="rounded-3xl border border-border bg-card/60 p-4 md:p-6">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className={cn("fred-ring h-12 w-12")} data-state={ringState(state)}>
+          <div className={cn("fred-ring h-12 w-12")} data-state={effectiveRingState}>
             <LucasBrandAvatar alt="Lucas" className="h-12 w-12 ring-0" />
           </div>
           <div>
             <p className="text-sm font-semibold">Lucas</p>
-            <p className="text-xs text-muted-foreground">{stateLabel(state, muted)}</p>
+            <p className="text-xs text-muted-foreground">{effectiveStateLabel}</p>
           </div>
         </div>
         {connecting && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
       </div>
 
       <div className="my-6 flex flex-col items-center justify-center gap-2">
-        <LucasAvatar status={avatarStatus(state)} mouthLevel={mouthLevel} size="large" showStatus />
+        <LucasAvatar status={effectiveAvatarStatus} mouthLevel={mouthLevel} size="large" showStatus />
         <div className="rounded-md border border-border/70 bg-background/70 px-2.5 py-1 font-mono text-[11px] text-muted-foreground shadow-sm">
-          Status: {avatarStatus(state)} | Mouth: {mouthLevel} | Source: {mouthSource} | Audio playing: {audioPlaying ? "yes" : "no"}
+          Status: {effectiveAvatarStatus} | Mouth: {mouthLevel} | Source: {mouthSource} | Audio playing: {audioPlaying ? "yes" : "no"}
         </div>
       </div>
 

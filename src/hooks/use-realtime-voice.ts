@@ -71,8 +71,11 @@ export function useRealtimeVoice({
   const assistantTranscriptFlushedRef = useRef<boolean>(false);
   const flushedAssistantKeysRef = useRef<Set<string>>(new Set());
   const audioPlaybackCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioPlaybackEndCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastAudioPlayingAtRef = useRef<number | null>(null);
   const firstAudioDeltaSeenRef = useRef<boolean>(false);
+  const isLucasAudioPlayingRef = useRef(false);
+  const responseFinishedAtRef = useRef<number | null>(null);
   const responseInProgressRef = useRef(false);
   const responseWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const emittedItemIdsRef = useRef<Set<string>>(new Set());
@@ -114,6 +117,22 @@ export function useRealtimeVoice({
     }
   }, []);
 
+  const clearPlaybackEndCheck = useCallback(() => {
+    if (audioPlaybackEndCheckRef.current) {
+      clearTimeout(audioPlaybackEndCheckRef.current);
+      audioPlaybackEndCheckRef.current = null;
+    }
+  }, []);
+
+  const setPrioritizedState = useCallback((next: VoiceState) => {
+    const protectedNext =
+      isLucasAudioPlayingRef.current && next !== "ended" && next !== "error"
+        ? "fred-speaking"
+        : next;
+    stateRef.current = protectedNext;
+    setState(protectedNext);
+  }, []);
+
   const stopMouthFallback = useCallback(() => {
     if (fallbackMouthRef.current !== null) {
       window.clearTimeout(fallbackMouthRef.current);
@@ -122,7 +141,7 @@ export function useRealtimeVoice({
   }, []);
 
   const isSpeakingActive = useCallback(() => {
-    return responseInProgressRef.current || stateRef.current === "fred-speaking";
+    return isLucasAudioPlayingRef.current || responseInProgressRef.current || stateRef.current === "fred-speaking";
   }, []);
 
   const stopMouthMotion = useCallback(() => {
@@ -235,6 +254,64 @@ export function useRealtimeVoice({
     startMouthLoop();
   }, [startMouthFallback, startMouthLoop]);
 
+  const isAudioActuallyPlaying = useCallback((audio = audioElRef.current) => {
+    return Boolean(
+      audio &&
+        !audio.paused &&
+        !audio.ended &&
+        (audio.currentTime > 0 || audio.readyState >= 2),
+    );
+  }, []);
+
+  const markLucasAudioPlaying = useCallback(() => {
+    clearPlaybackEndCheck();
+    isLucasAudioPlayingRef.current = true;
+    lastAudioPlayingAtRef.current = Date.now();
+    setAudioBlocked(false);
+    setAudioPlaying(true);
+    setPrioritizedState("fred-speaking");
+    beginMouthMotion();
+  }, [beginMouthMotion, clearPlaybackEndCheck, setPrioritizedState]);
+
+  const finishLucasAudioPlayback = useCallback(() => {
+    clearPlaybackEndCheck();
+    isLucasAudioPlayingRef.current = false;
+    setAudioPlaying(false);
+    stopMouthMotion();
+    if (stateRef.current !== "ended" && stateRef.current !== "error") {
+      setPrioritizedState(responseInProgressRef.current ? "fred-thinking" : "listening");
+    }
+  }, [clearPlaybackEndCheck, setPrioritizedState, stopMouthMotion]);
+
+  const schedulePlaybackEndCheck = useCallback(() => {
+    clearPlaybackEndCheck();
+    audioPlaybackEndCheckRef.current = setTimeout(() => {
+      const audio = audioElRef.current;
+      if (!isLucasAudioPlayingRef.current) return;
+      if (!isAudioActuallyPlaying(audio)) {
+        finishLucasAudioPlayback();
+        return;
+      }
+
+      // WebRTC keeps a remote media element alive while the per-response audio
+      // drains. Do not let response.done/transcript events end speaking early;
+      // only close after the response is done and the analyser has been silent
+      // long enough to represent playback drain, not a natural short pause.
+      const lastSignal = lastRealMouthSignalAtRef.current;
+      const silentFor = lastSignal > 0 ? Date.now() - lastSignal : 0;
+      if (!responseInProgressRef.current && lastSignal > 0 && silentFor > 900) {
+        finishLucasAudioPlayback();
+        return;
+      }
+      const responseFinishedAt = responseFinishedAtRef.current;
+      if (!responseInProgressRef.current && lastSignal === 0 && responseFinishedAt && Date.now() - responseFinishedAt > 1800) {
+        finishLucasAudioPlayback();
+        return;
+      }
+      schedulePlaybackEndCheck();
+    }, 250);
+  }, [clearPlaybackEndCheck, finishLucasAudioPlayback, isAudioActuallyPlaying]);
+
   const startMouthAnalyser = useCallback((stream: MediaStream) => {
     try {
       const AudioCtx: typeof AudioContext | undefined =
@@ -271,6 +348,7 @@ export function useRealtimeVoice({
   const cleanup = useCallback(() => {
     clearWatchdog();
     clearPlaybackCheck();
+    clearPlaybackEndCheck();
     stopMouthMotion();
     try { analyserSourceRef.current?.disconnect(); } catch { /* ignore */ }
     analyserSourceRef.current = null;
@@ -290,7 +368,10 @@ export function useRealtimeVoice({
       audioElRef.current = null;
     }
     connectingRef.current = false;
+    isLucasAudioPlayingRef.current = false;
+    setAudioPlaying(false);
     responseInProgressRef.current = false;
+    responseFinishedAtRef.current = null;
     assistantAudioStartedAtRef.current = null;
     assistantTranscriptFlushedRef.current = false;
     flushedAssistantKeysRef.current = new Set();
@@ -298,12 +379,12 @@ export function useRealtimeVoice({
     lastAudioPlayingAtRef.current = null;
     emittedItemIdsRef.current = new Set();
     partialUserItemIdRef.current = null;
-  }, [clearWatchdog, clearPlaybackCheck, stopMouthMotion]);
+  }, [clearWatchdog, clearPlaybackCheck, clearPlaybackEndCheck, stopMouthMotion]);
 
   const stop = useCallback(() => {
     cleanup();
-    setState("ended");
-  }, [cleanup]);
+    setPrioritizedState("ended");
+  }, [cleanup, setPrioritizedState]);
 
   useEffect(() => () => cleanup(), [cleanup]);
 
@@ -365,15 +446,12 @@ export function useRealtimeVoice({
     audioPlaybackCheckRef.current = setTimeout(() => {
       const audio = audioElRef.current;
       if (!audio || !responseInProgressRef.current) return;
-      const lastPlaying = lastAudioPlayingAtRef.current;
-      const noRecentPlaying = !lastPlaying || Date.now() - lastPlaying > 1200;
-      if (audio.muted || audio.paused || noRecentPlaying) {
+      if (audio.muted || audio.paused) {
         if (DEV) {
           console.warn("[voice-audio] playback attention needed", {
             at: new Date().toISOString(),
             muted: audio.muted,
             paused: audio.paused,
-            noRecentPlaying,
             readyState: audio.readyState,
           });
         }
@@ -398,14 +476,14 @@ export function useRealtimeVoice({
           msSinceAssistantAudio,
           probablyEcho,
         });
-        setState("user-speaking");
+        setPrioritizedState("user-speaking");
         if (currentAssistantIdRef.current && !probablyEcho) {
           interruptedRef.current = true;
         }
         break;
       }
       case "input_audio_buffer.speech_stopped": {
-        if (stateRef.current === "user-speaking") setState("fred-thinking");
+        if (stateRef.current === "user-speaking") setPrioritizedState("fred-thinking");
         break;
       }
       case "conversation.item.input_audio_transcription.delta": {
@@ -425,7 +503,7 @@ export function useRealtimeVoice({
         if (text.length === 0 || isLikelyNoiseTranscript(text)) {
           dlog("dropped noise/empty transcript", text);
           if (stateRef.current === "user-speaking" || stateRef.current === "fred-thinking") {
-            setState("listening");
+            setPrioritizedState("listening");
           }
           break;
         }
@@ -447,10 +525,11 @@ export function useRealtimeVoice({
         assistantAudioStartedAtRef.current = null;
         assistantTranscriptFlushedRef.current = false;
         firstAudioDeltaSeenRef.current = false;
+        responseFinishedAtRef.current = null;
         responseInProgressRef.current = true;
         clearWatchdog();
         setResponseError(null);
-        setState("fred-thinking");
+        setPrioritizedState("fred-thinking");
         setPartialAssistant("");
         console.log("[voice-event] response.created", {
           at: new Date().toISOString(),
@@ -485,26 +564,26 @@ export function useRealtimeVoice({
           if (audio.paused) {
             void audio.play().then(() => {
               setAudioBlocked(false);
+              markLucasAudioPlaying();
             }).catch((error) => {
               console.warn("[voice] failed to resume remote audio", error);
               setAudioBlocked(true);
             });
           } else {
             setAudioBlocked(false);
+            markLucasAudioPlaying();
           }
           schedulePlaybackCheck();
         }
-        if (stateRef.current !== "fred-speaking") {
-          stateRef.current = "fred-speaking";
-          setState("fred-speaking");
-        }
-        beginMouthMotion();
         break;
       }
       case "response.output_audio.done":
       case "response.audio.done": {
-        // audio stream ended; keep state until response.done for transcript flush
-        stopMouthMotion();
+        if (isLucasAudioPlayingRef.current) {
+          schedulePlaybackEndCheck();
+        } else {
+          stopMouthMotion();
+        }
         break;
       }
       case "response.output_audio_transcript.delta":
@@ -512,14 +591,9 @@ export function useRealtimeVoice({
         if (ev.delta) {
           setPartialAssistant((p) => p + ev.delta);
           schedulePlaybackCheck();
-          // WebRTC audio flows on the peer connection track — response.audio.delta
-          // may never fire. Transcript delta is the reliable signal that Lucas
-          // is now speaking. Flip state and start mouth motion here too.
-          if (stateRef.current !== "fred-speaking") {
-            stateRef.current = "fred-speaking";
-            setState("fred-speaking");
+          if (isLucasAudioPlayingRef.current || isAudioActuallyPlaying()) {
+            markLucasAudioPlaying();
           }
-          beginMouthMotion();
         }
         break;
       }
@@ -553,10 +627,16 @@ export function useRealtimeVoice({
         assistantAudioStartedAtRef.current = null;
         firstAudioDeltaSeenRef.current = false;
         responseInProgressRef.current = false;
-        stopMouthMotion();
+        responseFinishedAtRef.current = Date.now();
         clearWatchdog();
         clearPlaybackCheck();
-        if (stateRef.current !== "ended") setState("listening");
+        if (isLucasAudioPlayingRef.current && isAudioActuallyPlaying()) {
+          setPrioritizedState("fred-speaking");
+          beginMouthMotion();
+          schedulePlaybackEndCheck();
+        } else {
+          finishLucasAudioPlayback();
+        }
         break;
       }
       case "error": {
@@ -569,29 +649,30 @@ export function useRealtimeVoice({
           state: stateRef.current,
         });
         responseInProgressRef.current = false;
+        responseFinishedAtRef.current = Date.now();
         clearWatchdog();
         if (stateRef.current === "fred-thinking" || stateRef.current === "fred-speaking") {
           setResponseError("Lucas teve um problema para responder. Toque para tentar novamente.");
-          setState("listening");
+          finishLucasAudioPlayback();
         }
         break;
       }
       default:
         break;
     }
-  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion]);
+  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion, setPrioritizedState, markLucasAudioPlaying, schedulePlaybackEndCheck, finishLucasAudioPlayback, isAudioActuallyPlaying]);
 
   const start = useCallback(async () => {
     if (!supported) {
       setErrorMsg("Seu navegador não suporta conversas por voz em tempo real. Tente Chrome, Edge ou Safari atualizados.");
-      setState("error");
+          setPrioritizedState("error");
       return;
     }
     if (connectingRef.current || pcRef.current) return;
     connectingRef.current = true;
     setErrorMsg(null);
     setResponseError(null);
-    setState("connecting");
+    setPrioritizedState("connecting");
 
     try {
       const { client_secret, model } = await getSession();
@@ -612,7 +693,7 @@ export function useRealtimeVoice({
         }
       } catch {
         setErrorMsg("Precisamos de acesso ao microfone para iniciar. Você também pode continuar digitando.");
-        setState("error");
+          setPrioritizedState("error");
         connectingRef.current = false;
         return;
       }
@@ -643,18 +724,27 @@ export function useRealtimeVoice({
           audioEl.onstalled = () => console.log("[voice-audio] stalled");
           audioEl.onerror = (event) => console.error("[voice-audio] error", event);
         }
-        audioEl.addEventListener("playing", () => {
-          lastAudioPlayingAtRef.current = Date.now();
-          setAudioBlocked(false);
-          setAudioPlaying(true);
-          if (responseInProgressRef.current && stateRef.current !== "fred-speaking") {
-            stateRef.current = "fred-speaking";
-            setState("fred-speaking");
+        const eventAudio = audioEl;
+        const maybeMarkLucasAudioPlaying = () => {
+          if (responseInProgressRef.current || currentAssistantIdRef.current || isLucasAudioPlayingRef.current) {
+            markLucasAudioPlaying();
           }
-          beginMouthMotion();
+        };
+        audioEl.addEventListener("playing", maybeMarkLucasAudioPlaying);
+        audioEl.addEventListener("play", maybeMarkLucasAudioPlaying);
+        audioEl.addEventListener("timeupdate", () => {
+          if (
+            isAudioActuallyPlaying(eventAudio) &&
+            (responseInProgressRef.current || currentAssistantIdRef.current || isLucasAudioPlayingRef.current)
+          ) {
+            markLucasAudioPlaying();
+          }
         });
-        audioEl.addEventListener("pause", () => setAudioPlaying(false));
-        audioEl.addEventListener("ended", () => setAudioPlaying(false));
+        audioEl.addEventListener("pause", () => {
+          if (eventAudio.paused) finishLucasAudioPlayback();
+        });
+        audioEl.addEventListener("ended", () => finishLucasAudioPlayback());
+        audioEl.addEventListener("error", () => finishLucasAudioPlayback());
         document.body.appendChild(audioEl);
         audioElRef.current = audioEl;
       }
@@ -664,8 +754,7 @@ export function useRealtimeVoice({
         audioEl.srcObject = remote;
         markAudioPlayable(audioEl);
         void audioEl.play().then(() => {
-          lastAudioPlayingAtRef.current = Date.now();
-          setAudioBlocked(false);
+          if (responseInProgressRef.current || currentAssistantIdRef.current) markLucasAudioPlaying();
         }).catch((err) => {
           console.warn("[voice] initial play blocked", err);
           setAudioBlocked(true);
@@ -679,13 +768,13 @@ export function useRealtimeVoice({
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
       dc.onopen = () => {
-        setState("listening");
+        setPrioritizedState("listening");
         // Open the scene with an audio-only response.
         sendEvent({ type: "response.create", response: { output_modalities: ["audio"] } });
       };
       dc.onmessage = (ev) => handleEvent(typeof ev.data === "string" ? ev.data : "");
       dc.onclose = () => {
-        if (stateRef.current !== "ended" && stateRef.current !== "error") setState("ended");
+        if (stateRef.current !== "ended" && stateRef.current !== "error") setPrioritizedState("ended");
       };
 
       const offer = await pc.createOffer();
@@ -709,17 +798,17 @@ export function useRealtimeVoice({
       pc.onconnectionstatechange = () => {
         const st = pc.connectionState;
         if (st === "failed" || st === "disconnected" || st === "closed") {
-          if (stateRef.current !== "ended" && stateRef.current !== "error") setState("ended");
+          if (stateRef.current !== "ended" && stateRef.current !== "error") setPrioritizedState("ended");
         }
       };
       connectingRef.current = false;
     } catch (e) {
       console.error("[voice] start failed", e);
       setErrorMsg((e as Error).message || "Não foi possível iniciar a conversa por voz.");
-      setState("error");
+      setPrioritizedState("error");
       cleanup();
     }
-  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, beginMouthMotion]);
+  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, markLucasAudioPlaying, finishLucasAudioPlayback, isAudioActuallyPlaying, setPrioritizedState]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
@@ -734,13 +823,12 @@ export function useRealtimeVoice({
     if (!audio) return;
     markAudioPlayable(audio);
     void audio.play().then(() => {
-      lastAudioPlayingAtRef.current = Date.now();
-      setAudioBlocked(false);
+      markLucasAudioPlaying();
     }).catch((err) => {
       console.warn("[voice] resumeAudio failed", err);
       setAudioBlocked(true);
     });
-  }, [markAudioPlayable]);
+  }, [markAudioPlayable, markLucasAudioPlaying]);
 
   return {
     state,
