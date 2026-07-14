@@ -55,6 +55,8 @@ export function useRealtimeVoice({
   const [partialUser, setPartialUser] = useState<string>("");
   const [partialAssistant, setPartialAssistant] = useState<string>("");
   const [mouthLevel, setMouthLevel] = useState<number>(0);
+  const [mouthSource, setMouthSource] = useState<"none" | "analyser" | "fallback">("none");
+  const [audioPlaying, setAudioPlaying] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
