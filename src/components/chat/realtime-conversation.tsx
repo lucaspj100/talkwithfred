@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Keyboard, Mic, MicOff, Phone, PhoneOff, Loader2 } from "lucide-react";
-import { LucasAvatar } from "@/components/LucasBrand";
+import { LucasAvatar as LucasBrandAvatar } from "@/components/LucasBrand";
+import { LucasAvatar, type LucasAvatarStatus } from "@/components/lucas/LucasAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useRealtimeVoice,
@@ -85,7 +86,8 @@ export function RealtimeConversation({
       <div className="rounded-3xl border border-border bg-card/60 p-6 text-center md:p-10">
         <div className="mx-auto mb-4 h-28 w-28 md:h-36 md:w-36">
           <div className="fred-ring h-full w-full" data-state="neutral">
-            <LucasAvatar alt="Lucas" className="h-full w-full text-5xl ring-0" />
+            <LucasAvatar status="idle" size="large" showStatus={false} />
+
           </div>
         </div>
         <h2 className="font-display text-2xl font-bold">Conversa por voz com Lucas</h2>
@@ -123,7 +125,7 @@ export function RealtimeConversation({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className={cn("fred-ring h-12 w-12")} data-state={ringState(state)}>
-            <LucasAvatar alt="Lucas" className="h-12 w-12 ring-0" />
+            <LucasBrandAvatar alt="Lucas" className="h-12 w-12 ring-0" />
           </div>
           <div>
             <p className="text-sm font-semibold">Lucas</p>
@@ -134,9 +136,7 @@ export function RealtimeConversation({
       </div>
 
       <div className="my-6 flex justify-center">
-        <div className="fred-ring h-32 w-32 md:h-40 md:w-40" data-state={ringState(state)}>
-          <LucasAvatar alt="Lucas" className="h-full w-full text-5xl ring-0" />
-        </div>
+        <LucasAvatar status={avatarStatus(state)} size="large" showStatus />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
@@ -179,6 +179,22 @@ export function RealtimeConversation({
       />
     </div>
   );
+}
+
+function avatarStatus(s: VoiceState): LucasAvatarStatus {
+  switch (s) {
+    case "listening":
+    case "user-speaking":
+      return "listening";
+    case "fred-thinking":
+    case "connecting":
+    case "reconnecting":
+      return "thinking";
+    case "fred-speaking":
+      return "speaking";
+    default:
+      return "idle";
+  }
 }
 
 function ringState(s: VoiceState): "neutral" | "listening" | "responding" | "speaking" {
