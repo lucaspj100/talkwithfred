@@ -141,8 +141,9 @@ export function useRealtimeVoice({
   }, []);
 
   const isSpeakingActive = useCallback(() => {
-    return isLucasAudioPlayingRef.current || responseInProgressRef.current || stateRef.current === "fred-speaking";
+    return isLucasAudioPlayingRef.current;
   }, []);
+
 
   const stopMouthMotion = useCallback(() => {
     if (mouthRafRef.current !== null) {
