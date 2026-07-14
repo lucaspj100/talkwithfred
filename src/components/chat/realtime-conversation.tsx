@@ -69,6 +69,7 @@ export function RealtimeConversation({
     turns,
     partialUser,
     partialAssistant,
+    mouthLevel,
     supported,
     start,
     stop,
