@@ -137,7 +137,7 @@ export function RealtimeConversation({
       </div>
 
       <div className="my-6 flex justify-center">
-        <LucasAvatar status={avatarStatus(state)} size="large" showStatus />
+        <LucasAvatar status={avatarStatus(state)} mouthLevel={mouthLevel} size="large" showStatus />
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
