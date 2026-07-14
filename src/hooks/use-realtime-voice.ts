@@ -512,6 +512,14 @@ export function useRealtimeVoice({
         if (ev.delta) {
           setPartialAssistant((p) => p + ev.delta);
           schedulePlaybackCheck();
+          // WebRTC audio flows on the peer connection track — response.audio.delta
+          // may never fire. Transcript delta is the reliable signal that Lucas
+          // is now speaking. Flip state and start mouth motion here too.
+          if (stateRef.current !== "fred-speaking") {
+            stateRef.current = "fred-speaking";
+            setState("fred-speaking");
+          }
+          beginMouthMotion();
         }
         break;
       }
