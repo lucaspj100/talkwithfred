@@ -34,9 +34,9 @@ const STATUS_LABEL: Record<LucasAvatarStatus, string> = {
 type MouthShape = "closed" | "small" | "medium" | "open";
 
 function mouthShapeFromLevel(level: number): MouthShape {
-  if (level <= 15) return "closed";
-  if (level <= 40) return "small";
-  if (level <= 70) return "medium";
+  if (level <= 8) return "closed";
+  if (level <= 25) return "small";
+  if (level <= 50) return "medium";
   return "open";
 }
 
