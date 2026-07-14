@@ -111,6 +111,77 @@ export function useRealtimeVoice({
     }
   }, []);
 
+  const stopMouthAnalyser = useCallback(() => {
+    if (mouthRafRef.current !== null) {
+      cancelAnimationFrame(mouthRafRef.current);
+      mouthRafRef.current = null;
+    }
+    if (fallbackMouthRef.current !== null) {
+      clearInterval(fallbackMouthRef.current);
+      fallbackMouthRef.current = null;
+    }
+    smoothedMouthRef.current = 0;
+    setMouthLevel(0);
+  }, []);
+
+  const startMouthFallback = useCallback(() => {
+    if (fallbackMouthRef.current !== null) return;
+    // Natural-looking sequence used only when analyser isn't available.
+    const seq = [10, 30, 55, 70, 45, 20, 5, 25, 60, 40];
+    let i = 0;
+    fallbackMouthRef.current = window.setInterval(() => {
+      setMouthLevel(seq[i % seq.length]);
+      i++;
+    }, 120) as unknown as number;
+  }, []);
+
+  const startMouthAnalyser = useCallback((stream: MediaStream) => {
+    try {
+      const AudioCtx: typeof AudioContext | undefined =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) { startMouthFallback(); return; }
+      if (!audioContextRef.current) audioContextRef.current = new AudioCtx();
+      const ctx = audioContextRef.current;
+      if (ctx.state === "suspended") { void ctx.resume().catch(() => { /* ignore */ }); }
+
+      // Recreate the analyser + source for this stream.
+      try { analyserSourceRef.current?.disconnect(); } catch { /* ignore */ }
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.3;
+      source.connect(analyser);
+      // Do NOT connect analyser to ctx.destination — the <audio> element already plays it.
+      analyserSourceRef.current = source;
+      analyserRef.current = analyser;
+
+      const bins = new Uint8Array(analyser.frequencyBinCount);
+      const tick = () => {
+        const a = analyserRef.current;
+        if (!a) { mouthRafRef.current = null; return; }
+        a.getByteFrequencyData(bins);
+        // Focus on speech band (~85 Hz - 4 kHz). Use the whole buffer as a fair proxy.
+        let sum = 0;
+        for (let i = 0; i < bins.length; i++) sum += bins[i];
+        const avg = sum / bins.length; // 0..255
+        // Amplify — spoken audio averages are low; then clamp to 0..100.
+        const current = Math.min(100, Math.max(0, (avg / 255) * 100 * 2.2));
+        const prev = smoothedMouthRef.current;
+        const next = prev * 0.65 + current * 0.35;
+        smoothedMouthRef.current = next;
+        setMouthLevel(Math.round(next));
+        mouthRafRef.current = requestAnimationFrame(tick);
+      };
+      if (mouthRafRef.current !== null) cancelAnimationFrame(mouthRafRef.current);
+      mouthRafRef.current = requestAnimationFrame(tick);
+    } catch (err) {
+      console.warn("[voice] mouth analyser failed, using fallback", err);
+      startMouthFallback();
+    }
+  }, [startMouthFallback]);
+
+
   const cleanup = useCallback(() => {
     clearWatchdog();
     clearPlaybackCheck();
