@@ -54,6 +54,7 @@ export function useRealtimeVoice({
   const [turns, setTurns] = useState<VoiceTurn[]>([]);
   const [partialUser, setPartialUser] = useState<string>("");
   const [partialAssistant, setPartialAssistant] = useState<string>("");
+  const [mouthLevel, setMouthLevel] = useState<number>(0);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
