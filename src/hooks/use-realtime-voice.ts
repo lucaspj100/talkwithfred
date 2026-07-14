@@ -850,7 +850,9 @@ export function useRealtimeVoice({
     mouthLevel,
     mouthSource,
     audioPlaying,
+    userSpeaking: state === "user-speaking",
     supported,
+
     start,
     stop,
     toggleMute,
