@@ -646,7 +646,15 @@ export function useRealtimeVoice({
         audioEl.addEventListener("playing", () => {
           lastAudioPlayingAtRef.current = Date.now();
           setAudioBlocked(false);
+          setAudioPlaying(true);
+          if (responseInProgressRef.current && stateRef.current !== "fred-speaking") {
+            stateRef.current = "fred-speaking";
+            setState("fred-speaking");
+          }
+          beginMouthMotion();
         });
+        audioEl.addEventListener("pause", () => setAudioPlaying(false));
+        audioEl.addEventListener("ended", () => setAudioPlaying(false));
         document.body.appendChild(audioEl);
         audioElRef.current = audioEl;
       }
