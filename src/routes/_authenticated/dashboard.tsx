@@ -156,7 +156,7 @@ function Dashboard() {
       {/* Mode picker modal */}
       <ModePickerDialog
         open={picking}
-        onOpenChange={(o) => { if (!o) closePicker(); else setPicking(true); }}
+        onOpenChange={(o: boolean) => { if (!o) closePicker(); else setPicking(true); }}
         customMode={customMode}
         creating={creating}
         customTopic={customTopic}
