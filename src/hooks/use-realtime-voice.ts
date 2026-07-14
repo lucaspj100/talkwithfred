@@ -552,7 +552,8 @@ export function useRealtimeVoice({
       }
       pc.ontrack = (e) => {
         if (!audioEl) return;
-        audioEl.srcObject = e.streams[0];
+        const remote = e.streams[0];
+        audioEl.srcObject = remote;
         markAudioPlayable(audioEl);
         void audioEl.play().then(() => {
           lastAudioPlayingAtRef.current = Date.now();
@@ -561,6 +562,8 @@ export function useRealtimeVoice({
           console.warn("[voice] initial play blocked", err);
           setAudioBlocked(true);
         });
+        // Start analysing Lucas's outbound stream for mouth-sync.
+        startMouthAnalyser(remote);
       };
 
       for (const track of stream.getAudioTracks()) pc.addTrack(track, stream);
