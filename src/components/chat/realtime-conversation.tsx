@@ -146,10 +146,11 @@ export function RealtimeConversation({
       </div>
 
       <div className="my-6 flex flex-col items-center justify-center gap-2">
-        <LucasAvatar status={effectiveAvatarStatus} mouthLevel={mouthLevel} size="large" showStatus />
+        <LucasAvatar status={effectiveAvatarStatus} mouthLevel={effectiveMouthLevel} size="large" showStatus />
         <div className="rounded-md border border-border/70 bg-background/70 px-2.5 py-1 font-mono text-[11px] text-muted-foreground shadow-sm">
-          Status: {effectiveAvatarStatus} | Mouth: {mouthLevel} | Source: {mouthSource} | Audio playing: {audioPlaying ? "yes" : "no"}
+          Status: {effectiveAvatarStatus} | Mouth: {effectiveMouthLevel} | Source: {effectiveMouthSource} | Audio playing: {audioPlaying && !userSpeaking ? "yes" : "no"} | User speaking: {userSpeaking ? "yes" : "no"}
         </div>
+
       </div>
 
       <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
