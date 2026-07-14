@@ -86,7 +86,8 @@ export function RealtimeConversation({
       <div className="rounded-3xl border border-border bg-card/60 p-6 text-center md:p-10">
         <div className="mx-auto mb-4 h-28 w-28 md:h-36 md:w-36">
           <div className="fred-ring h-full w-full" data-state="neutral">
-            <LucasAvatar alt="Lucas" className="h-full w-full text-5xl ring-0" />
+            <LucasAvatar status="idle" size="large" showStatus={false} />
+
           </div>
         </div>
         <h2 className="font-display text-2xl font-bold">Conversa por voz com Lucas</h2>
