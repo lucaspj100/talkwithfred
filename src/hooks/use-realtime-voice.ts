@@ -253,6 +253,15 @@ export function useRealtimeVoice({
     startMouthLoop();
   }, [startMouthFallback, startMouthLoop]);
 
+  const isAudioActuallyPlaying = useCallback((audio = audioElRef.current) => {
+    return Boolean(
+      audio &&
+        !audio.paused &&
+        !audio.ended &&
+        (audio.currentTime > 0 || audio.readyState >= 2),
+    );
+  }, []);
+
   const markLucasAudioPlaying = useCallback(() => {
     clearPlaybackEndCheck();
     isLucasAudioPlayingRef.current = true;
@@ -278,7 +287,7 @@ export function useRealtimeVoice({
     audioPlaybackEndCheckRef.current = setTimeout(() => {
       const audio = audioElRef.current;
       if (!isLucasAudioPlayingRef.current) return;
-      if (!audio || audio.paused || audio.ended) {
+      if (!isAudioActuallyPlaying(audio)) {
         finishLucasAudioPlayback();
         return;
       }
@@ -295,7 +304,7 @@ export function useRealtimeVoice({
       }
       schedulePlaybackEndCheck();
     }, 250);
-  }, [clearPlaybackEndCheck, finishLucasAudioPlayback]);
+  }, [clearPlaybackEndCheck, finishLucasAudioPlayback, isAudioActuallyPlaying]);
 
   const startMouthAnalyser = useCallback((stream: MediaStream) => {
     try {
