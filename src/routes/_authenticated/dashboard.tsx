@@ -41,14 +41,26 @@ function Dashboard() {
   const [customMode, setCustomMode] = useState(false);
   const [customTopic, setCustomTopic] = useState("");
   const [creating, setCreating] = useState(false);
-  const customFieldRef = useRef<HTMLDivElement | null>(null);
   const customInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (picking && customMode) {
+      setTimeout(() => customInputRef.current?.focus(), 60);
+    }
+  }, [picking, customMode]);
+
+  function closePicker() {
+    setPicking(false);
+    setCustomMode(false);
+    setCustomTopic("");
+  }
 
   async function startChat(mode: Mode) {
     if (creating) return;
     setCreating(true);
     try {
       const { id } = await create({ data: { mode } });
+      closePicker();
       navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
     } catch (e) {
       toast.error((e as Error).message);
@@ -62,6 +74,7 @@ function Dashboard() {
     setCreating(true);
     try {
       const { id } = await create({ data: { mode: "custom", customTopic: topic } });
+      closePicker();
       navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
     } catch (e) {
       toast.error((e as Error).message);
@@ -72,13 +85,8 @@ function Dashboard() {
   function handleModeClick(mode: Mode) {
     if (mode === "custom") {
       setCustomMode(true);
-      setTimeout(() => {
-        customFieldRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        customInputRef.current?.focus();
-      }, 60);
       return;
     }
-    setCustomMode(false);
     startChat(mode);
   }
 
