@@ -752,6 +752,8 @@ export function useRealtimeVoice({
     partialUser,
     partialAssistant,
     mouthLevel,
+    mouthSource,
+    audioPlaying,
     supported,
     start,
     stop,
