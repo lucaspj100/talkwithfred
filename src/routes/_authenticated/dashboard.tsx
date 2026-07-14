@@ -7,8 +7,9 @@ import { MODES, type Mode } from "@/lib/fred-prompt";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles } from "lucide-react";
-import { useRef, useState } from "react";
+import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { LucasAvatar, LucasBrand } from "@/components/LucasBrand";
 import {
   labelGoal,
@@ -40,14 +41,26 @@ function Dashboard() {
   const [customMode, setCustomMode] = useState(false);
   const [customTopic, setCustomTopic] = useState("");
   const [creating, setCreating] = useState(false);
-  const customFieldRef = useRef<HTMLDivElement | null>(null);
   const customInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    if (picking && customMode) {
+      setTimeout(() => customInputRef.current?.focus(), 60);
+    }
+  }, [picking, customMode]);
+
+  function closePicker() {
+    setPicking(false);
+    setCustomMode(false);
+    setCustomTopic("");
+  }
 
   async function startChat(mode: Mode) {
     if (creating) return;
     setCreating(true);
     try {
       const { id } = await create({ data: { mode } });
+      closePicker();
       navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
     } catch (e) {
       toast.error((e as Error).message);
@@ -61,6 +74,7 @@ function Dashboard() {
     setCreating(true);
     try {
       const { id } = await create({ data: { mode: "custom", customTopic: topic } });
+      closePicker();
       navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
     } catch (e) {
       toast.error((e as Error).message);
@@ -71,13 +85,8 @@ function Dashboard() {
   function handleModeClick(mode: Mode) {
     if (mode === "custom") {
       setCustomMode(true);
-      setTimeout(() => {
-        customFieldRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-        customInputRef.current?.focus();
-      }, 60);
       return;
     }
-    setCustomMode(false);
     startChat(mode);
   }
 
@@ -131,7 +140,7 @@ function Dashboard() {
           tone="primary"
           title="Conversar com Lucas"
           description="Fale ou digite em inglês com seu parceiro de conversação."
-          cta={picking ? "Escolha um modo..." : "Iniciar conversa"}
+          cta="Escolher tema da conversa"
           onClick={() => setPicking(true)}
         />
         <ModeCard
@@ -144,79 +153,20 @@ function Dashboard() {
         />
       </div>
 
-      {/* Mode picker for "Conversar com Lucas" */}
-      {picking && (
-        <div className="mt-4 rounded-2xl border border-border bg-card/60 p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Escolha um modo de conversa:</p>
-            <button
-              onClick={() => { setPicking(false); setCustomMode(false); }}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              Fechar
-            </button>
-          </div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-            {MODES.map((m) => {
-              const active = m.id === "custom" && customMode;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => handleModeClick(m.id)}
-                  disabled={creating}
-                  className={`group rounded-xl border p-4 text-left transition disabled:opacity-60 ${
-                    active
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-background hover:border-primary/60"
-                  }`}
-                >
-                  <p className="font-display text-sm font-semibold">{m.label}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{m.description}</p>
-                </button>
-              );
-            })}
-          </div>
+      {/* Mode picker modal */}
+      <ModePickerDialog
+        open={picking}
+        onOpenChange={(o: boolean) => { if (!o) closePicker(); else setPicking(true); }}
+        customMode={customMode}
+        creating={creating}
+        customTopic={customTopic}
+        setCustomTopic={setCustomTopic}
+        onSelectMode={handleModeClick}
+        onBackFromCustom={() => { setCustomMode(false); setCustomTopic(""); }}
+        onStartCustom={startCustomChat}
+        customInputRef={customInputRef}
+      />
 
-          {customMode && (
-            <div ref={customFieldRef} className="mt-4 rounded-xl border border-primary/40 bg-background/70 p-4">
-              <label htmlFor="custom-topic" className="block text-sm font-medium">
-                Sobre o que você quer conversar?
-              </label>
-              <textarea
-                id="custom-topic"
-                ref={customInputRef}
-                value={customTopic}
-                onChange={(e) => setCustomTopic(e.target.value.slice(0, 300))}
-                maxLength={300}
-                rows={3}
-                placeholder="Ex.: tecnologia, futebol, minha profissão, uma viagem, uma reunião específica..."
-                className="mt-2 block w-full max-w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-              />
-              <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                <span>{customTopic.trim().length < 3 ? "Digite ao menos 3 caracteres" : "\u00a0"}</span>
-                <span>{customTopic.length}/300</span>
-              </div>
-              <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => { setCustomMode(false); setCustomTopic(""); }}
-                  disabled={creating}
-                >
-                  Voltar
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={startCustomChat}
-                  disabled={customTopic.trim().length < 3 || creating}
-                >
-                  {creating ? "Iniciando..." : "Começar conversa"}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Daily mission */}
       <div className="mt-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-5">
@@ -408,5 +358,99 @@ function FocusCard({ profile }: { profile: NonNullable<ReturnType<typeof Route.u
         </Link>
       </div>
     </div>
+  );
+}
+
+function ModePickerDialog({
+  open, onOpenChange, customMode, creating, customTopic, setCustomTopic,
+  onSelectMode, onBackFromCustom, onStartCustom, customInputRef,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  customMode: boolean;
+  creating: boolean;
+  customTopic: string;
+  setCustomTopic: (v: string) => void;
+  onSelectMode: (mode: Mode) => void;
+  onBackFromCustom: () => void;
+  onStartCustom: () => void;
+  customInputRef: React.RefObject<HTMLTextAreaElement | null>;
+}) {
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content
+          className="fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl outline-none max-h-[90vh] sm:max-h-[85vh] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+        >
+          <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-border bg-card/95 px-5 py-4 backdrop-blur">
+            <div className="min-w-0">
+              <DialogPrimitive.Title className="font-display text-lg font-bold leading-tight">
+                {customMode ? "Sobre o que você quer conversar?" : "Escolha como quer conversar"}
+              </DialogPrimitive.Title>
+              <DialogPrimitive.Description className="mt-0.5 text-xs text-muted-foreground">
+                {customMode ? "Escreva o tema. Você poderá mudar depois." : "Você poderá mudar o modo depois."}
+              </DialogPrimitive.Description>
+            </div>
+            <DialogPrimitive.Close
+              aria-label="Fechar"
+              className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <X className="size-5" />
+            </DialogPrimitive.Close>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            {!customMode ? (
+              <ul className="flex flex-col gap-2">
+                {MODES.map((m) => (
+                  <li key={m.id}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectMode(m.id)}
+                      disabled={creating}
+                      className="group flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition active:scale-[0.99] active:bg-accent/60 hover:border-primary/60 hover:bg-accent/40 disabled:opacity-60"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-display text-base font-semibold">{m.label}</p>
+                        <p className="mt-0.5 text-sm text-muted-foreground">{m.description}</p>
+                      </div>
+                      <ChevronRight className="size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <textarea
+                  ref={customInputRef}
+                  value={customTopic}
+                  onChange={(e) => setCustomTopic(e.target.value.slice(0, 300))}
+                  maxLength={300}
+                  rows={4}
+                  placeholder="Ex.: tecnologia, futebol, minha profissão, uma viagem, uma reunião específica..."
+                  className="block w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-base outline-none focus:border-primary"
+                />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{customTopic.trim().length < 3 ? "Digite ao menos 3 caracteres" : "\u00a0"}</span>
+                  <span>{customTopic.length}/300</span>
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                  <Button variant="ghost" onClick={onBackFromCustom} disabled={creating}>
+                    Voltar
+                  </Button>
+                  <Button
+                    onClick={onStartCustom}
+                    disabled={customTopic.trim().length < 3 || creating}
+                  >
+                    {creating ? "Iniciando..." : "Começar conversa"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
