@@ -55,6 +55,8 @@ export function useRealtimeVoice({
   const [partialUser, setPartialUser] = useState<string>("");
   const [partialAssistant, setPartialAssistant] = useState<string>("");
   const [mouthLevel, setMouthLevel] = useState<number>(0);
+  const [mouthSource, setMouthSource] = useState<"none" | "analyser" | "fallback">("none");
+  const [audioPlaying, setAudioPlaying] = useState(false);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dcRef = useRef<RTCDataChannel | null>(null);
@@ -119,6 +121,10 @@ export function useRealtimeVoice({
     }
   }, []);
 
+  const isSpeakingActive = useCallback(() => {
+    return responseInProgressRef.current || stateRef.current === "fred-speaking";
+  }, []);
+
   const stopMouthMotion = useCallback(() => {
     if (mouthRafRef.current !== null) {
       cancelAnimationFrame(mouthRafRef.current);
@@ -128,34 +134,35 @@ export function useRealtimeVoice({
     smoothedMouthRef.current = 0;
     lastRealMouthSignalAtRef.current = 0;
     setMouthLevel(0);
+    setMouthSource("none");
   }, [stopMouthFallback]);
 
   const startMouthFallback = useCallback(() => {
     if (fallbackMouthRef.current !== null) return;
-    const seq = [10, 35, 65, 20];
+    setMouthSource((s) => (s === "analyser" ? s : "fallback"));
+    const seq = [8, 35, 65, 20, 50, 12, 70, 25];
     let i = 0;
     const tick = () => {
-      if (stateRef.current !== "fred-speaking") {
+      if (!isSpeakingActive()) {
         fallbackMouthRef.current = null;
-        smoothedMouthRef.current = 0;
-        setMouthLevel(0);
         return;
       }
-      const next = seq[i % seq.length];
-      smoothedMouthRef.current = next;
-      setMouthLevel(next);
+      const next = seq[i % seq.length] + Math.round((Math.random() - 0.5) * 8);
+      const clamped = Math.max(0, Math.min(100, next));
+      smoothedMouthRef.current = clamped;
+      setMouthLevel(clamped);
       i++;
-      fallbackMouthRef.current = window.setTimeout(tick, 90 + Math.round(Math.random() * 90));
+      fallbackMouthRef.current = window.setTimeout(tick, 100 + Math.round(Math.random() * 80));
     };
     tick();
-  }, []);
+  }, [isSpeakingActive]);
 
   const startMouthLoop = useCallback(() => {
     if (mouthRafRef.current !== null) return;
 
     const analyser = analyserRef.current;
     if (!analyser) {
-      if (stateRef.current === "fred-speaking") startMouthFallback();
+      if (isSpeakingActive()) startMouthFallback();
       return;
     }
 
@@ -166,15 +173,16 @@ export function useRealtimeVoice({
       const activeAnalyser = analyserRef.current;
       if (!activeAnalyser) {
         mouthRafRef.current = null;
-        if (stateRef.current === "fred-speaking") startMouthFallback();
+        if (isSpeakingActive()) startMouthFallback();
         return;
       }
 
-      if (stateRef.current !== "fred-speaking") {
+      if (!isSpeakingActive()) {
         mouthRafRef.current = null;
         stopMouthFallback();
         smoothedMouthRef.current = 0;
         setMouthLevel(0);
+        setMouthSource("none");
         return;
       }
 
@@ -208,6 +216,7 @@ export function useRealtimeVoice({
       if (rawLevel >= 4) {
         lastRealMouthSignalAtRef.current = Date.now();
         stopMouthFallback();
+        setMouthSource("analyser");
         const next = smoothedMouthRef.current * 0.45 + rawLevel * 0.55;
         smoothedMouthRef.current = next;
         setMouthLevel(Math.round(Math.max(0, Math.min(100, next))));
@@ -219,7 +228,7 @@ export function useRealtimeVoice({
     };
 
     mouthRafRef.current = requestAnimationFrame(tick);
-  }, [startMouthFallback, stopMouthFallback]);
+  }, [startMouthFallback, stopMouthFallback, isSpeakingActive]);
 
   const beginMouthMotion = useCallback(() => {
     startMouthFallback();
@@ -503,6 +512,14 @@ export function useRealtimeVoice({
         if (ev.delta) {
           setPartialAssistant((p) => p + ev.delta);
           schedulePlaybackCheck();
+          // WebRTC audio flows on the peer connection track — response.audio.delta
+          // may never fire. Transcript delta is the reliable signal that Lucas
+          // is now speaking. Flip state and start mouth motion here too.
+          if (stateRef.current !== "fred-speaking") {
+            stateRef.current = "fred-speaking";
+            setState("fred-speaking");
+          }
+          beginMouthMotion();
         }
         break;
       }
@@ -629,7 +646,15 @@ export function useRealtimeVoice({
         audioEl.addEventListener("playing", () => {
           lastAudioPlayingAtRef.current = Date.now();
           setAudioBlocked(false);
+          setAudioPlaying(true);
+          if (responseInProgressRef.current && stateRef.current !== "fred-speaking") {
+            stateRef.current = "fred-speaking";
+            setState("fred-speaking");
+          }
+          beginMouthMotion();
         });
+        audioEl.addEventListener("pause", () => setAudioPlaying(false));
+        audioEl.addEventListener("ended", () => setAudioPlaying(false));
         document.body.appendChild(audioEl);
         audioElRef.current = audioEl;
       }
@@ -694,7 +719,7 @@ export function useRealtimeVoice({
       setState("error");
       cleanup();
     }
-  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser]);
+  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, beginMouthMotion]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
@@ -727,6 +752,8 @@ export function useRealtimeVoice({
     partialUser,
     partialAssistant,
     mouthLevel,
+    mouthSource,
+    audioPlaying,
     supported,
     start,
     stop,
