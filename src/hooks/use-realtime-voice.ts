@@ -590,9 +590,8 @@ export function useRealtimeVoice({
         if (ev.delta) {
           setPartialAssistant((p) => p + ev.delta);
           schedulePlaybackCheck();
-          if (isLucasAudioPlayingRef.current) {
-            setPrioritizedState("fred-speaking");
-            beginMouthMotion();
+          if (isLucasAudioPlayingRef.current || isAudioActuallyPlaying()) {
+            markLucasAudioPlaying();
           }
         }
         break;
@@ -725,10 +724,20 @@ export function useRealtimeVoice({
           audioEl.onerror = (event) => console.error("[voice-audio] error", event);
         }
         const eventAudio = audioEl;
-        audioEl.addEventListener("playing", () => markLucasAudioPlaying());
-        audioEl.addEventListener("play", () => markLucasAudioPlaying());
+        const maybeMarkLucasAudioPlaying = () => {
+          if (responseInProgressRef.current || currentAssistantIdRef.current || isLucasAudioPlayingRef.current) {
+            markLucasAudioPlaying();
+          }
+        };
+        audioEl.addEventListener("playing", maybeMarkLucasAudioPlaying);
+        audioEl.addEventListener("play", maybeMarkLucasAudioPlaying);
         audioEl.addEventListener("timeupdate", () => {
-          if (isAudioActuallyPlaying(eventAudio)) markLucasAudioPlaying();
+          if (
+            isAudioActuallyPlaying(eventAudio) &&
+            (responseInProgressRef.current || currentAssistantIdRef.current || isLucasAudioPlayingRef.current)
+          ) {
+            markLucasAudioPlaying();
+          }
         });
         audioEl.addEventListener("pause", () => {
           if (eventAudio.paused) finishLucasAudioPlayback();
@@ -744,7 +753,7 @@ export function useRealtimeVoice({
         audioEl.srcObject = remote;
         markAudioPlayable(audioEl);
         void audioEl.play().then(() => {
-          markLucasAudioPlaying();
+          if (responseInProgressRef.current || currentAssistantIdRef.current) markLucasAudioPlaying();
         }).catch((err) => {
           console.warn("[voice] initial play blocked", err);
           setAudioBlocked(true);
