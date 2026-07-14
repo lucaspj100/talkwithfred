@@ -360,3 +360,97 @@ function FocusCard({ profile }: { profile: NonNullable<ReturnType<typeof Route.u
     </div>
   );
 }
+
+function ModePickerDialog({
+  open, onOpenChange, customMode, creating, customTopic, setCustomTopic,
+  onSelectMode, onBackFromCustom, onStartCustom, customInputRef,
+}: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  customMode: boolean;
+  creating: boolean;
+  customTopic: string;
+  setCustomTopic: (v: string) => void;
+  onSelectMode: (mode: Mode) => void;
+  onBackFromCustom: () => void;
+  onStartCustom: () => void;
+  customInputRef: React.RefObject<HTMLTextAreaElement | null>;
+}) {
+  return (
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+        <DialogPrimitive.Content
+          className="fixed left-1/2 top-1/2 z-50 flex w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl outline-none max-h-[90vh] sm:max-h-[85vh] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+        >
+          <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-border bg-card/95 px-5 py-4 backdrop-blur">
+            <div className="min-w-0">
+              <DialogPrimitive.Title className="font-display text-lg font-bold leading-tight">
+                {customMode ? "Sobre o que você quer conversar?" : "Escolha como quer conversar"}
+              </DialogPrimitive.Title>
+              <DialogPrimitive.Description className="mt-0.5 text-xs text-muted-foreground">
+                {customMode ? "Escreva o tema. Você poderá mudar depois." : "Você poderá mudar o modo depois."}
+              </DialogPrimitive.Description>
+            </div>
+            <DialogPrimitive.Close
+              aria-label="Fechar"
+              className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-accent hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <X className="size-5" />
+            </DialogPrimitive.Close>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            {!customMode ? (
+              <ul className="flex flex-col gap-2">
+                {MODES.map((m) => (
+                  <li key={m.id}>
+                    <button
+                      type="button"
+                      onClick={() => onSelectMode(m.id)}
+                      disabled={creating}
+                      className="group flex w-full items-center gap-3 rounded-xl border border-border bg-background px-4 py-4 text-left transition active:scale-[0.99] active:bg-accent/60 hover:border-primary/60 hover:bg-accent/40 disabled:opacity-60"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="font-display text-base font-semibold">{m.label}</p>
+                        <p className="mt-0.5 text-sm text-muted-foreground">{m.description}</p>
+                      </div>
+                      <ChevronRight className="size-5 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <textarea
+                  ref={customInputRef}
+                  value={customTopic}
+                  onChange={(e) => setCustomTopic(e.target.value.slice(0, 300))}
+                  maxLength={300}
+                  rows={4}
+                  placeholder="Ex.: tecnologia, futebol, minha profissão, uma viagem, uma reunião específica..."
+                  className="block w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-base outline-none focus:border-primary"
+                />
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{customTopic.trim().length < 3 ? "Digite ao menos 3 caracteres" : "\u00a0"}</span>
+                  <span>{customTopic.length}/300</span>
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                  <Button variant="ghost" onClick={onBackFromCustom} disabled={creating}>
+                    Voltar
+                  </Button>
+                  <Button
+                    onClick={onStartCustom}
+                    disabled={customTopic.trim().length < 3 || creating}
+                  >
+                    {creating ? "Iniciando..." : "Começar conversa"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
+  );
+}
