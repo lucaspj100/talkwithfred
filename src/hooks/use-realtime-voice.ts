@@ -75,6 +75,7 @@ export function useRealtimeVoice({
   const lastAudioPlayingAtRef = useRef<number | null>(null);
   const firstAudioDeltaSeenRef = useRef<boolean>(false);
   const isLucasAudioPlayingRef = useRef(false);
+  const responseFinishedAtRef = useRef<number | null>(null);
   const responseInProgressRef = useRef(false);
   const responseWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const emittedItemIdsRef = useRef<Set<string>>(new Set());
@@ -302,6 +303,11 @@ export function useRealtimeVoice({
         finishLucasAudioPlayback();
         return;
       }
+      const responseFinishedAt = responseFinishedAtRef.current;
+      if (!responseInProgressRef.current && lastSignal === 0 && responseFinishedAt && Date.now() - responseFinishedAt > 1800) {
+        finishLucasAudioPlayback();
+        return;
+      }
       schedulePlaybackEndCheck();
     }, 250);
   }, [clearPlaybackEndCheck, finishLucasAudioPlayback, isAudioActuallyPlaying]);
@@ -364,6 +370,7 @@ export function useRealtimeVoice({
     connectingRef.current = false;
     isLucasAudioPlayingRef.current = false;
     responseInProgressRef.current = false;
+    responseFinishedAtRef.current = null;
     assistantAudioStartedAtRef.current = null;
     assistantTranscriptFlushedRef.current = false;
     flushedAssistantKeysRef.current = new Set();
@@ -376,7 +383,7 @@ export function useRealtimeVoice({
   const stop = useCallback(() => {
     cleanup();
     setPrioritizedState("ended");
-  }, [cleanup]);
+  }, [cleanup, setPrioritizedState]);
 
   useEffect(() => () => cleanup(), [cleanup]);
 
@@ -517,6 +524,7 @@ export function useRealtimeVoice({
         assistantAudioStartedAtRef.current = null;
         assistantTranscriptFlushedRef.current = false;
         firstAudioDeltaSeenRef.current = false;
+        responseFinishedAtRef.current = null;
         responseInProgressRef.current = true;
         clearWatchdog();
         setResponseError(null);
@@ -619,6 +627,7 @@ export function useRealtimeVoice({
         assistantAudioStartedAtRef.current = null;
         firstAudioDeltaSeenRef.current = false;
         responseInProgressRef.current = false;
+        responseFinishedAtRef.current = Date.now();
         clearWatchdog();
         clearPlaybackCheck();
         if (isLucasAudioPlayingRef.current && isAudioActuallyPlaying()) {
@@ -640,6 +649,7 @@ export function useRealtimeVoice({
           state: stateRef.current,
         });
         responseInProgressRef.current = false;
+        responseFinishedAtRef.current = Date.now();
         clearWatchdog();
         if (stateRef.current === "fred-thinking" || stateRef.current === "fred-speaking") {
           setResponseError("Lucas teve um problema para responder. Toque para tentar novamente.");
@@ -714,18 +724,16 @@ export function useRealtimeVoice({
           audioEl.onstalled = () => console.log("[voice-audio] stalled");
           audioEl.onerror = (event) => console.error("[voice-audio] error", event);
         }
-        audioEl.addEventListener("playing", () => {
-          lastAudioPlayingAtRef.current = Date.now();
-          setAudioBlocked(false);
-          setAudioPlaying(true);
-          if (responseInProgressRef.current && stateRef.current !== "fred-speaking") {
-            stateRef.current = "fred-speaking";
-            setState("fred-speaking");
-          }
-          beginMouthMotion();
+        audioEl.addEventListener("playing", () => markLucasAudioPlaying());
+        audioEl.addEventListener("play", () => markLucasAudioPlaying());
+        audioEl.addEventListener("timeupdate", () => {
+          if (isAudioActuallyPlaying(audioEl)) markLucasAudioPlaying();
         });
-        audioEl.addEventListener("pause", () => setAudioPlaying(false));
-        audioEl.addEventListener("ended", () => setAudioPlaying(false));
+        audioEl.addEventListener("pause", () => {
+          if (audioEl.paused) finishLucasAudioPlayback();
+        });
+        audioEl.addEventListener("ended", () => finishLucasAudioPlayback());
+        audioEl.addEventListener("error", () => finishLucasAudioPlayback());
         document.body.appendChild(audioEl);
         audioElRef.current = audioEl;
       }
@@ -735,8 +743,7 @@ export function useRealtimeVoice({
         audioEl.srcObject = remote;
         markAudioPlayable(audioEl);
         void audioEl.play().then(() => {
-          lastAudioPlayingAtRef.current = Date.now();
-          setAudioBlocked(false);
+          markLucasAudioPlaying();
         }).catch((err) => {
           console.warn("[voice] initial play blocked", err);
           setAudioBlocked(true);
