@@ -71,8 +71,10 @@ export function useRealtimeVoice({
   const assistantTranscriptFlushedRef = useRef<boolean>(false);
   const flushedAssistantKeysRef = useRef<Set<string>>(new Set());
   const audioPlaybackCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioPlaybackEndCheckRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastAudioPlayingAtRef = useRef<number | null>(null);
   const firstAudioDeltaSeenRef = useRef<boolean>(false);
+  const isLucasAudioPlayingRef = useRef(false);
   const responseInProgressRef = useRef(false);
   const responseWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const emittedItemIdsRef = useRef<Set<string>>(new Set());
@@ -114,6 +116,22 @@ export function useRealtimeVoice({
     }
   }, []);
 
+  const clearPlaybackEndCheck = useCallback(() => {
+    if (audioPlaybackEndCheckRef.current) {
+      clearTimeout(audioPlaybackEndCheckRef.current);
+      audioPlaybackEndCheckRef.current = null;
+    }
+  }, []);
+
+  const setPrioritizedState = useCallback((next: VoiceState) => {
+    const protectedNext =
+      isLucasAudioPlayingRef.current && next !== "ended" && next !== "error"
+        ? "fred-speaking"
+        : next;
+    stateRef.current = protectedNext;
+    setState(protectedNext);
+  }, []);
+
   const stopMouthFallback = useCallback(() => {
     if (fallbackMouthRef.current !== null) {
       window.clearTimeout(fallbackMouthRef.current);
@@ -122,7 +140,7 @@ export function useRealtimeVoice({
   }, []);
 
   const isSpeakingActive = useCallback(() => {
-    return responseInProgressRef.current || stateRef.current === "fred-speaking";
+    return isLucasAudioPlayingRef.current || responseInProgressRef.current || stateRef.current === "fred-speaking";
   }, []);
 
   const stopMouthMotion = useCallback(() => {
@@ -235,6 +253,50 @@ export function useRealtimeVoice({
     startMouthLoop();
   }, [startMouthFallback, startMouthLoop]);
 
+  const markLucasAudioPlaying = useCallback(() => {
+    clearPlaybackEndCheck();
+    isLucasAudioPlayingRef.current = true;
+    lastAudioPlayingAtRef.current = Date.now();
+    setAudioBlocked(false);
+    setAudioPlaying(true);
+    setPrioritizedState("fred-speaking");
+    beginMouthMotion();
+  }, [beginMouthMotion, clearPlaybackEndCheck, setPrioritizedState]);
+
+  const finishLucasAudioPlayback = useCallback(() => {
+    clearPlaybackEndCheck();
+    isLucasAudioPlayingRef.current = false;
+    setAudioPlaying(false);
+    stopMouthMotion();
+    if (stateRef.current !== "ended" && stateRef.current !== "error") {
+      setPrioritizedState(responseInProgressRef.current ? "fred-thinking" : "listening");
+    }
+  }, [clearPlaybackEndCheck, setPrioritizedState, stopMouthMotion]);
+
+  const schedulePlaybackEndCheck = useCallback(() => {
+    clearPlaybackEndCheck();
+    audioPlaybackEndCheckRef.current = setTimeout(() => {
+      const audio = audioElRef.current;
+      if (!isLucasAudioPlayingRef.current) return;
+      if (!audio || audio.paused || audio.ended) {
+        finishLucasAudioPlayback();
+        return;
+      }
+
+      // WebRTC keeps a remote media element alive while the per-response audio
+      // drains. Do not let response.done/transcript events end speaking early;
+      // only close after the response is done and the analyser has been silent
+      // long enough to represent playback drain, not a natural short pause.
+      const lastSignal = lastRealMouthSignalAtRef.current;
+      const silentFor = lastSignal > 0 ? Date.now() - lastSignal : 0;
+      if (!responseInProgressRef.current && lastSignal > 0 && silentFor > 900) {
+        finishLucasAudioPlayback();
+        return;
+      }
+      schedulePlaybackEndCheck();
+    }, 250);
+  }, [clearPlaybackEndCheck, finishLucasAudioPlayback]);
+
   const startMouthAnalyser = useCallback((stream: MediaStream) => {
     try {
       const AudioCtx: typeof AudioContext | undefined =
@@ -271,6 +333,7 @@ export function useRealtimeVoice({
   const cleanup = useCallback(() => {
     clearWatchdog();
     clearPlaybackCheck();
+    clearPlaybackEndCheck();
     stopMouthMotion();
     try { analyserSourceRef.current?.disconnect(); } catch { /* ignore */ }
     analyserSourceRef.current = null;
@@ -290,6 +353,7 @@ export function useRealtimeVoice({
       audioElRef.current = null;
     }
     connectingRef.current = false;
+    isLucasAudioPlayingRef.current = false;
     responseInProgressRef.current = false;
     assistantAudioStartedAtRef.current = null;
     assistantTranscriptFlushedRef.current = false;
@@ -298,11 +362,11 @@ export function useRealtimeVoice({
     lastAudioPlayingAtRef.current = null;
     emittedItemIdsRef.current = new Set();
     partialUserItemIdRef.current = null;
-  }, [clearWatchdog, clearPlaybackCheck, stopMouthMotion]);
+  }, [clearWatchdog, clearPlaybackCheck, clearPlaybackEndCheck, stopMouthMotion]);
 
   const stop = useCallback(() => {
     cleanup();
-    setState("ended");
+    setPrioritizedState("ended");
   }, [cleanup]);
 
   useEffect(() => () => cleanup(), [cleanup]);
