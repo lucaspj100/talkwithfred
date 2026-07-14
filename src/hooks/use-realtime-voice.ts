@@ -369,6 +369,7 @@ export function useRealtimeVoice({
     }
     connectingRef.current = false;
     isLucasAudioPlayingRef.current = false;
+    setAudioPlaying(false);
     responseInProgressRef.current = false;
     responseFinishedAtRef.current = null;
     assistantAudioStartedAtRef.current = null;
