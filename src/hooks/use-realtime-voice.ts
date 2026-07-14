@@ -649,6 +649,7 @@ export function useRealtimeVoice({
     turns,
     partialUser,
     partialAssistant,
+    mouthLevel,
     supported,
     start,
     stop,
