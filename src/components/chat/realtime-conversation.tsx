@@ -70,6 +70,8 @@ export function RealtimeConversation({
     partialUser,
     partialAssistant,
     mouthLevel,
+    mouthSource,
+    audioPlaying,
     supported,
     start,
     stop,
