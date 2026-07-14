@@ -179,7 +179,7 @@ export function useRealtimeVoice({
       }
 
       if (activeAnalyser.context.state === "suspended") {
-        void activeAnalyser.context.resume().catch(() => { /* ignore */ });
+        void (activeAnalyser.context as AudioContext).resume().catch(() => { /* ignore */ });
       }
 
       activeAnalyser.getByteTimeDomainData(waveform);
@@ -485,12 +485,17 @@ export function useRealtimeVoice({
           }
           schedulePlaybackCheck();
         }
-        if (stateRef.current !== "fred-speaking") setState("fred-speaking");
+        if (stateRef.current !== "fred-speaking") {
+          stateRef.current = "fred-speaking";
+          setState("fred-speaking");
+        }
+        beginMouthMotion();
         break;
       }
       case "response.output_audio.done":
       case "response.audio.done": {
         // audio stream ended; keep state until response.done for transcript flush
+        stopMouthMotion();
         break;
       }
       case "response.output_audio_transcript.delta":
@@ -531,12 +536,7 @@ export function useRealtimeVoice({
         assistantAudioStartedAtRef.current = null;
         firstAudioDeltaSeenRef.current = false;
         responseInProgressRef.current = false;
-        smoothedMouthRef.current = 0;
-        setMouthLevel(0);
-        if (fallbackMouthRef.current !== null) {
-          clearInterval(fallbackMouthRef.current);
-          fallbackMouthRef.current = null;
-        }
+        stopMouthMotion();
         clearWatchdog();
         clearPlaybackCheck();
         if (stateRef.current !== "ended") setState("listening");
@@ -562,7 +562,7 @@ export function useRealtimeVoice({
       default:
         break;
     }
-  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck]);
+  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion]);
 
   const start = useCallback(async () => {
     if (!supported) {
