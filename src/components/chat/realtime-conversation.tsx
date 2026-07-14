@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Keyboard, Mic, MicOff, Phone, PhoneOff, Loader2 } from "lucide-react";
-import { LucasAvatar } from "@/components/LucasBrand";
+import { LucasAvatar as LucasBrandAvatar } from "@/components/LucasBrand";
+import { LucasAvatar, type LucasAvatarStatus } from "@/components/lucas/LucasAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useRealtimeVoice,
