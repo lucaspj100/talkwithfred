@@ -665,14 +665,14 @@ export function useRealtimeVoice({
   const start = useCallback(async () => {
     if (!supported) {
       setErrorMsg("Seu navegador não suporta conversas por voz em tempo real. Tente Chrome, Edge ou Safari atualizados.");
-      setState("error");
+          setPrioritizedState("error");
       return;
     }
     if (connectingRef.current || pcRef.current) return;
     connectingRef.current = true;
     setErrorMsg(null);
     setResponseError(null);
-    setState("connecting");
+    setPrioritizedState("connecting");
 
     try {
       const { client_secret, model } = await getSession();
@@ -693,7 +693,7 @@ export function useRealtimeVoice({
         }
       } catch {
         setErrorMsg("Precisamos de acesso ao microfone para iniciar. Você também pode continuar digitando.");
-        setState("error");
+          setPrioritizedState("error");
         connectingRef.current = false;
         return;
       }
@@ -724,13 +724,14 @@ export function useRealtimeVoice({
           audioEl.onstalled = () => console.log("[voice-audio] stalled");
           audioEl.onerror = (event) => console.error("[voice-audio] error", event);
         }
+        const eventAudio = audioEl;
         audioEl.addEventListener("playing", () => markLucasAudioPlaying());
         audioEl.addEventListener("play", () => markLucasAudioPlaying());
         audioEl.addEventListener("timeupdate", () => {
-          if (isAudioActuallyPlaying(audioEl)) markLucasAudioPlaying();
+          if (isAudioActuallyPlaying(eventAudio)) markLucasAudioPlaying();
         });
         audioEl.addEventListener("pause", () => {
-          if (audioEl.paused) finishLucasAudioPlayback();
+          if (eventAudio.paused) finishLucasAudioPlayback();
         });
         audioEl.addEventListener("ended", () => finishLucasAudioPlayback());
         audioEl.addEventListener("error", () => finishLucasAudioPlayback());
@@ -757,13 +758,13 @@ export function useRealtimeVoice({
       const dc = pc.createDataChannel("oai-events");
       dcRef.current = dc;
       dc.onopen = () => {
-        setState("listening");
+        setPrioritizedState("listening");
         // Open the scene with an audio-only response.
         sendEvent({ type: "response.create", response: { output_modalities: ["audio"] } });
       };
       dc.onmessage = (ev) => handleEvent(typeof ev.data === "string" ? ev.data : "");
       dc.onclose = () => {
-        if (stateRef.current !== "ended" && stateRef.current !== "error") setState("ended");
+        if (stateRef.current !== "ended" && stateRef.current !== "error") setPrioritizedState("ended");
       };
 
       const offer = await pc.createOffer();
@@ -787,17 +788,17 @@ export function useRealtimeVoice({
       pc.onconnectionstatechange = () => {
         const st = pc.connectionState;
         if (st === "failed" || st === "disconnected" || st === "closed") {
-          if (stateRef.current !== "ended" && stateRef.current !== "error") setState("ended");
+          if (stateRef.current !== "ended" && stateRef.current !== "error") setPrioritizedState("ended");
         }
       };
       connectingRef.current = false;
     } catch (e) {
       console.error("[voice] start failed", e);
       setErrorMsg((e as Error).message || "Não foi possível iniciar a conversa por voz.");
-      setState("error");
+      setPrioritizedState("error");
       cleanup();
     }
-  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, beginMouthMotion]);
+  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, markLucasAudioPlaying, finishLucasAudioPlayback, isAudioActuallyPlaying, setPrioritizedState]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
@@ -812,13 +813,12 @@ export function useRealtimeVoice({
     if (!audio) return;
     markAudioPlayable(audio);
     void audio.play().then(() => {
-      lastAudioPlayingAtRef.current = Date.now();
-      setAudioBlocked(false);
+      markLucasAudioPlaying();
     }).catch((err) => {
       console.warn("[voice] resumeAudio failed", err);
       setAudioBlocked(true);
     });
-  }, [markAudioPlayable]);
+  }, [markAudioPlayable, markLucasAudioPlaying]);
 
   return {
     state,
