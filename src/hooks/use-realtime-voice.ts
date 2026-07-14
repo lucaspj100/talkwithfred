@@ -719,7 +719,7 @@ export function useRealtimeVoice({
       setState("error");
       cleanup();
     }
-  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser]);
+  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, beginMouthMotion]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
