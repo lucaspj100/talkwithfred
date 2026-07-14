@@ -140,7 +140,7 @@ function Dashboard() {
           tone="primary"
           title="Conversar com Lucas"
           description="Fale ou digite em inglês com seu parceiro de conversação."
-          cta={picking ? "Escolha um modo..." : "Iniciar conversa"}
+          cta="Escolher tema da conversa"
           onClick={() => setPicking(true)}
         />
         <ModeCard
