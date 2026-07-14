@@ -141,8 +141,9 @@ export function useRealtimeVoice({
   }, []);
 
   const isSpeakingActive = useCallback(() => {
-    return isLucasAudioPlayingRef.current || responseInProgressRef.current || stateRef.current === "fred-speaking";
+    return isLucasAudioPlayingRef.current;
   }, []);
+
 
   const stopMouthMotion = useCallback(() => {
     if (mouthRafRef.current !== null) {
@@ -476,6 +477,12 @@ export function useRealtimeVoice({
           msSinceAssistantAudio,
           probablyEcho,
         });
+        // User is speaking: force mouth closed immediately, regardless of any
+        // in-flight assistant audio timers. Real interruptions also end Lucas's
+        // audio via the audio element's pause/ended handlers.
+        isLucasAudioPlayingRef.current = false;
+        setAudioPlaying(false);
+        stopMouthMotion();
         setPrioritizedState("user-speaking");
         if (currentAssistantIdRef.current && !probablyEcho) {
           interruptedRef.current = true;
@@ -486,6 +493,7 @@ export function useRealtimeVoice({
         if (stateRef.current === "user-speaking") setPrioritizedState("fred-thinking");
         break;
       }
+
       case "conversation.item.input_audio_transcription.delta": {
         if (ev.delta) {
           if (ev.item_id) partialUserItemIdRef.current = ev.item_id;
@@ -842,7 +850,9 @@ export function useRealtimeVoice({
     mouthLevel,
     mouthSource,
     audioPlaying,
+    userSpeaking: state === "user-speaking",
     supported,
+
     start,
     stop,
     toggleMute,
