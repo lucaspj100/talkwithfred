@@ -79,6 +79,14 @@ export function useRealtimeVoice({
   const onUserFinalRef = useRef(onUserFinalTurn);
   const onAssistantFinalRef = useRef(onAssistantFinalTurn);
 
+  // Web Audio analyser for Lucas's response audio (mouth-sync).
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const analyserSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const mouthRafRef = useRef<number | null>(null);
+  const smoothedMouthRef = useRef<number>(0);
+  const fallbackMouthRef = useRef<number | null>(null);
+
   useEffect(() => { stateRef.current = state; }, [state]);
   useEffect(() => { partialAssistantRef.current = partialAssistant; }, [partialAssistant]);
   useEffect(() => { onUserFinalRef.current = onUserFinalTurn; }, [onUserFinalTurn]);
