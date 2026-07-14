@@ -454,6 +454,12 @@ export function useRealtimeVoice({
         assistantAudioStartedAtRef.current = null;
         firstAudioDeltaSeenRef.current = false;
         responseInProgressRef.current = false;
+        smoothedMouthRef.current = 0;
+        setMouthLevel(0);
+        if (fallbackMouthRef.current !== null) {
+          clearInterval(fallbackMouthRef.current);
+          fallbackMouthRef.current = null;
+        }
         clearWatchdog();
         clearPlaybackCheck();
         if (stateRef.current !== "ended") setState("listening");
