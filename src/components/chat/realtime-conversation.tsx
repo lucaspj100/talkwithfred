@@ -86,7 +86,7 @@ export function RealtimeConversation({
   const connecting = state === "connecting";
   const effectiveMouthLevel = audioPlaying && !userSpeaking ? mouthLevel : 0;
   const effectiveMouthSource = audioPlaying && !userSpeaking ? mouthSource : "none";
-  const effectiveAvatarStatus: LucasAvatarStatus = audioPlaying && !userSpeaking ? "speaking" : avatarStatus(state);
+  const effectiveAvatarStatus = audioPlaying && !userSpeaking ? "speaking" : avatarStatus(state);
   const effectiveRingState = audioPlaying && !userSpeaking ? "speaking" : ringState(state);
   const effectiveStateLabel = audioPlaying && !userSpeaking ? "Lucas está falando — pode interromper" : stateLabel(state, muted);
   const talkingState: TalkingAvatarState = audioPlaying && !userSpeaking
@@ -204,7 +204,7 @@ export function RealtimeConversation({
   );
 }
 
-function avatarStatus(s: VoiceState): LucasAvatarStatus {
+function avatarStatus(s: VoiceState): "idle" | "listening" | "thinking" | "speaking" {
   switch (s) {
     case "listening":
     case "user-speaking":
