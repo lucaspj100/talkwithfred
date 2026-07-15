@@ -14,7 +14,7 @@ const SIZE_CLASSES: Record<Size, string> = {
 export function LucasAvatar({
   size = "sm",
   className,
-  alt = "Lucas",
+  alt = "Fred",
 }: {
   size?: Size;
   className?: string;
@@ -43,7 +43,7 @@ export function LucasAvatar({
           onError={() => setFailed(true)}
         />
       ) : (
-        <span>L</span>
+        <span>F</span>
       )}
     </span>
   );
@@ -59,7 +59,7 @@ export function LucasBrand({
   className?: string;
 }) {
   const { data } = useAppSettings();
-  const name = data?.brand_name ?? "Speak With Lucas";
+  const name = data?.brand_name ?? "Talk With Fred";
   return (
     <Link to={linkTo} className={cn("flex items-center gap-2 font-display text-lg font-bold", className)}>
       <LucasAvatar size={size} />

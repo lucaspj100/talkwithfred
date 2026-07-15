@@ -20,10 +20,10 @@ const SIZE_BOX: Record<TalkingAvatarSize, string> = {
 };
 
 const STATE_LABEL: Record<TalkingAvatarState, string> = {
-  idle: "Lucas está pronto",
-  listening: "Lucas está ouvindo…",
-  thinking: "Lucas está preparando a resposta…",
-  speaking: "Lucas está falando…",
+  idle: "Fred está pronto",
+  listening: "Fred está ouvindo…",
+  thinking: "Fred está preparando a resposta…",
+  speaking: "Fred está falando…",
 };
 
 // Map to the fred-ring data-state used by the shared CSS animations.
@@ -35,7 +35,7 @@ const STATE_TO_RING: Record<TalkingAvatarState, "neutral" | "listening" | "think
 };
 
 /**
- * Circular Lucas avatar built around the brand image (from app settings).
+ * Circular Fred avatar built around the brand image (from app settings).
  * The surrounding `fred-ring` reacts to the conversation state; the image
  * itself has a subtle idle breathing motion. No mouth animation.
  */
@@ -52,7 +52,7 @@ export function TalkingAvatar({
     <div className={cn("inline-flex flex-col items-center gap-3", className)}>
       <div className={cn("fred-ring", box)} data-state={ring}>
         <LucasBrandImage
-          alt="Lucas"
+          alt="Fred"
           className={cn(
             "h-full w-full ring-0 animate-idle-breathe",
             state === "speaking" && "animate-head-bob",

@@ -43,19 +43,19 @@ export const extractLearningItems = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => ExtractInput.parse(i))
   .handler(async ({ data, context }) => {
-    const prompt = `You analyze one turn of an English conversation between a Brazilian learner and a tutor named Lucas.
+    const prompt = `You analyze one turn of an English conversation between a Brazilian learner and a tutor named Fred.
 
 USER said (English, may contain mistakes):
 """${data.userMessage}"""
 
-LUCAS replied:
+FRED replied:
 """${data.assistantMessage}"""
 
 Return STRICT JSON with this shape, no prose:
 {
   "errors": [{"original": "<user's wrong fragment>", "correction": "<fixed English>", "explanation_pt": "<short PT-BR why>"}],
-  "vocabulary": [{"word": "<single new useful word from Lucas>", "explanation_pt": "<PT-BR meaning>"}],
-  "phrases": [{"phrase": "<useful English phrase from Lucas>", "explanation_pt": "<PT-BR meaning>"}]
+  "vocabulary": [{"word": "<single new useful word from Fred>", "explanation_pt": "<PT-BR meaning>"}],
+  "phrases": [{"phrase": "<useful English phrase from Fred>", "explanation_pt": "<PT-BR meaning>"}]
 }
 
 Rules:

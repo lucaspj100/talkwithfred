@@ -170,8 +170,8 @@ export function OnboardingFlow({
       });
       toast.success(
         editMode
-          ? "Suas intenções foram atualizadas. A partir de agora, Lucas vai adaptar suas conversas e treinos para esse novo foco."
-          : "Tudo certo! Vamos conversar com Lucas.",
+          ? "Suas intenções foram atualizadas. A partir de agora, Fred vai adaptar suas conversas e treinos para esse novo foco."
+          : "Tudo certo! Vamos conversar com Fred.",
       );
       navigate({ to: "/dashboard" });
     } catch (e) {
@@ -308,7 +308,7 @@ export function OnboardingFlow({
         )}
 
         {current === "correction" && (
-          <Step title="Como você quer que Lucas corrija você?">
+          <Step title="Como você quer que Fred corrija você?">
             <SingleGrid
               options={CORRECTION_PREFS}
               value={s.correction_preference}
@@ -328,7 +328,7 @@ export function OnboardingFlow({
         )}
 
         {current === "summary" && (
-          <Step title="Seu plano com Lucas" subtitle="Revise antes de começar. Você pode mudar depois.">
+          <Step title="Seu plano com Fred" subtitle="Revise antes de começar. Você pode mudar depois.">
             <div className="space-y-3 rounded-2xl border border-border bg-card/60 p-5 text-sm">
               <SummaryRow label="Objetivo principal" value={labelGoal(s.primary_english_goal)} />
               {s.english_goals.filter((g) => g !== s.primary_english_goal).length > 0 && (
@@ -367,7 +367,7 @@ export function OnboardingFlow({
               ? "Salvando..."
               : editMode
               ? "Salvar alterações"
-              : "Começar com Lucas"
+              : "Começar com Fred"
             : "Avançar"}
           <ArrowRight className="ml-1 size-4" />
         </Button>

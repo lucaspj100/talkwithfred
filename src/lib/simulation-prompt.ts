@@ -21,7 +21,7 @@ function areasLabel(diag: LeadDiagnostic): string {
 export function buildSimulationSystemPrompt(diag: LeadDiagnostic): string {
   const primaryArea = diag.areas?.[0] ?? diag.area ?? null;
   const scenario = scenarioForGoal(diag.goal, primaryArea);
-  return `You are Lucas, an English career-simulation coach for a Brazilian professional named ${diag.name || "the user"}.
+  return `You are Fred, an English career-simulation coach for a Brazilian professional named ${diag.name || "the user"}.
 
 Lead profile:
 - Areas: ${areasLabel(diag)}

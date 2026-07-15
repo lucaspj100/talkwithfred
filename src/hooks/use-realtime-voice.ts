@@ -84,7 +84,7 @@ export function useRealtimeVoice({
   const onUserFinalRef = useRef(onUserFinalTurn);
   const onAssistantFinalRef = useRef(onAssistantFinalTurn);
 
-  // Web Audio analyser for Lucas's response audio (mouth-sync).
+  // Web Audio analyser for Fred's response audio (mouth-sync).
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const analyserSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
@@ -478,7 +478,7 @@ export function useRealtimeVoice({
           probablyEcho,
         });
         // User is speaking: force mouth closed immediately, regardless of any
-        // in-flight assistant audio timers. Real interruptions also end Lucas's
+        // in-flight assistant audio timers. Real interruptions also end Fred's
         // audio via the audio element's pause/ended handlers.
         isLucasAudioPlayingRef.current = false;
         setAudioPlaying(false);
@@ -507,7 +507,7 @@ export function useRealtimeVoice({
         partialUserItemIdRef.current = null;
         const id = ev.item_id || `u_${Date.now()}`;
         // Validate: skip empty/noise-only transcriptions. Server VAD is set to
-        // create_response=false, so nothing is sent to Lucas unless we ask.
+        // create_response=false, so nothing is sent to Fred unless we ask.
         if (text.length === 0 || isLikelyNoiseTranscript(text)) {
           dlog("dropped noise/empty transcript", text);
           if (stateRef.current === "user-speaking" || stateRef.current === "fred-thinking") {
@@ -523,7 +523,7 @@ export function useRealtimeVoice({
           ]);
           onUserFinalRef.current?.(text);
         }
-        // Now that we have validated speech, ask Lucas to respond.
+        // Now that we have validated speech, ask Fred to respond.
         requestResponse();
         break;
       }
@@ -660,7 +660,7 @@ export function useRealtimeVoice({
         responseFinishedAtRef.current = Date.now();
         clearWatchdog();
         if (stateRef.current === "fred-thinking" || stateRef.current === "fred-speaking") {
-          setResponseError("Lucas teve um problema para responder. Toque para tentar novamente.");
+          setResponseError("Fred teve um problema para responder. Toque para tentar novamente.");
           finishLucasAudioPlayback();
         }
         break;
@@ -767,7 +767,7 @@ export function useRealtimeVoice({
           console.warn("[voice] initial play blocked", err);
           setAudioBlocked(true);
         });
-        // Start analysing Lucas's outbound stream for mouth-sync.
+        // Start analysing Fred's outbound stream for mouth-sync.
         startMouthAnalyser(remote);
       };
 

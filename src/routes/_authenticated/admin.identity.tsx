@@ -123,7 +123,7 @@ function AdminIdentityPage() {
         .eq("singleton", true);
       if (updateErr) throw updateErr;
 
-      toast.success("Foto do Lucas atualizada.");
+      toast.success("Foto do Fred atualizada.");
       if (sourceUrl) URL.revokeObjectURL(sourceUrl);
       setSourceUrl(null);
       setCroppedAreaPixels(null);
@@ -168,12 +168,12 @@ function AdminIdentityPage() {
       <div>
         <h2 className="font-display text-2xl font-bold">Identidade visual</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Configure a foto que representa o Lucas em toda a plataforma.
+          Configure a foto que representa o Fred em toda a plataforma.
         </p>
       </div>
 
       <section className="rounded-2xl border border-border bg-card/40 p-5">
-        <h3 className="mb-4 font-display text-lg font-semibold">Foto do Lucas</h3>
+        <h3 className="mb-4 font-display text-lg font-semibold">Foto do Fred</h3>
 
         <div className="flex flex-wrap items-center gap-4">
           <LucasAvatar size="lg" className="h-20 w-20 text-2xl" />
