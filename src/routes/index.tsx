@@ -31,9 +31,8 @@ function Landing() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
         <LucasBrand linkTo="/" />
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">Entrar</Link>
-          <Link to="/simulacao"><Button>Ver meu mapa de oportunidades</Button></Link>
         </div>
       </header>
 
