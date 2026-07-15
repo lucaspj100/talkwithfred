@@ -117,8 +117,8 @@ function Dashboard() {
             Escolha como quer praticar inglês hoje.
           </p>
         </div>
-        <div className="fred-ring h-24 w-24 justify-self-end" data-state="neutral">
-          <LucasAvatar alt="Lucas" className="h-24 w-24 text-4xl ring-0" />
+        <div className="justify-self-end">
+          <TalkingAvatar state="idle" size="small" />
         </div>
       </div>
 
