@@ -90,6 +90,15 @@ export function RealtimeConversation({
   const effectiveAvatarStatus: LucasAvatarStatus = audioPlaying && !userSpeaking ? "speaking" : avatarStatus(state);
   const effectiveRingState = audioPlaying && !userSpeaking ? "speaking" : ringState(state);
   const effectiveStateLabel = audioPlaying && !userSpeaking ? "Lucas está falando — pode interromper" : stateLabel(state, muted);
+  const talkingState: TalkingAvatarState = audioPlaying && !userSpeaking
+    ? "speaking"
+    : userSpeaking
+      ? "listening"
+      : state === "fred-thinking" || state === "connecting" || state === "reconnecting"
+        ? "thinking"
+        : state === "listening"
+          ? "listening"
+          : "idle";
 
 
   if (idle || isError) {
