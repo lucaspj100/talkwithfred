@@ -7,13 +7,13 @@ import { ArrowRight, Sparkle, Target, MessageCircle, Globe2, ClipboardList, MapI
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Simulador de Inglês para Carreira — Lucas" },
+      { title: "Simulador de Inglês para Carreira — Fred" },
       {
         name: "description",
         content:
           "Você tem capacidade para oportunidades maiores, mas o inglês ainda te faz recuar? Faça uma simulação gratuita com IA e descubra onde seu inglês trava sua carreira.",
       },
-      { property: "og:title", content: "Simulador de Inglês para Carreira — Lucas" },
+      { property: "og:title", content: "Simulador de Inglês para Carreira — Fred" },
       {
         property: "og:description",
         content: "Simulação gratuita com IA para profissionais. Veja onde seu inglês trava e quais oportunidades podem estar fora do seu radar.",
@@ -61,10 +61,10 @@ function Landing() {
 
         <div className="relative mx-auto w-full max-w-md">
           <div className="fred-ring mx-auto h-72 w-72" data-state="responding">
-            <img src={fredAvatar} alt="Lucas, IA que simula situações profissionais em inglês" width={1024} height={1024} className="h-72 w-72 rounded-full object-cover" />
+            <img src={fredAvatar} alt="Fred, IA que simula situações profissionais em inglês" width={1024} height={1024} className="h-72 w-72 rounded-full object-cover" />
           </div>
           <div className="mt-6 rounded-2xl border border-border bg-card/70 p-4 shadow-2xl backdrop-blur">
-            <p className="text-sm text-muted-foreground">Lucas (recrutador internacional)</p>
+            <p className="text-sm text-muted-foreground">Fred (recrutador internacional)</p>
             <p className="mt-1 text-base">
               Hi! Thanks for joining today. Could you tell me a little about your background and the kind of role you're looking for?
             </p>
@@ -86,8 +86,8 @@ function Landing() {
             },
             {
               icon: MessageCircle,
-              t: "Faça uma simulação com Lucas",
-              d: "Lucas conduz uma situação real de carreira: entrevista, reunião, apresentação ou conversa com recrutador.",
+              t: "Faça uma simulação com Fred",
+              d: "Fred conduz uma situação real de carreira: entrevista, reunião, apresentação ou conversa com recrutador.",
             },
             {
               icon: MapIcon,
@@ -152,7 +152,7 @@ function Landing() {
       </section>
 
       <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Speak With Lucas · Simulador de Inglês para Carreira
+        © {new Date().getFullYear()} Talk With Fred · Simulador de Inglês para Carreira
       </footer>
     </div>
   );

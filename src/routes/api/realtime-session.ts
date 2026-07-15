@@ -143,7 +143,7 @@ export const Route = createFileRoute("/api/realtime-session")({
                       prefix_padding_ms: VAD_PREFIX_PADDING_MS,
                       silence_duration_ms: END_OF_SPEECH_SILENCE_MS,
                       // The client validates the transcription before asking
-                      // for a response, so noise never triggers Lucas.
+                      // for a response, so noise never triggers Fred.
                       create_response: false,
                       interrupt_response: true,
                     },
