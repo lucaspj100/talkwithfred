@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { LucasAvatar as LucasBrandImage } from "@/components/LucasBrand";
+import { FredAvatar as FredBrandImage } from "@/components/FredBrand";
 
 export type TalkingAvatarState = "idle" | "listening" | "thinking" | "speaking";
 export type TalkingAvatarSize = "small" | "medium" | "large";
@@ -51,7 +51,7 @@ export function TalkingAvatar({
   return (
     <div className={cn("inline-flex flex-col items-center gap-3", className)}>
       <div className={cn("fred-ring", box)} data-state={ring}>
-        <LucasBrandImage
+        <FredBrandImage
           alt="Fred"
           className={cn(
             "h-full w-full ring-0 animate-idle-breathe",

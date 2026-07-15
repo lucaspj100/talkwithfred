@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export type AppSettings = {
   id: string;
   brand_name: string;
-  lucas_avatar_url: string | null;
+  fred_avatar_url: string | null;
   updated_at: string;
 };
 
@@ -16,7 +16,7 @@ export function useAppSettings() {
     queryFn: async (): Promise<AppSettings | null> => {
       const { data, error } = await supabase
         .from("app_settings")
-        .select("id, brand_name, lucas_avatar_url, updated_at")
+        .select("id, brand_name, fred_avatar_url, updated_at")
         .eq("singleton", true)
         .maybeSingle();
       if (error) throw error;

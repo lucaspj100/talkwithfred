@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import fredAvatar from "@/assets/fred-avatar.jpg";
 import { Button } from "@/components/ui/button";
-import { LucasBrand } from "@/components/LucasBrand";
+import { FredBrand } from "@/components/FredBrand";
 import { Mic, Keyboard } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -29,7 +29,7 @@ function Landing() {
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-        <LucasBrand linkTo="/" />
+        <FredBrand linkTo="/" />
         <Link to="/auth" className="text-sm text-muted-foreground hover:text-foreground">
           Entrar
         </Link>

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { LucasAvatar } from "@/components/LucasBrand";
+import { FredAvatar } from "@/components/FredBrand";
 import { APP_SETTINGS_QUERY_KEY, useAppSettings } from "@/lib/use-app-settings";
 import { Upload, Trash2, RotateCcw, Loader2 } from "lucide-react";
 
@@ -18,7 +18,7 @@ const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const MAX_BYTES = 5 * 1024 * 1024;
 const OUTPUT_SIZE = 512;
 const BUCKET = "brand-assets";
-const OBJECT_PATH = "brand/lucas-avatar.webp";
+const OBJECT_PATH = "brand/fred-avatar.webp";
 
 async function getCroppedWebpBlob(imageSrc: string, cropPixels: Area): Promise<Blob> {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -119,7 +119,7 @@ function AdminIdentityPage() {
 
       const { error: updateErr } = await supabase
         .from("app_settings")
-        .update({ lucas_avatar_url: finalUrl, updated_by: uid })
+        .update({ fred_avatar_url: finalUrl, updated_by: uid })
         .eq("singleton", true);
       if (updateErr) throw updateErr;
 
@@ -143,14 +143,14 @@ function AdminIdentityPage() {
   };
 
   const handleRemove = async () => {
-    if (!settings?.lucas_avatar_url) return;
+    if (!settings?.fred_avatar_url) return;
     if (!confirm("Remover a foto atual e voltar ao padrão?")) return;
     setRemoving(true);
     try {
       await supabase.storage.from(BUCKET).remove([OBJECT_PATH]);
       const { error } = await supabase
         .from("app_settings")
-        .update({ lucas_avatar_url: null })
+        .update({ fred_avatar_url: null })
         .eq("singleton", true);
       if (error) throw error;
       toast.success("Foto removida. Usando o padrão.");
@@ -176,10 +176,10 @@ function AdminIdentityPage() {
         <h3 className="mb-4 font-display text-lg font-semibold">Foto do Fred</h3>
 
         <div className="flex flex-wrap items-center gap-4">
-          <LucasAvatar size="lg" className="h-20 w-20 text-2xl" />
+          <FredAvatar size="lg" className="h-20 w-20 text-2xl" />
           <div className="min-w-[200px] flex-1">
             <div className="text-sm text-muted-foreground">
-              {settings?.lucas_avatar_url ? "Imagem personalizada ativa." : "Nenhuma imagem configurada. Usando o fallback (letra L)."}
+              {settings?.fred_avatar_url ? "Imagem personalizada ativa." : "Nenhuma imagem configurada. Usando o fallback (letra L)."}
             </div>
             <div className="mt-1 text-xs text-muted-foreground">JPG, PNG ou WEBP · até 5 MB</div>
           </div>
@@ -196,9 +196,9 @@ function AdminIdentityPage() {
         <div className="mt-4 flex flex-wrap gap-2">
           <Button size="sm" onClick={() => fileInputRef.current?.click()} disabled={saving || removing}>
             <Upload className="mr-1 size-4" />
-            {settings?.lucas_avatar_url ? "Trocar imagem" : "Enviar imagem"}
+            {settings?.fred_avatar_url ? "Trocar imagem" : "Enviar imagem"}
           </Button>
-          {settings?.lucas_avatar_url && (
+          {settings?.fred_avatar_url && (
             <Button size="sm" variant="outline" onClick={handleRemove} disabled={saving || removing}>
               {removing ? <Loader2 className="mr-1 size-4 animate-spin" /> : <Trash2 className="mr-1 size-4" />}
               Restaurar padrão

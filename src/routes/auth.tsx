@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, redirect, Link } from "@tanstack/react-router";
-import { LucasBrand } from "@/components/LucasBrand";
+import { FredBrand } from "@/components/FredBrand";
 import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,7 +76,7 @@ function AuthPage() {
     <div className="flex min-h-screen items-center justify-center px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center">
-          <LucasBrand linkTo="/" />
+          <FredBrand linkTo="/" />
         </div>
         <div className="rounded-2xl border border-border bg-card/70 p-6 shadow-2xl backdrop-blur">
           <Tabs defaultValue="signup">

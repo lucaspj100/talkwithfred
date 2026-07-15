@@ -11,7 +11,7 @@ const SIZE_CLASSES: Record<Size, string> = {
   lg: "h-12 w-12 text-lg",
 };
 
-export function LucasAvatar({
+export function FredAvatar({
   size = "sm",
   className,
   alt = "Fred",
@@ -21,7 +21,7 @@ export function LucasAvatar({
   alt?: string;
 }) {
   const { data } = useAppSettings();
-  const url = data?.lucas_avatar_url ?? null;
+  const url = data?.fred_avatar_url ?? null;
   const [failed, setFailed] = useState(false);
   const showImage = url && !failed;
 
@@ -49,7 +49,7 @@ export function LucasAvatar({
   );
 }
 
-export function LucasBrand({
+export function FredBrand({
   linkTo = "/",
   size = "sm",
   className,
@@ -62,7 +62,7 @@ export function LucasBrand({
   const name = data?.brand_name ?? "Talk With Fred";
   return (
     <Link to={linkTo} className={cn("flex items-center gap-2 font-display text-lg font-bold", className)}>
-      <LucasAvatar size={size} />
+      <FredAvatar size={size} />
       {name}
     </Link>
   );
