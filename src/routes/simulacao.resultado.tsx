@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LucasBrand } from "@/components/LucasBrand";
+import { FredBrand } from "@/components/FredBrand";
 import { markLeadConverted } from "@/lib/leads.functions";
 import {
   labelArea,
@@ -81,7 +81,7 @@ function ResultadoPage() {
   return (
     <div className="min-h-[100dvh]">
       <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
-        <LucasBrand linkTo="/" />
+        <FredBrand linkTo="/" />
         <Link to="/simulacao" className="text-xs text-muted-foreground hover:text-foreground">
           <ArrowLeft className="mr-1 inline size-3" /> Refazer simulação
         </Link>

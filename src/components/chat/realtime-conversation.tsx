@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Keyboard, Mic, MicOff, Phone, PhoneOff, Loader2 } from "lucide-react";
-import { LucasAvatar as LucasBrandAvatar } from "@/components/LucasBrand";
-import { TalkingAvatar, type TalkingAvatarState } from "@/components/lucas/TalkingAvatar";
+import { FredAvatar as FredBrandAvatar } from "@/components/FredBrand";
+import { TalkingAvatar, type TalkingAvatarState } from "@/components/fred/TalkingAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useRealtimeVoice,
@@ -139,7 +139,7 @@ export function RealtimeConversation({
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className={cn("fred-ring h-12 w-12")} data-state={effectiveRingState}>
-            <LucasBrandAvatar alt="Fred" className="h-12 w-12 ring-0" />
+            <FredBrandAvatar alt="Fred" className="h-12 w-12 ring-0" />
           </div>
           <div>
             <p className="text-sm font-semibold">Fred</p>

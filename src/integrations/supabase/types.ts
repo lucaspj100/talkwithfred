@@ -17,24 +17,24 @@ export type Database = {
       app_settings: {
         Row: {
           brand_name: string
+          fred_avatar_url: string | null
           id: string
-          lucas_avatar_url: string | null
           singleton: boolean
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           brand_name?: string
+          fred_avatar_url?: string | null
           id?: string
-          lucas_avatar_url?: string | null
           singleton?: boolean
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           brand_name?: string
+          fred_avatar_url?: string | null
           id?: string
-          lucas_avatar_url?: string | null
           singleton?: boolean
           updated_at?: string
           updated_by?: string | null

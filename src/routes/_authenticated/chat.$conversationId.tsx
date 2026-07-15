@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { LucasAvatar } from "@/components/LucasBrand";
+import { FredAvatar } from "@/components/FredBrand";
 import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square, VolumeX, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { MODES, type Mode } from "@/lib/fred-prompt";
@@ -640,7 +640,7 @@ function ChatPage() {
         {/* Fred panel */}
         <aside className="hidden flex-col items-center justify-start gap-4 rounded-3xl border border-border bg-card/40 p-6 md:flex">
           <div className="fred-ring h-44 w-44" data-state={fredState}>
-            <LucasAvatar alt="Fred" className="h-44 w-44 text-5xl ring-0" />
+            <FredAvatar alt="Fred" className="h-44 w-44 text-5xl ring-0" />
           </div>
           <p className="font-display text-lg font-semibold">Fred</p>
           <p className="text-center text-xs text-muted-foreground">{stateLabel[fredState]}</p>
@@ -651,7 +651,7 @@ function ChatPage() {
         <section className="flex flex-col rounded-3xl border border-border bg-card/40">
           <div className="flex items-center gap-3 border-b border-border px-4 py-3 md:hidden">
             <div className="fred-ring h-10 w-10" data-state={fredState}>
-              <LucasAvatar alt="Fred" className="h-10 w-10 ring-0" />
+              <FredAvatar alt="Fred" className="h-10 w-10 ring-0" />
             </div>
             <div>
               <p className="text-sm font-semibold">Fred</p>
@@ -692,7 +692,7 @@ function ChatPage() {
               const showPlaceholder = isPending && captionN == null;
               return (
                 <div key={m.id} className="flex items-start gap-3">
-                  <LucasAvatar alt="" className="shrink-0" />
+                  <FredAvatar alt="" className="shrink-0" />
                   <div className="max-w-[85%]">
                     <p className="whitespace-pre-wrap text-sm leading-relaxed">
                       {showPlaceholder ? "..." : display || (status === "streaming" ? "..." : "")}

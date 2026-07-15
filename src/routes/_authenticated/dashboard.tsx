@@ -10,8 +10,8 @@ import { toast } from "sonner";
 import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { LucasBrand } from "@/components/LucasBrand";
-import { TalkingAvatar } from "@/components/lucas/TalkingAvatar";
+import { FredBrand } from "@/components/FredBrand";
+import { TalkingAvatar } from "@/components/fred/TalkingAvatar";
 import {
   labelGoal,
   labelArea,
@@ -99,7 +99,7 @@ function Dashboard() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <header className="mb-8 flex items-center justify-between">
-        <LucasBrand linkTo="/dashboard" />
+        <FredBrand linkTo="/dashboard" />
         <div className="flex items-center gap-2">
           {me.isAdmin && (
             <Link to="/admin"><Button variant="ghost" size="sm"><ShieldAlert className="mr-1 size-4" />Administração</Button></Link>
