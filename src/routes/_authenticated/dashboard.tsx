@@ -11,6 +11,7 @@ import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Fl
 import { useEffect, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { LucasAvatar, LucasBrand } from "@/components/LucasBrand";
+import { TalkingAvatar } from "@/components/lucas/TalkingAvatar";
 import {
   labelGoal,
   labelArea,
