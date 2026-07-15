@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Keyboard, Mic, MicOff, Phone, PhoneOff, Loader2 } from "lucide-react";
 import { LucasAvatar as LucasBrandAvatar } from "@/components/LucasBrand";
-import { LucasAvatar, type LucasAvatarStatus } from "@/components/lucas/LucasAvatar";
+import { type LucasAvatarStatus } from "@/components/lucas/LucasAvatar";
+import { TalkingAvatar, type TalkingAvatarState } from "@/components/lucas/TalkingAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import {
   useRealtimeVoice,
@@ -89,6 +90,15 @@ export function RealtimeConversation({
   const effectiveAvatarStatus: LucasAvatarStatus = audioPlaying && !userSpeaking ? "speaking" : avatarStatus(state);
   const effectiveRingState = audioPlaying && !userSpeaking ? "speaking" : ringState(state);
   const effectiveStateLabel = audioPlaying && !userSpeaking ? "Lucas está falando — pode interromper" : stateLabel(state, muted);
+  const talkingState: TalkingAvatarState = audioPlaying && !userSpeaking
+    ? "speaking"
+    : userSpeaking
+      ? "listening"
+      : state === "fred-thinking" || state === "connecting" || state === "reconnecting"
+        ? "thinking"
+        : state === "listening"
+          ? "listening"
+          : "idle";
 
 
   if (idle || isError) {
@@ -96,7 +106,7 @@ export function RealtimeConversation({
       <div className="rounded-3xl border border-border bg-card/60 p-6 text-center md:p-10">
         <div className="mx-auto mb-4 h-28 w-28 md:h-36 md:w-36">
           <div className="fred-ring h-full w-full" data-state="neutral">
-            <LucasAvatar status="idle" size="large" showStatus={false} />
+            <TalkingAvatar state="idle" size="large" />
 
           </div>
         </div>
@@ -146,7 +156,7 @@ export function RealtimeConversation({
       </div>
 
       <div className="my-6 flex flex-col items-center justify-center gap-2">
-        <LucasAvatar status={effectiveAvatarStatus} mouthLevel={effectiveMouthLevel} size="large" showStatus />
+        <TalkingAvatar state={talkingState} mouthLevel={effectiveMouthLevel} size="large" />
         <div className="rounded-md border border-border/70 bg-background/70 px-2.5 py-1 font-mono text-[11px] text-muted-foreground shadow-sm">
           Status: {effectiveAvatarStatus} | Mouth: {effectiveMouthLevel} | Source: {effectiveMouthSource} | Audio playing: {audioPlaying && !userSpeaking ? "yes" : "no"} | User speaking: {userSpeaking ? "yes" : "no"}
         </div>

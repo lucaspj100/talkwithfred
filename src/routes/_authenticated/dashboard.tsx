@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { LucasAvatar, LucasBrand } from "@/components/LucasBrand";
+import { LucasBrand } from "@/components/LucasBrand";
+import { TalkingAvatar } from "@/components/lucas/TalkingAvatar";
 import {
   labelGoal,
   labelArea,
@@ -116,8 +117,8 @@ function Dashboard() {
             Escolha como quer praticar inglês hoje.
           </p>
         </div>
-        <div className="fred-ring h-24 w-24 justify-self-end" data-state="neutral">
-          <LucasAvatar alt="Lucas" className="h-24 w-24 text-4xl ring-0" />
+        <div className="justify-self-end">
+          <TalkingAvatar state="idle" size="small" />
         </div>
       </div>
 
