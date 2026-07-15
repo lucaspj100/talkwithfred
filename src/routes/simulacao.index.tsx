@@ -24,13 +24,13 @@ import { RealtimeVoiceChat } from "@/components/simulation/realtime-voice-chat";
 export const Route = createFileRoute("/simulacao/")({
   head: () => ({
     meta: [
-      { title: "Simulação gratuita — Simulador de Inglês para Carreira" },
+      { title: "Simulação gratuita — Pratique inglês em situações reais" },
       {
         name: "description",
         content:
           "Faça uma simulação gratuita com IA, veja onde seu inglês trava e descubra quais oportunidades podem estar ficando fora do seu radar.",
       },
-      { property: "og:title", content: "Simulador de Inglês para Carreira — Fred" },
+      { property: "og:title", content: "Pratique inglês em situações reais — Fred" },
       {
         property: "og:description",
         content: "Simulação gratuita com IA para profissionais que querem destravar carreira e oportunidades internacionais.",

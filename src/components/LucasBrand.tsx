@@ -43,7 +43,7 @@ export function LucasAvatar({
           onError={() => setFailed(true)}
         />
       ) : (
-        <span>L</span>
+        <span>F</span>
       )}
     </span>
   );
