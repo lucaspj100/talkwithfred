@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Keyboard, Mic, MicOff, Phone, PhoneOff, Loader2 } from "lucide-react";
 import { LucasAvatar as LucasBrandAvatar } from "@/components/LucasBrand";
-import { LucasAvatar, type LucasAvatarStatus } from "@/components/lucas/LucasAvatar";
+import { type LucasAvatarStatus } from "@/components/lucas/LucasAvatar";
 import { TalkingAvatar, type TalkingAvatarState } from "@/components/lucas/TalkingAvatar";
 import { supabase } from "@/integrations/supabase/client";
 import {
