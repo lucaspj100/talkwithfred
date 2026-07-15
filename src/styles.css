@@ -113,8 +113,9 @@
   html, body { font-family: var(--font-sans); }
   body {
     background:
-      radial-gradient(1100px 600px at 85% -10%, oklch(0.78 0.15 70 / 10%), transparent 60%),
-      radial-gradient(900px 500px at -10% 100%, oklch(0.62 0.18 250 / 14%), transparent 60%),
+      radial-gradient(1100px 600px at 85% -10%, oklch(0.68 0.18 250 / 18%), transparent 60%),
+      radial-gradient(900px 500px at -10% 100%, oklch(0.72 0.18 50 / 10%), transparent 60%),
+      var(--color-background);
       var(--color-background);
     color: var(--color-foreground);
     min-height: 100vh;
