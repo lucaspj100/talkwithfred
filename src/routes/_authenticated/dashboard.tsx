@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { LucasAvatar, LucasBrand } from "@/components/LucasBrand";
+import { LucasBrand } from "@/components/LucasBrand";
 import { TalkingAvatar } from "@/components/lucas/TalkingAvatar";
 import {
   labelGoal,
