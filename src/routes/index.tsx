@@ -48,14 +48,11 @@ function Landing() {
           <p className="mt-5 max-w-xl text-lg text-muted-foreground">
             Faça uma simulação gratuita com IA, veja onde seu inglês trava e descubra quais oportunidades podem estar ficando fora do seu radar.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-          <Link to="/simulacao">
-              <Button size="lg" className="text-base">
-                Ver meu mapa de oportunidades na carreira <ArrowRight className="ml-1 size-4" />
+          <div className="mt-8 flex justify-center md:justify-start">
+            <Link to="/auth" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full text-base sm:w-auto">
+                Praticar com a IA agora <ArrowRight className="ml-1 size-4" />
               </Button>
-            </Link>
-            <Link to="/auth">
-              <Button size="lg" variant="ghost" className="text-base">Praticar com a IA agora</Button>
             </Link>
           </div>
           <p className="mt-6 text-xs text-muted-foreground">
