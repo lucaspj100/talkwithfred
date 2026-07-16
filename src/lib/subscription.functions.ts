@@ -137,7 +137,8 @@ export const createMySubscription = createServerFn({ method: "POST" })
  */
 export const refreshMySubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data: { preapprovalId?: string } | undefined) => data ?? {})
+  .handler(async ({ context, data }) => {
     const { data: sub } = await context.supabase
       .from("subscriptions")
       .select("*")
@@ -145,11 +146,17 @@ export const refreshMySubscription = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!sub?.provider_subscription_id) return { status: sub?.status ?? null };
+
+    const preapprovalId = data.preapprovalId || sub?.provider_subscription_id || null;
+    if (!preapprovalId) return { status: sub?.status ?? null };
 
     const { mpGetPreapproval, normalizeStatus } = await import("@/lib/mercado-pago.server");
     const { syncPreapprovalById } = await import("@/lib/subscription.server");
-    const remote = await mpGetPreapproval(sub.provider_subscription_id);
+    const remote = await mpGetPreapproval(preapprovalId);
+    // Guard: only sync if this preapproval belongs to the caller.
+    if (remote.external_reference && remote.external_reference !== context.userId) {
+      return { status: sub?.status ?? null };
+    }
     await syncPreapprovalById(remote);
     return { status: normalizeStatus(remote.status) };
   });
