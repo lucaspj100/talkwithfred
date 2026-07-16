@@ -16,6 +16,8 @@ function titleFromPath(pathname: string): string {
   if (pathname === "/admin" || pathname === "/admin/") return "Visão geral";
   if (pathname.startsWith("/admin/users/")) return "Detalhes do usuário";
   if (pathname === "/admin/users") return "Usuários";
+  if (pathname.startsWith("/admin/assinaturas/")) return "Detalhes da assinatura";
+  if (pathname === "/admin/assinaturas") return "Assinaturas";
   if (pathname === "/admin/retention") return "Retenção";
   if (pathname === "/admin/leads") return "Leads";
   if (pathname === "/admin/identity") return "Identidade visual";
