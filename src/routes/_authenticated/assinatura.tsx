@@ -104,7 +104,7 @@ function AssinaturaPage() {
   const needsPayment = status === "past_due" || status === "payment_required";
   const available = Number(sub?.minutes_available ?? 0);
   const used = Number(sub?.minutes_used ?? 0);
-  const total = Number(sub?.monthly_minutes ?? 120);
+  const total = Number(sub?.monthly_minutes ?? 90);
   const showBalance = active; // Only show minutes as usable when active
   const usedPct = total > 0 ? Math.min(100, Math.max(0, (used / total) * 100)) : 0;
   const meta = statusMeta(status, available);
