@@ -226,7 +226,8 @@ async function rollupUsageSession(sessionId: string) {
     )
     .eq("usage_session_id", sessionId);
   const list = (rows ?? []) as Array<Record<string, unknown>>;
-  const totals = list.reduce(
+  type Totals = { itt: number; ott: number; iat: number; oat: number; cached: number; usd: number; brl: number };
+  const totals: Totals = list.reduce<Totals>(
     (acc, r) => ({
       itt: acc.itt + Number(r.input_text_tokens ?? 0),
       ott: acc.ott + Number(r.output_text_tokens ?? 0),
