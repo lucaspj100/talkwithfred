@@ -898,7 +898,7 @@ function ChatPage() {
                 size="icon"
                 variant={recording ? "destructive" : "secondary"}
                 onClick={toggleRecord}
-                disabled={transcribing || isBusy}
+                disabled={transcribing || isBusy || !usageReady}
                 title={recording ? "Parar gravação" : "Falar em inglês"}
               >
                 {transcribing ? <Loader2 className="size-4 animate-spin" /> : recording ? <MicOff className="size-4" /> : <Mic className="size-4" />}
@@ -907,12 +907,12 @@ function ChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSubmit(); } }}
-                placeholder={recording ? "Falando..." : "Type in English..."}
-                disabled={recording || transcribing}
+                placeholder={recording ? "Falando..." : !usageReady ? "Aguardando assinatura…" : "Type in English..."}
+                disabled={recording || transcribing || !usageReady}
                 rows={1}
                 className="min-h-[44px] max-h-32 resize-none"
               />
-              <Button type="submit" size="icon" disabled={!input.trim() || isBusy}>
+              <Button type="submit" size="icon" disabled={!input.trim() || isBusy || !usageReady}>
                 {isBusy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
               </Button>
             </div>
