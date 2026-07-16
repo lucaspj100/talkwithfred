@@ -35,7 +35,7 @@ function statusMeta(status: string | null | undefined, minutesAvailable: number)
         return {
           label: "Ativa",
           tone: "warn",
-          help: "Você utilizou os 120 minutos deste ciclo. O saldo será renovado na próxima cobrança.",
+          help: "Você utilizou os 90 minutos deste ciclo. O saldo será renovado na próxima cobrança.",
         };
       }
       return { label: "Ativa", tone: "ok", help: "Seu plano está ativo." };
