@@ -138,14 +138,12 @@ async function mpFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
     } catch {
       /* not JSON */
     }
+    const causeArr = Array.isArray(parsed?.cause) ? (parsed?.cause as Array<{ description?: string; code?: string | number }>) : null;
     const mpMessage =
       (parsed?.message as string | undefined) ??
-      (Array.isArray(parsed?.cause) && (parsed?.cause as Array<{ description?: string }>)[0]?.description) ??
-      null;
-    const code =
-      (parsed?.code as string | undefined) ??
-      (Array.isArray(parsed?.cause) && String((parsed?.cause as Array<{ code?: string | number }>)[0]?.code ?? "")) ??
-      null;
+      (causeArr?.[0]?.description ?? null);
+    const codeRaw = (parsed?.code as string | number | undefined) ?? causeArr?.[0]?.code ?? null;
+    const code = codeRaw != null ? String(codeRaw) : null;
     console.error(
       "[mercado-pago]",
       path,
