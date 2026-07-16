@@ -102,13 +102,39 @@ function Dashboard() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <header className="mb-8 flex items-center justify-between">
+      <header className="mb-8 flex items-center justify-between gap-3">
         <FredBrand linkTo="/dashboard" />
         <div className="flex items-center gap-2">
           {me.isAdmin && (
-            <Link to="/admin"><Button variant="ghost" size="sm"><ShieldAlert className="mr-1 size-4" />Administração</Button></Link>
+            <Link to="/admin" className="hidden md:inline-flex"><Button variant="ghost" size="sm"><ShieldAlert className="mr-1 size-4" />Administração</Button></Link>
           )}
-          <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="mr-1 size-4" />Sair</Button>
+          <Link to="/assinatura" className="hidden md:inline-flex"><Button variant="ghost" size="sm"><CreditCard className="mr-1 size-4" />Minha assinatura</Button></Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" aria-label="Menu do usuário" className="rounded-full">
+                <div className="grid size-8 place-items-center rounded-full bg-primary/15 text-primary">
+                  <UserIcon className="size-4" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem asChild>
+                <Link to="/assinatura"><CreditCard className="mr-2 size-4" />Minha assinatura</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/settings/onboarding"><UserIcon className="mr-2 size-4" />Meu perfil</Link>
+              </DropdownMenuItem>
+              {me.isAdmin && (
+                <DropdownMenuItem asChild>
+                  <Link to="/admin"><ShieldAlert className="mr-2 size-4" />Administração</Link>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut}>
+                <LogOut className="mr-2 size-4" />Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
