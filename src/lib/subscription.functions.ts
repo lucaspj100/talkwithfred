@@ -128,7 +128,7 @@ export const createMySubscription = createServerFn({ method: "POST" })
       subscription_id: existing?.provider_subscription_id ?? null,
       init_point: initPoint,
       status: "pending" as const,
-      status: normalizeStatus(preapproval.status),
+      
     };
   });
 
