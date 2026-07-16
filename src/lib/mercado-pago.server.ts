@@ -3,6 +3,7 @@
 
 export const MP_PREAPPROVAL_PLAN_ID = "045a59c7e71441efb447e2ebee2bb2bf";
 export const MP_BACK_URL = "https://talkwithfred.live/assinatura/retorno";
+export const MP_NOTIFICATION_URL = "https://talkwithfred.live/api/public/mercado-pago/webhook";
 export const MP_BASE_URL = "https://api.mercadopago.com";
 
 export type MpPreapproval = {
