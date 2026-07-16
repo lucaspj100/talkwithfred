@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
-import { Loader2, RefreshCw, XCircle } from "lucide-react";
+import { Loader2, RefreshCw, XCircle, MessageCircle, AlertTriangle, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/assinatura")({
@@ -21,27 +21,41 @@ export const Route = createFileRoute("/_authenticated/assinatura")({
   component: AssinaturaPage,
 });
 
-function statusLabel(status: string | null | undefined) {
+type StatusMeta = {
+  label: string;
+  tone: "ok" | "warn" | "danger" | "neutral";
+  help: string;
+};
+
+function statusMeta(status: string | null | undefined, minutesAvailable: number): StatusMeta {
   switch (status) {
     case "authorized":
     case "active":
-      return { label: "Ativa", tone: "ok" as const, help: "Sua assinatura está ativa. Aproveite seus 120 minutos deste ciclo." };
+      if (minutesAvailable <= 0) {
+        return {
+          label: "Ativa",
+          tone: "warn",
+          help: "Você utilizou os 120 minutos deste ciclo. O saldo será renovado na próxima cobrança.",
+        };
+      }
+      return { label: "Ativa", tone: "ok", help: "Seu plano está ativo." };
     case "pending":
-      return { label: "Aguardando confirmação", tone: "warn" as const, help: "Estamos confirmando seu pagamento. Isso pode levar alguns minutos." };
+      return { label: "Pagamento pendente", tone: "warn", help: "Estamos confirmando seu pagamento. Isso pode levar alguns minutos." };
     case "paused":
-      return { label: "Pausada", tone: "warn" as const, help: "Sua assinatura está pausada." };
+      return { label: "Pausada", tone: "warn", help: "Sua assinatura está pausada." };
     case "past_due":
     case "payment_required":
-      return { label: "Pagamento pendente", tone: "danger" as const, help: "Regularize o pagamento para continuar usando." };
+      return { label: "Pagamento pendente", tone: "danger", help: "Não conseguimos confirmar sua última cobrança. Regularize para continuar usando o Fred." };
     case "cancelled":
     case "canceled":
-      return { label: "Cancelada", tone: "danger" as const, help: "Sua assinatura foi cancelada." };
+      return { label: "Cancelada", tone: "danger", help: "Sua assinatura foi cancelada." };
     default:
-      return { label: "Sem assinatura", tone: "neutral" as const, help: "Assine para começar a praticar." };
+      return { label: "Sem assinatura", tone: "neutral", help: "Assine para começar a praticar." };
   }
 }
 
 function AssinaturaPage() {
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const getSub = useServerFn(getMySubscription);
   const syncFn = useServerFn(syncMySubscription);
@@ -53,8 +67,7 @@ function AssinaturaPage() {
   });
 
   const [cooldownAt, setCooldownAt] = useState<number>(0);
-  const now = Date.now();
-  const cooldownRemaining = Math.max(0, cooldownAt - now);
+  const cooldownRemaining = Math.max(0, cooldownAt - Date.now());
 
   const syncMut = useMutation({
     mutationFn: () => syncFn(),
@@ -83,20 +96,41 @@ function AssinaturaPage() {
     return <div className="flex min-h-[50vh] items-center justify-center"><Loader2 className="size-6 animate-spin text-muted-foreground" /></div>;
   }
 
-  const meta = statusLabel(sub?.status);
+  const status = sub?.status ?? null;
+  const active = status === "authorized" || status === "active";
+  const pending = status === "pending";
+  const cancelled = status === "cancelled" || status === "canceled";
+  const paused = status === "paused";
+  const needsPayment = status === "past_due" || status === "payment_required";
   const available = Number(sub?.minutes_available ?? 0);
   const used = Number(sub?.minutes_used ?? 0);
   const total = Number(sub?.monthly_minutes ?? 120);
-  const pct = total > 0 ? Math.min(100, Math.round((used / total) * 100)) : 0;
-  const active = sub?.status === "authorized" || sub?.status === "active";
-  const cancelled = sub?.status === "cancelled";
-  const canAccess = active && available > 0;
+  const showBalance = active; // Only show minutes as usable when active
+  const usedPct = total > 0 ? Math.min(100, Math.max(0, (used / total) * 100)) : 0;
+  const meta = statusMeta(status, available);
   const periodEnd = sub?.current_period_end ? new Date(sub.current_period_end as string) : null;
   const cancelledStillActive = cancelled && periodEnd && periodEnd > new Date();
+  const zero = active && available <= 0;
+
+  // Primary action based on status
+  let primary: { label: string; onClick?: () => void; to?: string; disabled?: boolean } | null = null;
+  if (active && !zero) {
+    primary = { label: "Conversar com Fred", to: "/dashboard" };
+  } else if (active && zero) {
+    primary = { label: "Ver próxima renovação", to: "/assinatura", disabled: true };
+  } else if (pending) {
+    primary = { label: "Atualizar status", onClick: () => syncMut.mutate(), disabled: syncMut.isPending || cooldownRemaining > 0 };
+  } else if (needsPayment) {
+    primary = { label: "Regularizar pagamento", to: "/planos" };
+  } else if (paused) {
+    primary = { label: "Regularizar assinatura", to: "/planos" };
+  } else if (cancelled) {
+    primary = { label: "Assinar novamente", to: "/planos" };
+  }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-10">
-      <h1 className="mb-6 font-display text-3xl font-extrabold">Minha assinatura</h1>
+    <div className="mx-auto max-w-2xl px-4 py-8 md:px-6 md:py-10">
+      <h1 className="mb-6 font-display text-2xl font-extrabold md:text-3xl">Minha assinatura</h1>
 
       {!sub ? (
         <div className="rounded-3xl border border-border bg-card/60 p-6 text-center">
@@ -105,9 +139,15 @@ function AssinaturaPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="rounded-3xl border border-border bg-card/60 p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
+          {/* Header card */}
+          <div className="rounded-3xl border border-border bg-card/60 p-5 md:p-6">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Plano</p>
+                <p className="font-display text-lg font-bold">Talk With Fred</p>
+                <p className="text-sm text-muted-foreground">R$ 49 / mês · 120 minutos</p>
+              </div>
+              <div className="shrink-0 text-right">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
                 <p className={`font-semibold ${
                   meta.tone === "ok" ? "text-primary"
@@ -115,61 +155,134 @@ function AssinaturaPage() {
                   : meta.tone === "warn" ? "text-amber-500" : ""
                 }`}>{meta.label}</p>
               </div>
+            </div>
+            <p className="text-sm text-muted-foreground">{meta.help}</p>
+
+            {/* Primary action */}
+            {primary && (
+              <div className="mt-4">
+                {primary.to && !primary.onClick ? (
+                  <Link to={primary.to}>
+                    <Button
+                      size="lg"
+                      disabled={primary.disabled}
+                      className="h-11 w-full rounded-full bg-cta text-base font-semibold text-cta-foreground hover:bg-cta/90 sm:w-auto sm:px-8"
+                    >
+                      {active && !zero && <MessageCircle className="mr-2 size-4" />}
+                      {primary.label}
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    size="lg"
+                    disabled={primary.disabled}
+                    onClick={primary.onClick}
+                    className="h-11 w-full rounded-full bg-cta text-base font-semibold text-cta-foreground hover:bg-cta/90 sm:w-auto sm:px-8"
+                  >
+                    {(syncMut.isPending && pending) && <Loader2 className="mr-2 size-4 animate-spin" />}
+                    {primary.label}
+                    {cooldownRemaining > 0 && pending && (
+                      <span className="ml-2 text-xs opacity-80">({Math.ceil(cooldownRemaining / 1000)}s)</span>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Secondary sync (always visible for transparency) */}
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <Button variant="ghost" size="sm"
                 onClick={() => syncMut.mutate()}
                 disabled={syncMut.isPending || cooldownRemaining > 0}>
-                <RefreshCw className={`mr-1 size-4 ${syncMut.isPending ? "animate-spin" : ""}`} />
-                {cooldownRemaining > 0 ? `Aguarde ${Math.ceil(cooldownRemaining/1000)}s` : "Atualizar status"}
+                <RefreshCw className={`mr-1 size-3.5 ${syncMut.isPending ? "animate-spin" : ""}`} />
+                {cooldownRemaining > 0 ? `Aguarde ${Math.ceil(cooldownRemaining / 1000)}s` : "Atualizar status"}
               </Button>
+              {sub.last_synced_at && (
+                <span>Últ. sincronização: {new Date(sub.last_synced_at as string).toLocaleString("pt-BR")}</span>
+              )}
             </div>
-            <p className="mb-4 text-sm text-muted-foreground">{meta.help}</p>
+          </div>
 
+          {/* Minutes card */}
+          <div className="rounded-3xl border border-border bg-card/60 p-5 md:p-6">
+            <div className="mb-2 flex items-baseline justify-between gap-2">
+              <p className="text-sm font-semibold">Minutos deste ciclo</p>
+              {showBalance ? (
+                <p className="text-sm text-muted-foreground">
+                  {available.toFixed(0)} / {total} min disponíveis
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Indisponível</p>
+              )}
+            </div>
+            {showBalance ? (
+              <>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={`h-full rounded-full transition-all ${zero ? "bg-destructive" : available < 10 ? "bg-amber-500" : "bg-primary"}`}
+                    style={{ width: `${Math.max(0, 100 - usedPct)}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {used.toFixed(1)} min usados neste ciclo.
+                </p>
+              </>
+            ) : (
+              <>
+                <div
+                  className="h-2 w-full overflow-hidden rounded-full bg-muted opacity-50"
+                  aria-hidden
+                >
+                  <div className="h-full w-0 rounded-full bg-muted-foreground/40" />
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {pending
+                    ? "Disponível após confirmação do pagamento."
+                    : cancelled
+                    ? "Assinatura encerrada — sem saldo disponível."
+                    : needsPayment
+                    ? "Regularize o pagamento para liberar os minutos."
+                    : paused
+                    ? "Assinatura pausada — saldo indisponível."
+                    : "Assine para receber 120 minutos por ciclo."}
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Details */}
+          <div className="rounded-3xl border border-border bg-card/40 p-5 md:p-6">
+            <p className="mb-3 text-xs uppercase tracking-wide text-muted-foreground">Detalhes do ciclo</p>
             <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Plano</p><p>Talk With Fred</p></div>
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Valor</p><p>R$ 49/mês</p></div>
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Início do ciclo</p><p>{sub.current_period_start ? new Date(sub.current_period_start).toLocaleDateString("pt-BR") : "—"}</p></div>
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Fim do ciclo</p><p>{periodEnd ? periodEnd.toLocaleDateString("pt-BR") : "—"}</p></div>
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Próxima cobrança</p><p>{sub.next_payment_date ? new Date(sub.next_payment_date).toLocaleDateString("pt-BR") : "—"}</p></div>
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Último pagamento</p><p>{sub.last_payment_at ? new Date(sub.last_payment_at).toLocaleDateString("pt-BR") : "—"}</p></div>
-              <div><p className="text-xs uppercase tracking-wide text-muted-foreground">Últ. sincronização</p><p>{sub.last_synced_at ? new Date(sub.last_synced_at as string).toLocaleString("pt-BR") : "—"}</p></div>
+              <Detail label="Início do ciclo" value={sub.current_period_start ? new Date(sub.current_period_start).toLocaleDateString("pt-BR") : "—"} />
+              <Detail label="Fim do ciclo" value={periodEnd ? periodEnd.toLocaleDateString("pt-BR") : "—"} />
+              <Detail label="Próxima cobrança" value={sub.next_payment_date ? new Date(sub.next_payment_date).toLocaleDateString("pt-BR") : "—"} />
+              <Detail label="Último pagamento" value={sub.last_payment_at ? new Date(sub.last_payment_at).toLocaleDateString("pt-BR") : "—"} />
             </div>
           </div>
 
-          <div className="rounded-3xl border border-border bg-card/60 p-6">
-            <div className="mb-2 flex items-baseline justify-between">
-              <p className="text-sm font-semibold">Minutos disponíveis</p>
-              <p className="text-sm text-muted-foreground">{available.toFixed(1)} / {total} min</p>
-            </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${100 - pct}%` }} />
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">{used.toFixed(1)} min usados neste ciclo.</p>
-          </div>
-
+          {/* State alerts */}
           {cancelled && (
-            <div className="rounded-3xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm">
-              {cancelledStillActive
-                ? <>Sua assinatura foi cancelada. Você tem acesso até {periodEnd?.toLocaleDateString("pt-BR")}.</>
-                : <>Seu acesso foi encerrado.</>}
-              <div className="mt-3"><Link to="/planos"><Button size="sm" className="rounded-full bg-cta text-cta-foreground hover:bg-cta/90">Assinar novamente</Button></Link></div>
+            <div className="flex items-start gap-3 rounded-3xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-rose-500" />
+              <div className="min-w-0">
+                {cancelledStillActive
+                  ? <>Sua assinatura foi cancelada. Você tem acesso até {periodEnd?.toLocaleDateString("pt-BR")}.</>
+                  : <>Seu acesso foi encerrado.</>}
+              </div>
             </div>
           )}
 
-          {!active && !cancelled && (
-            <div className="rounded-3xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-              {meta.help}
-              <div className="mt-3"><Link to="/planos"><Button size="sm" className="rounded-full bg-cta text-cta-foreground hover:bg-cta/90">Regularizar</Button></Link></div>
+          {pending && (
+            <div className="flex items-start gap-3 rounded-3xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+              <Clock className="mt-0.5 size-4 shrink-0 text-amber-500" />
+              <div>Estamos confirmando seu pagamento. Isso pode levar alguns minutos. Clique em “Atualizar status” caso já tenha pago.</div>
             </div>
           )}
 
-          {active && !canAccess && (
-            <div className="rounded-3xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-              Você utilizou todos os 120 minutos deste ciclo. O saldo será renovado na próxima cobrança.
-            </div>
-          )}
-
-          {(active || sub.status === "past_due" || sub.status === "payment_required" || sub.status === "paused") && (
-            <div className="rounded-3xl border border-border bg-card/40 p-6">
+          {/* Cancel */}
+          {(active || needsPayment || paused) && (
+            <div className="rounded-3xl border border-border bg-card/40 p-5 md:p-6">
               <h2 className="mb-2 font-display text-lg font-bold">Gerenciar assinatura</h2>
               <p className="mb-4 text-sm text-muted-foreground">
                 Ao cancelar, a cobrança recorrente é encerrada. O histórico das suas conversas não será apagado.
@@ -202,6 +315,15 @@ function AssinaturaPage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function Detail({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className="mt-0.5">{value}</p>
     </div>
   );
 }
