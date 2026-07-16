@@ -118,6 +118,65 @@ function ChatPage() {
     return () => { mounted = false; sub.subscription.unsubscribe(); };
   }, [navigate]);
 
+  // ============= Usage session (120-minute quota) =============
+  const usage = useUsageSession();
+  const [usageInit, setUsageInit] = useState<"pending" | "ready" | "blocked">("pending");
+  const [outOfMinutes, setOutOfMinutes] = useState(false);
+  const [busyOtherTab, setBusyOtherTab] = useState(false);
+
+  const initUsage = useCallback(
+    async (force = false) => {
+      const res = await usage.start({
+        conversationId: conversation.id,
+        mode: "voice",
+        force,
+      });
+      if ("ok" in res && res.ok) {
+        setUsageInit("ready");
+        setBusyOtherTab(false);
+        return true;
+      }
+      const fail = res as Exclude<typeof res, { ok: true }>;
+      if (fail.code === "another_active_session") {
+        setBusyOtherTab(true);
+        setUsageInit("blocked");
+        return false;
+      }
+      setUsageInit("blocked");
+      if (fail.code === "no_subscription") {
+        toast.error(fail.message);
+        navigate({ to: "/planos" });
+      } else if (fail.code === "no_minutes") {
+        setOutOfMinutes(true);
+      } else if (fail.code === "pending" || fail.code === "blocked") {
+        toast.error(fail.message);
+        navigate({ to: "/assinatura" });
+      } else {
+        toast.error(fail.message);
+      }
+      return false;
+    },
+    [conversation.id, navigate, usage],
+  );
+
+  useEffect(() => {
+    if (!authReady) return;
+    if (usageInit !== "pending") return;
+    void initUsage(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady]);
+
+  // React to running-out-of-minutes signal from heartbeat.
+  useEffect(() => {
+    if (usage.ended && usage.ended.reason === "out_of_minutes") {
+      setOutOfMinutes(true);
+    }
+  }, [usage.ended]);
+
+  const usageReady = usageInit === "ready" && !usage.ended;
+
+
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
