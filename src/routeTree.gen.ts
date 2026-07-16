@@ -41,8 +41,10 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminRetentionRouteImport } from './routes/_authenticated/admin.retention'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminIdentityRouteImport } from './routes/_authenticated/admin.identity'
+import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin.assinaturas'
 import { Route as ApiPublicMercadoPagoWebhookRouteImport } from './routes/api/public/mercado-pago/webhook'
 import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
+import { Route as AuthenticatedAdminAssinaturasIdRouteImport } from './routes/_authenticated/admin.assinaturas.$id'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -211,6 +213,12 @@ const AuthenticatedAdminIdentityRoute =
     path: '/identity',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAssinaturasRoute =
+  AuthenticatedAdminAssinaturasRouteImport.update({
+    id: '/assinaturas',
+    path: '/assinaturas',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const ApiPublicMercadoPagoWebhookRoute =
   ApiPublicMercadoPagoWebhookRouteImport.update({
     id: '/api/public/mercado-pago/webhook',
@@ -222,6 +230,12 @@ const AuthenticatedAdminUsersUserIdRoute =
     id: '/$userId',
     path: '/$userId',
     getParentRoute: () => AuthenticatedAdminUsersRoute,
+  } as any)
+const AuthenticatedAdminAssinaturasIdRoute =
+  AuthenticatedAdminAssinaturasIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAdminAssinaturasRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -241,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
+  '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
   '/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
@@ -256,6 +271,7 @@ export interface FileRoutesByFullPath {
   '/api/usage/stop': typeof ApiUsageStopRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
+  '/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
@@ -274,6 +290,7 @@ export interface FileRoutesByTo {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao': typeof SimulacaoIndexRoute
+  '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
   '/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
@@ -289,6 +306,7 @@ export interface FileRoutesByTo {
   '/api/usage/stop': typeof ApiUsageStopRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
+  '/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
@@ -311,6 +329,7 @@ export interface FileRoutesById {
   '/api/tts-stream': typeof ApiTtsStreamRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
+  '/_authenticated/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
   '/_authenticated/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/retention': typeof AuthenticatedAdminRetentionRoute
@@ -326,6 +345,7 @@ export interface FileRoutesById {
   '/api/usage/stop': typeof ApiUsageStopRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
+  '/_authenticated/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
@@ -348,6 +368,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/simulacao/resultado'
     | '/simulacao/'
+    | '/admin/assinaturas'
     | '/admin/identity'
     | '/admin/leads'
     | '/admin/retention'
@@ -363,6 +384,7 @@ export interface FileRouteTypes {
     | '/api/usage/stop'
     | '/admin/'
     | '/practice/'
+    | '/admin/assinaturas/$id'
     | '/admin/users/$userId'
     | '/api/public/mercado-pago/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -381,6 +403,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/simulacao/resultado'
     | '/simulacao'
+    | '/admin/assinaturas'
     | '/admin/identity'
     | '/admin/leads'
     | '/admin/retention'
@@ -396,6 +419,7 @@ export interface FileRouteTypes {
     | '/api/usage/stop'
     | '/admin'
     | '/practice'
+    | '/admin/assinaturas/$id'
     | '/admin/users/$userId'
     | '/api/public/mercado-pago/webhook'
   id:
@@ -417,6 +441,7 @@ export interface FileRouteTypes {
     | '/api/tts-stream'
     | '/simulacao/resultado'
     | '/simulacao/'
+    | '/_authenticated/admin/assinaturas'
     | '/_authenticated/admin/identity'
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/retention'
@@ -432,6 +457,7 @@ export interface FileRouteTypes {
     | '/api/usage/stop'
     | '/_authenticated/admin/'
     | '/_authenticated/practice/'
+    | '/_authenticated/admin/assinaturas/$id'
     | '/_authenticated/admin/users/$userId'
     | '/api/public/mercado-pago/webhook'
   fileRoutesById: FileRoutesById
@@ -682,6 +708,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIdentityRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/assinaturas': {
+      id: '/_authenticated/admin/assinaturas'
+      path: '/assinaturas'
+      fullPath: '/admin/assinaturas'
+      preLoaderRoute: typeof AuthenticatedAdminAssinaturasRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/api/public/mercado-pago/webhook': {
       id: '/api/public/mercado-pago/webhook'
       path: '/api/public/mercado-pago/webhook'
@@ -696,8 +729,29 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminUsersUserIdRouteImport
       parentRoute: typeof AuthenticatedAdminUsersRoute
     }
+    '/_authenticated/admin/assinaturas/$id': {
+      id: '/_authenticated/admin/assinaturas/$id'
+      path: '/$id'
+      fullPath: '/admin/assinaturas/$id'
+      preLoaderRoute: typeof AuthenticatedAdminAssinaturasIdRouteImport
+      parentRoute: typeof AuthenticatedAdminAssinaturasRoute
+    }
   }
 }
+
+interface AuthenticatedAdminAssinaturasRouteChildren {
+  AuthenticatedAdminAssinaturasIdRoute: typeof AuthenticatedAdminAssinaturasIdRoute
+}
+
+const AuthenticatedAdminAssinaturasRouteChildren: AuthenticatedAdminAssinaturasRouteChildren =
+  {
+    AuthenticatedAdminAssinaturasIdRoute: AuthenticatedAdminAssinaturasIdRoute,
+  }
+
+const AuthenticatedAdminAssinaturasRouteWithChildren =
+  AuthenticatedAdminAssinaturasRoute._addFileChildren(
+    AuthenticatedAdminAssinaturasRouteChildren,
+  )
 
 interface AuthenticatedAdminUsersRouteChildren {
   AuthenticatedAdminUsersUserIdRoute: typeof AuthenticatedAdminUsersUserIdRoute
@@ -714,6 +768,7 @@ const AuthenticatedAdminUsersRouteWithChildren =
   )
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRouteWithChildren
   AuthenticatedAdminIdentityRoute: typeof AuthenticatedAdminIdentityRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
   AuthenticatedAdminRetentionRoute: typeof AuthenticatedAdminRetentionRoute
@@ -722,6 +777,8 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAssinaturasRoute:
+    AuthenticatedAdminAssinaturasRouteWithChildren,
   AuthenticatedAdminIdentityRoute: AuthenticatedAdminIdentityRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
   AuthenticatedAdminRetentionRoute: AuthenticatedAdminRetentionRoute,

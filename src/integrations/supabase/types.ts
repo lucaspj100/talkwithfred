@@ -292,6 +292,62 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_audit_logs: {
+        Row: {
+          action: string
+          actor_type: string
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_data: Json | null
+          previous_data: Json | null
+          provider_reference: string | null
+          reason: string | null
+          subscription_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_type: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          previous_data?: Json | null
+          provider_reference?: string | null
+          reason?: string | null
+          subscription_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_type?: string
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_data?: Json | null
+          previous_data?: Json | null
+          provider_reference?: string | null
+          reason?: string | null
+          subscription_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_audit_logs_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_events: {
         Row: {
           created_at: string
@@ -331,6 +387,7 @@ export type Database = {
       subscriptions: {
         Row: {
           canceled_at: string | null
+          cancellation_reason: string | null
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
@@ -338,6 +395,8 @@ export type Database = {
           last_payment_at: string | null
           last_payment_status: string | null
           last_renewed_payment_id: string | null
+          last_synced_at: string | null
+          last_user_sync_at: string | null
           minutes_available: number
           minutes_used: number
           monthly_minutes: number
@@ -346,6 +405,7 @@ export type Database = {
           plan_name: string
           provider: string
           provider_plan_id: string | null
+          provider_status: string | null
           provider_subscription_id: string | null
           status: string
           updated_at: string
@@ -353,6 +413,7 @@ export type Database = {
         }
         Insert: {
           canceled_at?: string | null
+          cancellation_reason?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -360,6 +421,8 @@ export type Database = {
           last_payment_at?: string | null
           last_payment_status?: string | null
           last_renewed_payment_id?: string | null
+          last_synced_at?: string | null
+          last_user_sync_at?: string | null
           minutes_available?: number
           minutes_used?: number
           monthly_minutes?: number
@@ -368,6 +431,7 @@ export type Database = {
           plan_name?: string
           provider?: string
           provider_plan_id?: string | null
+          provider_status?: string | null
           provider_subscription_id?: string | null
           status?: string
           updated_at?: string
@@ -375,6 +439,7 @@ export type Database = {
         }
         Update: {
           canceled_at?: string | null
+          cancellation_reason?: string | null
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
@@ -382,6 +447,8 @@ export type Database = {
           last_payment_at?: string | null
           last_payment_status?: string | null
           last_renewed_payment_id?: string | null
+          last_synced_at?: string | null
+          last_user_sync_at?: string | null
           minutes_available?: number
           minutes_used?: number
           monthly_minutes?: number
@@ -390,6 +457,7 @@ export type Database = {
           plan_name?: string
           provider?: string
           provider_plan_id?: string | null
+          provider_status?: string | null
           provider_subscription_id?: string | null
           status?: string
           updated_at?: string
