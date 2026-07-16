@@ -5,11 +5,11 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { normalizeStatus, type MpPreapproval, type MpPayment } from "@/lib/mercado-pago.server";
 
-const MONTHLY_MINUTES = 120;
+const MONTHLY_MINUTES = 90;
 
 /**
  * Update or insert the local subscriptions row based on a MP preapproval payload.
- * Renews the 120-minute quota when a NEW payment is detected (idempotent).
+ * Renews the 90-minute quota when a NEW payment is detected (idempotent).
  */
 export async function syncPreapprovalById(remote: MpPreapproval): Promise<void> {
   if (!remote?.id) return;
