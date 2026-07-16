@@ -1,11 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { verifyBearer } from "@/lib/api-auth.server";
 
 export const Route = createFileRoute("/api/stt")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const auth = request.headers.get("authorization");
-        if (!auth?.startsWith("Bearer ")) return new Response("Unauthorized", { status: 401 });
+        const auth = await verifyBearer(request);
+        if ("error" in auth) return auth.error;
 
         const key = process.env.LOVABLE_API_KEY;
         if (!key) return new Response("Missing LOVABLE_API_KEY", { status: 500 });

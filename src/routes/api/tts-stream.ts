@@ -1,38 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
+import { verifyTtsToken } from "@/lib/api-auth.server";
 
-// Progressive streaming TTS endpoint. Designed to be used as the `src` of
-// an HTMLAudioElement so playback starts as soon as the browser has enough
-// data, instead of waiting for the whole MP3 to be downloaded.
-//
-// Auth: because <audio src> cannot set custom headers, the caller passes
-// the Supabase access_token as a query param. The endpoint validates it
-// against Supabase Auth before proxying the upstream stream.
+/**
+ * Progressive streaming TTS endpoint used as the `src` of an HTMLAudioElement.
+ *
+ * Auth: because <audio src> cannot set custom headers, callers pass a
+ * short-lived, single-purpose signed token (minted server-side via
+ * `mintTtsToken`) as a query param. We never accept the raw Supabase
+ * session access_token in the URL — leakage of that token would allow
+ * session takeover.
+ */
 export const Route = createFileRoute("/api/tts-stream")({
   server: {
     handlers: {
       GET: async ({ request }) => {
         const url = new URL(request.url);
         const text = url.searchParams.get("text");
-        const accessToken = url.searchParams.get("access_token");
+        const ticket = url.searchParams.get("t");
 
         if (!text || text.length > 4000) {
           return new Response("Bad text", { status: 400 });
         }
-        if (!accessToken) {
-          return new Response("Unauthorized", { status: 401 });
-        }
-
-        if (!process.env.SUPABASE_URL || !process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Server misconfigured", { status: 500 });
-        }
-        const supabase = createClient(
-          process.env.SUPABASE_URL,
-          process.env.SUPABASE_PUBLISHABLE_KEY,
-          { auth: { persistSession: false, autoRefreshToken: false } },
-        );
-        const { data, error } = await supabase.auth.getUser(accessToken);
-        if (error || !data?.user?.id) {
+        const claims = verifyTtsToken(ticket);
+        if (!claims) {
           return new Response("Unauthorized", { status: 401 });
         }
 
@@ -54,8 +44,6 @@ export const Route = createFileRoute("/api/tts-stream")({
           return new Response(t || "TTS failed", { status: upstream.status || 502 });
         }
 
-        // Pass upstream body through unchanged so the browser receives
-        // bytes progressively and can begin playback before the file ends.
         return new Response(upstream.body, {
           headers: {
             "Content-Type": "audio/mpeg",
