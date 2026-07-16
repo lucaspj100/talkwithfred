@@ -22,13 +22,22 @@ export type VoiceTurn = {
 
 export type SessionCredential = { client_secret: string; model: string };
 
+type RealtimeUsage = {
+  input_tokens?: number;
+  output_tokens?: number;
+  total_tokens?: number;
+  input_token_details?: unknown;
+  output_token_details?: unknown;
+};
+
 type RealtimeEvent = {
   type: string;
   delta?: string;
   transcript?: string;
   item_id?: string;
   response_id?: string;
-  response?: { id?: string };
+  event_id?: string;
+  response?: { id?: string; usage?: RealtimeUsage; model?: string };
   error?: { message?: string; type?: string; code?: string; param?: string };
 };
 
@@ -36,6 +45,12 @@ type UseVoiceOpts = {
   getSession: () => Promise<SessionCredential>;
   onUserFinalTurn?: (text: string) => void;
   onAssistantFinalTurn?: (text: string, opts: { interrupted: boolean }) => void;
+  onUsage?: (u: {
+    usage: RealtimeUsage;
+    responseId: string | null;
+    eventId: string | null;
+    model: string | null;
+  }) => void;
 };
 
 const DEV = typeof import.meta !== "undefined" && (import.meta as { env?: { DEV?: boolean } }).env?.DEV;
@@ -45,6 +60,7 @@ export function useRealtimeVoice({
   getSession,
   onUserFinalTurn,
   onAssistantFinalTurn,
+  onUsage,
 }: UseVoiceOpts) {
   const [state, setState] = useState<VoiceState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -622,6 +638,18 @@ export function useRealtimeVoice({
           responseId: currentAssistantIdRef.current,
           transcriptFlushed: assistantTranscriptFlushedRef.current,
         });
+        if (ev.type === "response.done" && ev.response?.usage && onUsage) {
+          try {
+            onUsage({
+              usage: ev.response.usage,
+              responseId: ev.response.id ?? ev.response_id ?? null,
+              eventId: ev.event_id ?? null,
+              model: ev.response.model ?? null,
+            });
+          } catch (e) {
+            console.warn("[voice] onUsage handler threw", e);
+          }
+        }
         const pending = partialAssistantRef.current.trim();
         if (!assistantTranscriptFlushedRef.current && pending.length > 0) {
           setPartialAssistant("");
@@ -668,7 +696,7 @@ export function useRealtimeVoice({
       default:
         break;
     }
-  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion, setPrioritizedState, markFredAudioPlaying, schedulePlaybackEndCheck, finishFredAudioPlayback, isAudioActuallyPlaying]);
+  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion, setPrioritizedState, markFredAudioPlaying, schedulePlaybackEndCheck, finishFredAudioPlayback, isAudioActuallyPlaying, onUsage]);
 
   const start = useCallback(async () => {
     if (!supported) {

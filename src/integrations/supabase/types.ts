@@ -14,6 +14,143 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_model_pricing: {
+        Row: {
+          cached_input_audio_per_million_usd: number
+          cached_input_text_per_million_usd: number
+          created_at: string
+          effective_from: string
+          effective_until: string | null
+          id: string
+          input_audio_per_million_usd: number
+          input_text_per_million_usd: number
+          model: string
+          output_audio_per_million_usd: number
+          output_text_per_million_usd: number
+          provider: string
+          source_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          cached_input_audio_per_million_usd?: number
+          cached_input_text_per_million_usd?: number
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          input_audio_per_million_usd?: number
+          input_text_per_million_usd?: number
+          model: string
+          output_audio_per_million_usd?: number
+          output_text_per_million_usd?: number
+          provider?: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cached_input_audio_per_million_usd?: number
+          cached_input_text_per_million_usd?: number
+          created_at?: string
+          effective_from?: string
+          effective_until?: string | null
+          id?: string
+          input_audio_per_million_usd?: number
+          input_text_per_million_usd?: number
+          model?: string
+          output_audio_per_million_usd?: number
+          output_text_per_million_usd?: number
+          provider?: string
+          source_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_usage_events: {
+        Row: {
+          cached_input_audio_tokens: number
+          cached_input_text_tokens: number
+          conversation_id: string | null
+          created_at: string
+          estimated_cost_brl: number | null
+          estimated_cost_usd: number
+          event_type: string
+          exchange_rate_brl: number | null
+          id: string
+          input_audio_tokens: number
+          input_text_tokens: number
+          model: string
+          occurred_at: string
+          output_audio_tokens: number
+          output_text_tokens: number
+          provider: string
+          provider_event_id: string | null
+          provider_response_id: string | null
+          raw_usage: Json | null
+          total_input_tokens: number
+          total_output_tokens: number
+          usage_session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          cached_input_audio_tokens?: number
+          cached_input_text_tokens?: number
+          conversation_id?: string | null
+          created_at?: string
+          estimated_cost_brl?: number | null
+          estimated_cost_usd?: number
+          event_type: string
+          exchange_rate_brl?: number | null
+          id?: string
+          input_audio_tokens?: number
+          input_text_tokens?: number
+          model: string
+          occurred_at?: string
+          output_audio_tokens?: number
+          output_text_tokens?: number
+          provider?: string
+          provider_event_id?: string | null
+          provider_response_id?: string | null
+          raw_usage?: Json | null
+          total_input_tokens?: number
+          total_output_tokens?: number
+          usage_session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          cached_input_audio_tokens?: number
+          cached_input_text_tokens?: number
+          conversation_id?: string | null
+          created_at?: string
+          estimated_cost_brl?: number | null
+          estimated_cost_usd?: number
+          event_type?: string
+          exchange_rate_brl?: number | null
+          id?: string
+          input_audio_tokens?: number
+          input_text_tokens?: number
+          model?: string
+          occurred_at?: string
+          output_audio_tokens?: number
+          output_text_tokens?: number
+          provider?: string
+          provider_event_id?: string | null
+          provider_response_id?: string | null
+          raw_usage?: Json | null
+          total_input_tokens?: number
+          total_output_tokens?: number
+          usage_session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_events_usage_session_id_fkey"
+            columns: ["usage_session_id"]
+            isOneToOne: false
+            referencedRelation: "usage_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           brand_name: string
@@ -68,6 +205,42 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      finance_settings: {
+        Row: {
+          alert_cost_per_user_brl: number
+          alert_cost_percent_of_revenue: number
+          id: number
+          mercado_pago_fee_percent: number
+          monthly_fixed_cost_brl: number
+          tax_percent: number
+          updated_at: string
+          updated_by: string | null
+          usd_brl_rate: number
+        }
+        Insert: {
+          alert_cost_per_user_brl?: number
+          alert_cost_percent_of_revenue?: number
+          id?: number
+          mercado_pago_fee_percent?: number
+          monthly_fixed_cost_brl?: number
+          tax_percent?: number
+          updated_at?: string
+          updated_by?: string | null
+          usd_brl_rate?: number
+        }
+        Update: {
+          alert_cost_per_user_brl?: number
+          alert_cost_percent_of_revenue?: number
+          id?: number
+          mercado_pago_fee_percent?: number
+          monthly_fixed_cost_brl?: number
+          tax_percent?: number
+          updated_at?: string
+          updated_by?: string | null
+          usd_brl_rate?: number
         }
         Relationships: []
       }
@@ -494,6 +667,15 @@ export type Database = {
       }
       usage_sessions: {
         Row: {
+          ai_cached_tokens: number
+          ai_estimated_cost_brl: number
+          ai_estimated_cost_usd: number
+          ai_events_count: number
+          ai_input_audio_tokens: number
+          ai_input_text_tokens: number
+          ai_model: string | null
+          ai_output_audio_tokens: number
+          ai_output_text_tokens: number
           close_reason: string | null
           conversation_id: string | null
           created_at: string
@@ -511,6 +693,15 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ai_cached_tokens?: number
+          ai_estimated_cost_brl?: number
+          ai_estimated_cost_usd?: number
+          ai_events_count?: number
+          ai_input_audio_tokens?: number
+          ai_input_text_tokens?: number
+          ai_model?: string | null
+          ai_output_audio_tokens?: number
+          ai_output_text_tokens?: number
           close_reason?: string | null
           conversation_id?: string | null
           created_at?: string
@@ -528,6 +719,15 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ai_cached_tokens?: number
+          ai_estimated_cost_brl?: number
+          ai_estimated_cost_usd?: number
+          ai_events_count?: number
+          ai_input_audio_tokens?: number
+          ai_input_text_tokens?: number
+          ai_model?: string | null
+          ai_output_audio_tokens?: number
+          ai_output_text_tokens?: number
           close_reason?: string | null
           conversation_id?: string | null
           created_at?: string

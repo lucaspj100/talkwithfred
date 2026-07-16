@@ -25,6 +25,7 @@ export function RealtimeConversation({
   onAssistantFinalTurn,
   onSwitchToText,
   onVoiceActiveChange,
+  onUsage,
   disabled,
   disabledReason,
 }: {
@@ -35,6 +36,12 @@ export function RealtimeConversation({
   onAssistantFinalTurn?: (text: string, opts: { interrupted: boolean }) => void;
   onSwitchToText: () => void;
   onVoiceActiveChange?: (active: boolean) => void;
+  onUsage?: (u: {
+    usage: unknown;
+    responseId: string | null;
+    eventId: string | null;
+    model: string | null;
+  }) => void;
   disabled?: boolean;
   disabledReason?: string | null;
 }) {
@@ -85,7 +92,12 @@ export function RealtimeConversation({
     toggleMute,
     retryResponse,
     resumeAudio,
-  } = useRealtimeVoice({ getSession, onUserFinalTurn, onAssistantFinalTurn });
+  } = useRealtimeVoice({
+    getSession,
+    onUserFinalTurn,
+    onAssistantFinalTurn,
+    onUsage: onUsage as never,
+  });
 
   const idle = state === "idle";
   const isError = state === "error";

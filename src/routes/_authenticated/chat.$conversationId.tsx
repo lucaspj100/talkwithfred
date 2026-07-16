@@ -737,6 +737,31 @@ function ChatPage() {
           onAssistantFinalTurn={handleVoiceAssistantFinal}
           onSwitchToText={() => setChatMode("text")}
           onVoiceActiveChange={(active) => usage.setActive(active && usageReady)}
+          onUsage={async (u) => {
+            try {
+              const { data } = await supabase.auth.getSession();
+              const token = data.session?.access_token;
+              if (!token) return;
+              await fetch("/api/ai-usage/record", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  usage_session_id: usage.sessionId,
+                  conversation_id: conversation.id,
+                  response_id: u.responseId,
+                  event_id: u.eventId,
+                  model: u.model,
+                  event_type: "response.done",
+                  usage: u.usage,
+                }),
+              });
+            } catch (e) {
+              console.warn("[ai-usage] record failed", e);
+            }
+          }}
           disabled={!usageReady}
           disabledReason={
             busyOtherTab

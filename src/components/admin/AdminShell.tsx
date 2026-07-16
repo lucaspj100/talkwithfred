@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { ArrowLeft, BarChart3, Users, Repeat, ClipboardList, ImageIcon, CreditCard } from "lucide-react";
+import { ArrowLeft, BarChart3, Users, Repeat, ClipboardList, ImageIcon, CreditCard, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
 
@@ -7,6 +7,7 @@ const NAV = [
   { to: "/admin", label: "Visão geral", icon: BarChart3, exact: true },
   { to: "/admin/users", label: "Usuários", icon: Users, exact: false },
   { to: "/admin/assinaturas", label: "Assinaturas", icon: CreditCard, exact: false },
+  { to: "/admin/custos-ia", label: "Custos de IA", icon: DollarSign, exact: true },
   { to: "/admin/retention", label: "Retenção", icon: Repeat, exact: true },
   { to: "/admin/leads", label: "Leads", icon: ClipboardList, exact: true },
   { to: "/admin/identity", label: "Identidade visual", icon: ImageIcon, exact: true },
@@ -18,6 +19,7 @@ function titleFromPath(pathname: string): string {
   if (pathname === "/admin/users") return "Usuários";
   if (pathname.startsWith("/admin/assinaturas/")) return "Detalhes da assinatura";
   if (pathname === "/admin/assinaturas") return "Assinaturas";
+  if (pathname === "/admin/custos-ia") return "Custos de IA";
   if (pathname === "/admin/retention") return "Retenção";
   if (pathname === "/admin/leads") return "Leads";
   if (pathname === "/admin/identity") return "Identidade visual";

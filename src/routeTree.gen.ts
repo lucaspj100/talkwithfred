@@ -33,6 +33,7 @@ import { Route as ApiUsageStartRouteImport } from './routes/api/usage/start'
 import { Route as ApiUsageHeartbeatRouteImport } from './routes/api/usage/heartbeat'
 import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public/simulation-chat'
 import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/public/realtime-session'
+import { Route as ApiAiUsageRecordRouteImport } from './routes/api/ai-usage/record'
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
@@ -41,6 +42,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminRetentionRouteImport } from './routes/_authenticated/admin.retention'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminIdentityRouteImport } from './routes/_authenticated/admin.identity'
+import { Route as AuthenticatedAdminCustosIaRouteImport } from './routes/_authenticated/admin.custos-ia'
 import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin.assinaturas'
 import { Route as ApiPublicMercadoPagoWebhookRouteImport } from './routes/api/public/mercado-pago/webhook'
 import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
@@ -167,6 +169,11 @@ const ApiPublicRealtimeSessionRoute =
     path: '/api/public/realtime-session',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiAiUsageRecordRoute = ApiAiUsageRecordRouteImport.update({
+  id: '/api/ai-usage/record',
+  path: '/api/ai-usage/record',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSettingsOnboardingRoute =
   AuthenticatedSettingsOnboardingRouteImport.update({
     id: '/settings/onboarding',
@@ -213,6 +220,12 @@ const AuthenticatedAdminIdentityRoute =
     path: '/identity',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCustosIaRoute =
+  AuthenticatedAdminCustosIaRouteImport.update({
+    id: '/custos-ia',
+    path: '/custos-ia',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAssinaturasRoute =
   AuthenticatedAdminAssinaturasRouteImport.update({
     id: '/assinaturas',
@@ -256,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
   '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
+  '/admin/custos-ia': typeof AuthenticatedAdminCustosIaRoute
   '/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
@@ -264,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/api/usage/heartbeat': typeof ApiUsageHeartbeatRoute
@@ -291,6 +306,7 @@ export interface FileRoutesByTo {
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao': typeof SimulacaoIndexRoute
   '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
+  '/admin/custos-ia': typeof AuthenticatedAdminCustosIaRoute
   '/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
@@ -299,6 +315,7 @@ export interface FileRoutesByTo {
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/api/usage/heartbeat': typeof ApiUsageHeartbeatRoute
@@ -330,6 +347,7 @@ export interface FileRoutesById {
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
   '/_authenticated/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
+  '/_authenticated/admin/custos-ia': typeof AuthenticatedAdminCustosIaRoute
   '/_authenticated/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/retention': typeof AuthenticatedAdminRetentionRoute
@@ -338,6 +356,7 @@ export interface FileRoutesById {
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/api/usage/heartbeat': typeof ApiUsageHeartbeatRoute
@@ -369,6 +388,7 @@ export interface FileRouteTypes {
     | '/simulacao/resultado'
     | '/simulacao/'
     | '/admin/assinaturas'
+    | '/admin/custos-ia'
     | '/admin/identity'
     | '/admin/leads'
     | '/admin/retention'
@@ -377,6 +397,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
+    | '/api/ai-usage/record'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
     | '/api/usage/heartbeat'
@@ -404,6 +425,7 @@ export interface FileRouteTypes {
     | '/simulacao/resultado'
     | '/simulacao'
     | '/admin/assinaturas'
+    | '/admin/custos-ia'
     | '/admin/identity'
     | '/admin/leads'
     | '/admin/retention'
@@ -412,6 +434,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
+    | '/api/ai-usage/record'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
     | '/api/usage/heartbeat'
@@ -442,6 +465,7 @@ export interface FileRouteTypes {
     | '/simulacao/resultado'
     | '/simulacao/'
     | '/_authenticated/admin/assinaturas'
+    | '/_authenticated/admin/custos-ia'
     | '/_authenticated/admin/identity'
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/retention'
@@ -450,6 +474,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
     | '/_authenticated/settings/onboarding'
+    | '/api/ai-usage/record'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
     | '/api/usage/heartbeat'
@@ -474,6 +499,7 @@ export interface RootRouteChildren {
   ApiTtsStreamRoute: typeof ApiTtsStreamRoute
   SimulacaoResultadoRoute: typeof SimulacaoResultadoRoute
   SimulacaoIndexRoute: typeof SimulacaoIndexRoute
+  ApiAiUsageRecordRoute: typeof ApiAiUsageRecordRoute
   ApiPublicRealtimeSessionRoute: typeof ApiPublicRealtimeSessionRoute
   ApiPublicSimulationChatRoute: typeof ApiPublicSimulationChatRoute
   ApiUsageHeartbeatRoute: typeof ApiUsageHeartbeatRoute
@@ -652,6 +678,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRealtimeSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ai-usage/record': {
+      id: '/api/ai-usage/record'
+      path: '/api/ai-usage/record'
+      fullPath: '/api/ai-usage/record'
+      preLoaderRoute: typeof ApiAiUsageRecordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/settings/onboarding': {
       id: '/_authenticated/settings/onboarding'
       path: '/settings/onboarding'
@@ -706,6 +739,13 @@ declare module '@tanstack/react-router' {
       path: '/identity'
       fullPath: '/admin/identity'
       preLoaderRoute: typeof AuthenticatedAdminIdentityRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/custos-ia': {
+      id: '/_authenticated/admin/custos-ia'
+      path: '/custos-ia'
+      fullPath: '/admin/custos-ia'
+      preLoaderRoute: typeof AuthenticatedAdminCustosIaRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/assinaturas': {
@@ -769,6 +809,7 @@ const AuthenticatedAdminUsersRouteWithChildren =
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRouteWithChildren
+  AuthenticatedAdminCustosIaRoute: typeof AuthenticatedAdminCustosIaRoute
   AuthenticatedAdminIdentityRoute: typeof AuthenticatedAdminIdentityRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
   AuthenticatedAdminRetentionRoute: typeof AuthenticatedAdminRetentionRoute
@@ -779,6 +820,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAssinaturasRoute:
     AuthenticatedAdminAssinaturasRouteWithChildren,
+  AuthenticatedAdminCustosIaRoute: AuthenticatedAdminCustosIaRoute,
   AuthenticatedAdminIdentityRoute: AuthenticatedAdminIdentityRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
   AuthenticatedAdminRetentionRoute: AuthenticatedAdminRetentionRoute,
@@ -855,6 +897,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTtsStreamRoute: ApiTtsStreamRoute,
   SimulacaoResultadoRoute: SimulacaoResultadoRoute,
   SimulacaoIndexRoute: SimulacaoIndexRoute,
+  ApiAiUsageRecordRoute: ApiAiUsageRecordRoute,
   ApiPublicRealtimeSessionRoute: ApiPublicRealtimeSessionRoute,
   ApiPublicSimulationChatRoute: ApiPublicSimulationChatRoute,
   ApiUsageHeartbeatRoute: ApiUsageHeartbeatRoute,
