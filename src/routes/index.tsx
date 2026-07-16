@@ -74,7 +74,7 @@ function Landing() {
         </div>
 
         <p className="mt-6 text-xs text-muted-foreground">
-          120 minutos por mês · Cancele quando quiser
+          90 minutos por mês · Cancele quando quiser
         </p>
 
         <section className="mt-14 w-full max-w-md rounded-3xl border border-border bg-card/60 p-6 text-left md:p-8">
