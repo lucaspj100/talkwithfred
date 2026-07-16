@@ -244,7 +244,7 @@ function AssinaturaPage() {
                     ? "Regularize o pagamento para liberar os minutos."
                     : paused
                     ? "Assinatura pausada — saldo indisponível."
-                    : "Assine para receber 120 minutos por ciclo."}
+                    : "Assine para receber 90 minutos por ciclo."}
                 </p>
               </>
             )}
