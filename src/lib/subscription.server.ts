@@ -27,7 +27,7 @@ export async function syncPreapprovalById(remote: MpPreapproval): Promise<void> 
   const lastChargedDate = remote.summarized?.last_charged_date ?? null;
   const chargedQuantity = Number(remote.summarized?.charged_quantity ?? 0);
 
-  const base: Record<string, unknown> = {
+  const base: Record<string, string | number | boolean | null> = {
     provider: "mercado_pago",
     provider_subscription_id: remote.id,
     provider_plan_id: remote.preapproval_plan_id ?? null,
@@ -78,14 +78,16 @@ export async function syncPreapprovalById(remote: MpPreapproval): Promise<void> 
 
   if (existing) {
     await supabaseAdmin
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .from("subscriptions")
-      .update(base)
+      .update(base as any)
       .eq("id", existing.id);
   } else if (userId) {
     await supabaseAdmin.from("subscriptions").insert({
       user_id: userId,
       ...base,
-    });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
   } else {
     console.warn("[subscription.server] preapproval without external_reference and no local row", remote.id);
   }

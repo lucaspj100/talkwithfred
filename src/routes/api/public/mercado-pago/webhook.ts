@@ -62,7 +62,7 @@ export const Route = createFileRoute("/api/public/mercado-pago/webhook")({
             event_type: topic,
             provider_subscription_id: topic.includes("preapproval") ? resourceId : null,
             provider_event_id: providerEventId,
-            payload: payload as unknown as Record<string, unknown>,
+            payload: payload as unknown as never,
             processed: false,
           })
           .select("id")

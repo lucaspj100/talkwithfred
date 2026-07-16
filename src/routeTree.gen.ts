@@ -21,8 +21,10 @@ import { Route as ApiSttRouteImport } from './routes/api/stt'
 import { Route as ApiRealtimeSessionRouteImport } from './routes/api/realtime-session'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
+import { Route as AuthenticatedPlanosRouteImport } from './routes/_authenticated/planos'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authenticated/assinatura'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
@@ -31,10 +33,12 @@ import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/publi
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
+import { Route as AuthenticatedAssinaturaRetornoRouteImport } from './routes/_authenticated/assinatura.retorno'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
 import { Route as AuthenticatedAdminRetentionRouteImport } from './routes/_authenticated/admin.retention'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminIdentityRouteImport } from './routes/_authenticated/admin.identity'
+import { Route as ApiPublicMercadoPagoWebhookRouteImport } from './routes/api/public/mercado-pago/webhook'
 import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -96,6 +100,11 @@ const AuthenticatedPracticeRoute = AuthenticatedPracticeRouteImport.update({
   path: '/practice',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPlanosRoute = AuthenticatedPlanosRouteImport.update({
+  id: '/planos',
+  path: '/planos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -104,6 +113,11 @@ const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAssinaturaRoute = AuthenticatedAssinaturaRouteImport.update({
+  id: '/assinatura',
+  path: '/assinatura',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
@@ -151,6 +165,12 @@ const AuthenticatedChatConversationIdRoute =
     path: '/chat/$conversationId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAssinaturaRetornoRoute =
+  AuthenticatedAssinaturaRetornoRouteImport.update({
+    id: '/retorno',
+    path: '/retorno',
+    getParentRoute: () => AuthenticatedAssinaturaRoute,
+  } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
@@ -173,6 +193,12 @@ const AuthenticatedAdminIdentityRoute =
     path: '/identity',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiPublicMercadoPagoWebhookRoute =
+  ApiPublicMercadoPagoWebhookRouteImport.update({
+    id: '/api/public/mercado-pago/webhook',
+    path: '/api/public/mercado-pago/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminUsersUserIdRoute =
   AuthenticatedAdminUsersUserIdRouteImport.update({
     id: '/$userId',
@@ -185,8 +211,10 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/assinatura': typeof AuthenticatedAssinaturaRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/planos': typeof AuthenticatedPlanosRoute
   '/practice': typeof AuthenticatedPracticeRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/realtime-session': typeof ApiRealtimeSessionRoute
@@ -199,6 +227,7 @@ export interface FileRoutesByFullPath {
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
+  '/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
@@ -207,13 +236,16 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/assinatura': typeof AuthenticatedAssinaturaRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/planos': typeof AuthenticatedPlanosRoute
   '/api/chat': typeof ApiChatRoute
   '/api/realtime-session': typeof ApiRealtimeSessionRoute
   '/api/stt': typeof ApiSttRoute
@@ -225,6 +257,7 @@ export interface FileRoutesByTo {
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
+  '/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
@@ -233,6 +266,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -241,8 +275,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/assinatura': typeof AuthenticatedAssinaturaRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/planos': typeof AuthenticatedPlanosRoute
   '/_authenticated/practice': typeof AuthenticatedPracticeRouteWithChildren
   '/api/chat': typeof ApiChatRoute
   '/api/realtime-session': typeof ApiRealtimeSessionRoute
@@ -255,6 +291,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
+  '/_authenticated/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
@@ -263,6 +300,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
   '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -271,8 +309,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/admin'
+    | '/assinatura'
     | '/dashboard'
     | '/onboarding'
+    | '/planos'
     | '/practice'
     | '/api/chat'
     | '/api/realtime-session'
@@ -285,6 +325,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/retention'
     | '/admin/users'
+    | '/assinatura/retorno'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
@@ -293,13 +334,16 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/practice/'
     | '/admin/users/$userId'
+    | '/api/public/mercado-pago/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/sitemap.xml'
+    | '/assinatura'
     | '/dashboard'
     | '/onboarding'
+    | '/planos'
     | '/api/chat'
     | '/api/realtime-session'
     | '/api/stt'
@@ -311,6 +355,7 @@ export interface FileRouteTypes {
     | '/admin/leads'
     | '/admin/retention'
     | '/admin/users'
+    | '/assinatura/retorno'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
@@ -319,6 +364,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/practice'
     | '/admin/users/$userId'
+    | '/api/public/mercado-pago/webhook'
   id:
     | '__root__'
     | '/'
@@ -326,8 +372,10 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/_authenticated/admin'
+    | '/_authenticated/assinatura'
     | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
+    | '/_authenticated/planos'
     | '/_authenticated/practice'
     | '/api/chat'
     | '/api/realtime-session'
@@ -340,6 +388,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/retention'
     | '/_authenticated/admin/users'
+    | '/_authenticated/assinatura/retorno'
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
     | '/_authenticated/settings/onboarding'
@@ -348,6 +397,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/'
     | '/_authenticated/practice/'
     | '/_authenticated/admin/users/$userId'
+    | '/api/public/mercado-pago/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -364,6 +414,7 @@ export interface RootRouteChildren {
   SimulacaoIndexRoute: typeof SimulacaoIndexRoute
   ApiPublicRealtimeSessionRoute: typeof ApiPublicRealtimeSessionRoute
   ApiPublicSimulationChatRoute: typeof ApiPublicSimulationChatRoute
+  ApiPublicMercadoPagoWebhookRoute: typeof ApiPublicMercadoPagoWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -452,6 +503,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPracticeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/planos': {
+      id: '/_authenticated/planos'
+      path: '/planos'
+      fullPath: '/planos'
+      preLoaderRoute: typeof AuthenticatedPlanosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -464,6 +522,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assinatura': {
+      id: '/_authenticated/assinatura'
+      path: '/assinatura'
+      fullPath: '/assinatura'
+      preLoaderRoute: typeof AuthenticatedAssinaturaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin': {
@@ -522,6 +587,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatConversationIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/assinatura/retorno': {
+      id: '/_authenticated/assinatura/retorno'
+      path: '/retorno'
+      fullPath: '/assinatura/retorno'
+      preLoaderRoute: typeof AuthenticatedAssinaturaRetornoRouteImport
+      parentRoute: typeof AuthenticatedAssinaturaRoute
+    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/users'
@@ -549,6 +621,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/identity'
       preLoaderRoute: typeof AuthenticatedAdminIdentityRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/public/mercado-pago/webhook': {
+      id: '/api/public/mercado-pago/webhook'
+      path: '/api/public/mercado-pago/webhook'
+      fullPath: '/api/public/mercado-pago/webhook'
+      preLoaderRoute: typeof ApiPublicMercadoPagoWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/admin/users/$userId': {
       id: '/_authenticated/admin/users/$userId'
@@ -593,6 +672,20 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedAssinaturaRouteChildren {
+  AuthenticatedAssinaturaRetornoRoute: typeof AuthenticatedAssinaturaRetornoRoute
+}
+
+const AuthenticatedAssinaturaRouteChildren: AuthenticatedAssinaturaRouteChildren =
+  {
+    AuthenticatedAssinaturaRetornoRoute: AuthenticatedAssinaturaRetornoRoute,
+  }
+
+const AuthenticatedAssinaturaRouteWithChildren =
+  AuthenticatedAssinaturaRoute._addFileChildren(
+    AuthenticatedAssinaturaRouteChildren,
+  )
+
 interface AuthenticatedPracticeRouteChildren {
   AuthenticatedPracticeFillInBlankRoute: typeof AuthenticatedPracticeFillInBlankRoute
   AuthenticatedPracticeIndexRoute: typeof AuthenticatedPracticeIndexRoute
@@ -610,8 +703,10 @@ const AuthenticatedPracticeRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedAssinaturaRoute: typeof AuthenticatedAssinaturaRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPlanosRoute: typeof AuthenticatedPlanosRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRouteWithChildren
   AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRoute
   AuthenticatedSettingsOnboardingRoute: typeof AuthenticatedSettingsOnboardingRoute
@@ -619,8 +714,10 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedAssinaturaRoute: AuthenticatedAssinaturaRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedPlanosRoute: AuthenticatedPlanosRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRouteWithChildren,
   AuthenticatedChatConversationIdRoute: AuthenticatedChatConversationIdRoute,
   AuthenticatedSettingsOnboardingRoute: AuthenticatedSettingsOnboardingRoute,
@@ -643,17 +740,8 @@ const rootRouteChildren: RootRouteChildren = {
   SimulacaoIndexRoute: SimulacaoIndexRoute,
   ApiPublicRealtimeSessionRoute: ApiPublicRealtimeSessionRoute,
   ApiPublicSimulationChatRoute: ApiPublicSimulationChatRoute,
+  ApiPublicMercadoPagoWebhookRoute: ApiPublicMercadoPagoWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
