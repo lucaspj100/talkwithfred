@@ -168,21 +168,22 @@ export async function mpGetPreapprovalPlan(id: string): Promise<MpPreapprovalPla
   return mpFetch<MpPreapprovalPlan>(`/preapproval_plan/${encodeURIComponent(id)}`);
 }
 
-export async function mpCreatePreapproval(input: {
-  payerEmail: string;
+/**
+ * Build the hosted-checkout URL for our plan. The redirect-based flow does NOT
+ * hit POST /preapproval directly — MP requires a `card_token_id` there. Instead
+ * we send the user to MP's checkout, they enter card + email, and MP creates
+ * the preapproval and calls our webhook.
+ */
+export function buildCheckoutUrl(input: {
   externalReference: string;
-  idempotencyKey: string;
-}): Promise<MpPreapproval> {
-  return mpFetch<MpPreapproval>("/preapproval", {
-    method: "POST",
-    headers: { "X-Idempotency-Key": input.idempotencyKey },
-    body: JSON.stringify({
-      preapproval_plan_id: MP_PREAPPROVAL_PLAN_ID,
-      payer_email: input.payerEmail,
-      external_reference: input.externalReference,
-      back_url: MP_BACK_URL,
-    }),
-  });
+  payerEmail?: string | null;
+}): string {
+  const params = new URLSearchParams();
+  params.set("preapproval_plan_id", MP_PREAPPROVAL_PLAN_ID);
+  params.set("external_reference", input.externalReference);
+  params.set("back_url", MP_BACK_URL);
+  if (input.payerEmail) params.set("payer_email", input.payerEmail);
+  return `https://www.mercadopago.com.br/subscriptions/checkout?${params.toString()}`;
 }
 
 export async function mpGetPreapproval(id: string): Promise<MpPreapproval> {
