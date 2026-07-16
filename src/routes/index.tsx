@@ -74,7 +74,7 @@ function Landing() {
         </div>
 
         <p className="mt-6 text-xs text-muted-foreground">
-          120 minutos por mês · Cancele quando quiser
+          90 minutos por mês · Cancele quando quiser
         </p>
 
         <section className="mt-14 w-full max-w-md rounded-3xl border border-border bg-card/60 p-6 text-left md:p-8">
@@ -85,7 +85,7 @@ function Landing() {
             <span className="text-muted-foreground">/mês</span>
           </div>
           <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
-            <li>• 120 minutos mensais de conversação</li>
+            <li>• 90 minutos mensais de conversação</li>
             <li>• Prática por voz e texto</li>
             <li>• Correções personalizadas</li>
             <li>• Cancele quando quiser</li>

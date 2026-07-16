@@ -35,7 +35,7 @@ function statusMeta(status: string | null | undefined, minutesAvailable: number)
         return {
           label: "Ativa",
           tone: "warn",
-          help: "Você utilizou os 120 minutos deste ciclo. O saldo será renovado na próxima cobrança.",
+          help: "Você utilizou os 90 minutos deste ciclo. O saldo será renovado na próxima cobrança.",
         };
       }
       return { label: "Ativa", tone: "ok", help: "Seu plano está ativo." };
@@ -104,7 +104,7 @@ function AssinaturaPage() {
   const needsPayment = status === "past_due" || status === "payment_required";
   const available = Number(sub?.minutes_available ?? 0);
   const used = Number(sub?.minutes_used ?? 0);
-  const total = Number(sub?.monthly_minutes ?? 120);
+  const total = Number(sub?.monthly_minutes ?? 90);
   const showBalance = active; // Only show minutes as usable when active
   const usedPct = total > 0 ? Math.min(100, Math.max(0, (used / total) * 100)) : 0;
   const meta = statusMeta(status, available);
@@ -145,7 +145,7 @@ function AssinaturaPage() {
               <div className="min-w-0">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Plano</p>
                 <p className="font-display text-lg font-bold">Talk With Fred</p>
-                <p className="text-sm text-muted-foreground">R$ 49 / mês · 120 minutos</p>
+                <p className="text-sm text-muted-foreground">R$ 49 / mês · 90 minutos</p>
               </div>
               <div className="shrink-0 text-right">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
@@ -244,7 +244,7 @@ function AssinaturaPage() {
                     ? "Regularize o pagamento para liberar os minutos."
                     : paused
                     ? "Assinatura pausada — saldo indisponível."
-                    : "Assine para receber 120 minutos por ciclo."}
+                    : "Assine para receber 90 minutos por ciclo."}
                 </p>
               </>
             )}

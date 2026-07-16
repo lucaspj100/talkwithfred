@@ -93,7 +93,7 @@ function AdminAssinaturaDetail() {
   const s = data.subscription as Record<string, unknown>;
   const profile = data.profile as { name?: string | null; email?: string | null } | null;
   const used = Number(s.minutes_used ?? 0);
-  const monthly = Number(s.monthly_minutes ?? 120);
+  const monthly = Number(s.monthly_minutes ?? 90);
   const available = Number(s.minutes_available ?? 0);
   const pct = monthly > 0 ? Math.min(100, Math.round((used / monthly) * 100)) : 0;
 

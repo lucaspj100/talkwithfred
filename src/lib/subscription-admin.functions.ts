@@ -106,7 +106,7 @@ export const listAdminSubscriptions = createServerFn({ method: "POST" })
         provider_subscription_id: (r.provider_subscription_id as string | null) ?? null,
         provider_plan_id: (r.provider_plan_id as string | null) ?? null,
         payer_email: (r.payer_email as string | null) ?? null,
-        monthly_minutes: Number(r.monthly_minutes ?? 120),
+        monthly_minutes: Number(r.monthly_minutes ?? 90),
         minutes_used: Number(r.minutes_used ?? 0),
         minutes_available: Number(r.minutes_available ?? 0),
         current_period_start: (r.current_period_start as string | null) ?? null,

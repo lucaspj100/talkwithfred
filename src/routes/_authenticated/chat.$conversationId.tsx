@@ -119,7 +119,7 @@ function ChatPage() {
     return () => { mounted = false; sub.subscription.unsubscribe(); };
   }, [navigate]);
 
-  // ============= Usage session (120-minute quota) =============
+  // ============= Usage session (90-minute quota) =============
   const usage = useUsageSession();
   const [usageInit, setUsageInit] = useState<"pending" | "ready" | "blocked">("pending");
   const [outOfMinutes, setOutOfMinutes] = useState(false);
@@ -653,12 +653,12 @@ function ChatPage() {
       ? `${Math.max(0, Math.floor(usage.minutesAvailable))} min restantes`
       : "…";
 
-  // Soft toasts at milestones — 30 / 10 / 5 min remaining.
+  // Soft toasts at milestones — 20 / 10 / 5 min remaining.
   const milestonesShownRef = useRef<Set<number>>(new Set());
   useEffect(() => {
     const m = usage.minutesAvailable;
     if (m == null) return;
-    const milestones = [30, 10, 5];
+    const milestones = [20, 10, 5];
     for (const t of milestones) {
       if (m <= t && !milestonesShownRef.current.has(t)) {
         milestonesShownRef.current.add(t);
@@ -677,7 +677,7 @@ function ChatPage() {
     <Dialog open={outOfMinutesOpen()} onOpenChange={(v) => { if (!v) setOutOfMinutes(false); }}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Seus 120 minutos deste mês terminaram</DialogTitle>
+          <DialogTitle>Seus 90 minutos deste mês terminaram</DialogTitle>
           <DialogDescription>
             Sua franquia deste ciclo foi consumida. Você pode acompanhar o próximo ciclo em sua assinatura.
           </DialogDescription>
@@ -742,7 +742,7 @@ function ChatPage() {
             busyOtherTab
               ? "Já existe uma conversa ativa em outra aba."
               : outOfMinutesOpen()
-                ? "Você utilizou os 120 minutos deste ciclo."
+                ? "Você utilizou os 90 minutos deste ciclo."
                 : usageInit === "pending"
                   ? "Verificando sua assinatura…"
                   : null

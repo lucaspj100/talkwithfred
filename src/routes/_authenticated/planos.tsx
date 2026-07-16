@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/planos")({
   head: () => ({
     meta: [
       { title: "Planos — Talk With Fred" },
-      { name: "description", content: "Assine o Talk With Fred: 120 minutos de conversação em inglês por mês." },
+      { name: "description", content: "Assine o Talk With Fred: 90 minutos de conversação em inglês por mês." },
     ],
   }),
   component: PlanosPage,
@@ -64,7 +64,7 @@ function PlanosPage() {
 
         <ul className="mb-8 space-y-2 text-sm">
           {[
-            "120 minutos de conversação por mês",
+            "90 minutos de conversação por mês",
             "Prática por voz e texto",
             "Correções personalizadas",
             "Histórico de conversas",

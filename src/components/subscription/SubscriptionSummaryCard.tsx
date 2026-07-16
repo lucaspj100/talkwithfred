@@ -27,7 +27,7 @@ export function SubscriptionSummaryCard() {
   const status = sub?.status ?? null;
   const active = status === "authorized" || status === "active";
   const available = Number(sub?.minutes_available ?? 0);
-  const total = Number(sub?.monthly_minutes ?? 120);
+  const total = Number(sub?.monthly_minutes ?? 90);
   const periodEnd = sub?.current_period_end
     ? new Date(sub.current_period_end as string)
     : null;

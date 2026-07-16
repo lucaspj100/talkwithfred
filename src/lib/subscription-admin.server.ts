@@ -204,22 +204,27 @@ export async function adjustMinutes(
   const before = await fetchSub(subId);
   if (!before) return { ok: false, error: "not_found" };
 
-  const monthly = Number(before.monthly_minutes ?? 120);
+  const monthly = Number(before.monthly_minutes ?? 90);
   const currentUsed = Number(before.minutes_used ?? 0);
+  const currentAvailable = Number(before.minutes_available ?? 0);
 
+  // Admin adjustments are NOT capped at the monthly plan — admins may grant
+  // bonus minutes beyond the standard 90-minute cycle.
   let newUsed = currentUsed;
+  let newAvailable = currentAvailable;
   if (operation === "add") {
-    // "Add minutes" => decrease used, bounded at 0.
+    newAvailable = currentAvailable + minutes;
     newUsed = Math.max(0, currentUsed - minutes);
   } else if (operation === "remove") {
-    // "Remove minutes" => increase used, bounded at monthly cap.
-    newUsed = Math.min(monthly, currentUsed + minutes);
+    const drop = Math.min(currentAvailable, minutes);
+    newAvailable = Math.max(0, currentAvailable - minutes);
+    newUsed = currentUsed + drop;
   } else {
-    // set: target `minutes` available; used = monthly - available.
-    const target = Math.max(0, Math.min(monthly, minutes));
-    newUsed = Math.max(0, monthly - target);
+    // set: available becomes the target value (may exceed monthly for bonuses)
+    const target = Math.max(0, minutes);
+    newAvailable = target;
+    newUsed = Math.max(0, monthly - Math.min(monthly, target));
   }
-  const newAvailable = Math.max(0, monthly - newUsed);
 
   const { error } = await supabaseAdmin
     .from("subscriptions")
