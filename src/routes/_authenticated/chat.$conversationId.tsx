@@ -1,6 +1,7 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { getConversation, persistTurn } from "@/lib/conversations.functions";
+import { getSubscriptionAccess } from "@/lib/subscription.functions";
 import { extractLearningItems } from "@/lib/learning.functions";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
@@ -17,6 +18,11 @@ import { RealtimeConversation, type HistoryMessage } from "@/components/chat/rea
 
 export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
   loader: async ({ params }) => {
+    const access = await getSubscriptionAccess();
+    if (!access.hasAccess) {
+      if (!access.hasSubscription) throw redirect({ to: "/planos" });
+      throw redirect({ to: "/assinatura" });
+    }
     const data = await getConversation({ data: { id: params.conversationId } });
     return data;
   },
