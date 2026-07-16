@@ -1,10 +1,10 @@
-// Server-only helpers for the 120-minute usage control system.
+// Server-only helpers for the 90-minute usage control system.
 // Uses the admin client so users cannot manipulate seconds/minutes columns.
 import { createHash, randomBytes } from "crypto";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export const MONTHLY_MINUTES = 120;
-export const MONTHLY_SECONDS = MONTHLY_MINUTES * 60;
+export const MONTHLY_MINUTES = 90;
+export const MONTHLY_SECONDS = MONTHLY_MINUTES * 60; // 5400
 export const HEARTBEAT_INTERVAL_SECONDS = 15;
 export const MAX_HEARTBEAT_INCREMENT_SECONDS = 25; // clamp for delayed heartbeats
 export const ABANDON_TIMEOUT_SECONDS = 60;
