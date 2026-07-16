@@ -211,7 +211,7 @@ export const diagnoseMercadoPago = createServerFn({ method: "GET" })
     } = await import("@/lib/mercado-pago.server");
 
     const tok = readAccessToken();
-    const result: Record<string, unknown> = {
+    const result: Record<string, string | number | boolean | null> = {
       secret_exists: !!tok.token,
       token_prefix: tok.prefix,
       token_length: tok.length,
