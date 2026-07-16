@@ -216,6 +216,8 @@ function Dashboard() {
         </div>
       </div>
 
+      <SubscriptionSummaryCard />
+
       <h2 className="mt-10 font-display text-xl font-bold">Suas últimas conversas</h2>
       <div className="mt-4 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card/40">
         {convs.length === 0 && (
