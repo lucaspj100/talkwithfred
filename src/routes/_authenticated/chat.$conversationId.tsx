@@ -761,7 +761,10 @@ function ChatPage() {
         <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
           <ArrowLeft className="mr-1 size-4" /> Dashboard
         </Button>
-        <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+        <div className="flex items-center gap-2">
+          {minutesBadge}
+          <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             type="button"
@@ -774,6 +777,8 @@ function ChatPage() {
           </Button>
         </div>
       </header>
+      {outOfMinutesDialog}
+      {otherTabDialog}
 
       <div className="mb-3 flex justify-end">
         <Button
