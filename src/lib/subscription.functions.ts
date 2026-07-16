@@ -77,32 +77,13 @@ export const createMySubscription = createServerFn({ method: "POST" })
     }
 
     const {
-      mpCreatePreapproval,
-      mpGetPreapproval,
+      buildCheckoutUrl,
       mpGetPreapprovalPlan,
-      normalizeStatus,
       MP_PREAPPROVAL_PLAN_ID,
       MercadoPagoApiError,
     } = await import("@/lib/mercado-pago.server");
 
-    // 3. Reuse pending preapproval if we already have one
-    if (existing?.provider_subscription_id && existing.status === "pending") {
-      try {
-        const remote = await mpGetPreapproval(existing.provider_subscription_id);
-        if (remote?.init_point) {
-          return {
-            already_active: false as const,
-            subscription_id: existing.provider_subscription_id,
-            init_point: remote.init_point,
-            status: normalizeStatus(remote.status),
-          };
-        }
-      } catch {
-        // fall through
-      }
-    }
-
-    // 4. Pre-flight: validate plan exists / token owns it. Surfaces real 401/404.
+    // 3. Pre-flight: validate plan exists / token owns it. Surfaces real 401/404.
     try {
       await mpGetPreapprovalPlan(MP_PREAPPROVAL_PLAN_ID);
     } catch (e) {
@@ -117,42 +98,25 @@ export const createMySubscription = createServerFn({ method: "POST" })
       throw e;
     }
 
-    // 5. Create preapproval with idempotency key
-    const idempotencyKey = `sub:${userId}:${Date.now()}`;
-    let preapproval;
-    try {
-      preapproval = await mpCreatePreapproval({
-        payerEmail: email,
-        externalReference: userId,
-        idempotencyKey,
-      });
-    } catch (e) {
-      if (e instanceof MercadoPagoApiError) {
-        console.error("[createMySubscription] preapproval creation failed", {
-          status: e.status,
-          code: e.code,
-          mpMessage: e.mpMessage,
-        });
-        throw new Error(e.message);
-      }
-      throw e;
-    }
+    // 4. Build hosted-checkout URL. Mercado Pago's POST /preapproval requires
+    //    a `card_token_id` when linked to a plan, which our redirect flow does
+    //    not have. The plan's hosted checkout collects the card + email and
+    //    creates the preapproval, then notifies our webhook.
+    const initPoint = buildCheckoutUrl({
+      externalReference: userId,
+      payerEmail: email,
+    });
 
-    if (!preapproval?.id) {
-      throw new Error("O Mercado Pago não retornou um ID de assinatura.");
-    }
-
+    // 5. Upsert a local pending row. provider_subscription_id will be filled
+    //    by the webhook once MP creates the preapproval.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const row = {
       user_id: userId,
       provider: "mercado_pago",
-      provider_subscription_id: preapproval.id,
-      provider_plan_id: preapproval.preapproval_plan_id ?? null,
-      payer_email: preapproval.payer_email ?? email,
-      status: normalizeStatus(preapproval.status),
-      next_payment_date: preapproval.next_payment_date ?? null,
+      provider_plan_id: MP_PREAPPROVAL_PLAN_ID,
+      payer_email: email,
+      status: "pending",
     };
-
     if (existing) {
       await supabaseAdmin.from("subscriptions").update(row).eq("id", existing.id);
     } else {
@@ -161,8 +125,9 @@ export const createMySubscription = createServerFn({ method: "POST" })
 
     return {
       already_active: false as const,
-      subscription_id: preapproval.id,
-      init_point: preapproval.init_point,
+      subscription_id: existing?.provider_subscription_id ?? null,
+      init_point: initPoint,
+      status: "pending" as const,
       status: normalizeStatus(preapproval.status),
     };
   });
