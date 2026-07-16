@@ -113,7 +113,7 @@ export async function startUsageSession(
     return {
       ok: false,
       code: "no_minutes",
-      message: "Você utilizou os 120 minutos deste ciclo.",
+      message: "Você utilizou os 90 minutos deste ciclo.",
       status: sub.status,
     };
   }
