@@ -226,8 +226,8 @@ export const diagnoseMercadoPago = createServerFn({ method: "GET" })
       result.plan_found = true;
       result.plan_status = plan.status ?? null;
       result.plan_reason = plan.reason ?? null;
-      result.plan_application_id = plan.application_id ?? null;
-      result.plan_collector_id = plan.collector_id ?? null;
+      result.plan_application_id = plan.application_id != null ? String(plan.application_id) : null;
+      result.plan_collector_id = plan.collector_id != null ? String(plan.collector_id) : null;
       result.plan_transaction_amount = plan.auto_recurring?.transaction_amount ?? null;
       result.plan_currency_id = plan.auto_recurring?.currency_id ?? null;
     } catch (e) {
