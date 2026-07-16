@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { MODES, type Mode } from "@/lib/fred-prompt";
 import { RealtimeConversation, type HistoryMessage } from "@/components/chat/realtime-conversation";
 import { useUsageSession } from "@/hooks/use-usage-session";
+import { mintTtsToken } from "@/lib/tts-token.functions";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 
