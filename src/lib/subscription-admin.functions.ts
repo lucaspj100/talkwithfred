@@ -211,7 +211,7 @@ function actorFromRequest(userId: string, headers: Headers | undefined) {
 export const syncAdminSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => idInput.parse(i))
-  .handler(async ({ data, context, signal: _signal }) => {
+  .handler(async ({ data, context }) => {
     await ensureAdmin(context);
     const { syncOne } = await import("@/lib/subscription-admin.server");
     return syncOne(data.id, { type: "admin", userId: context.userId });
