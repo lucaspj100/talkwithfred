@@ -59,7 +59,7 @@ function Landing() {
               size="lg"
               className="h-12 w-full rounded-full bg-cta text-base font-semibold text-cta-foreground shadow-lg shadow-cta/20 hover:bg-cta/90"
             >
-              <Mic className="mr-2 size-5" /> Começar conversa
+              <Mic className="mr-2 size-5" /> Começar agora
             </Button>
           </Link>
           <Link to="/auth" className="w-full">
@@ -74,8 +74,28 @@ function Landing() {
         </div>
 
         <p className="mt-6 text-xs text-muted-foreground">
-          Conversação com IA · Feedback personalizado · Sem cartão de crédito
+          120 minutos por mês · Cancele quando quiser
         </p>
+
+        <section className="mt-14 w-full max-w-md rounded-3xl border border-border bg-card/60 p-6 text-left md:p-8">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Plano mensal</p>
+          <h2 className="mt-1 font-display text-2xl font-bold">Talk With Fred</h2>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-3xl font-extrabold">R$ 49</span>
+            <span className="text-muted-foreground">/mês</span>
+          </div>
+          <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
+            <li>• 120 minutos mensais de conversação</li>
+            <li>• Prática por voz e texto</li>
+            <li>• Correções personalizadas</li>
+            <li>• Cancele quando quiser</li>
+          </ul>
+          <Link to="/auth" className="mt-6 block">
+            <Button className="h-11 w-full rounded-full bg-cta font-semibold text-cta-foreground hover:bg-cta/90">
+              Começar agora
+            </Button>
+          </Link>
+        </section>
       </main>
 
       <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
