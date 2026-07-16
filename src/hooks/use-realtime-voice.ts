@@ -696,7 +696,7 @@ export function useRealtimeVoice({
       default:
         break;
     }
-  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion, setPrioritizedState, markFredAudioPlaying, schedulePlaybackEndCheck, finishFredAudioPlayback, isAudioActuallyPlaying]);
+  }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion, setPrioritizedState, markFredAudioPlaying, schedulePlaybackEndCheck, finishFredAudioPlayback, isAudioActuallyPlaying, onUsage]);
 
   const start = useCallback(async () => {
     if (!supported) {
