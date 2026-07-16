@@ -28,6 +28,20 @@ export type MpPreapproval = {
   } | null;
 };
 
+export type MpPreapprovalPlan = {
+  id: string;
+  status?: string;
+  reason?: string;
+  application_id?: number | string;
+  collector_id?: number | string;
+  auto_recurring?: {
+    frequency?: number;
+    frequency_type?: string;
+    transaction_amount?: number;
+    currency_id?: string;
+  } | null;
+};
+
 export type MpPayment = {
   id: number | string;
   status: string;
@@ -39,10 +53,72 @@ export type MpPayment = {
   metadata?: { preapproval_id?: string | null } | null;
 };
 
+/**
+ * Rich error thrown by mpFetch. Carries HTTP status + parsed body so callers
+ * can produce a friendly, specific message instead of "Mercado Pago 400".
+ */
+export class MercadoPagoApiError extends Error {
+  status: number;
+  code: string | null;
+  mpMessage: string | null;
+  cause_: unknown;
+  bodyText: string;
+  constructor(opts: {
+    status: number;
+    code: string | null;
+    mpMessage: string | null;
+    cause: unknown;
+    bodyText: string;
+    friendly: string;
+  }) {
+    super(opts.friendly);
+    this.name = "MercadoPagoApiError";
+    this.status = opts.status;
+    this.code = opts.code;
+    this.mpMessage = opts.mpMessage;
+    this.cause_ = opts.cause;
+    this.bodyText = opts.bodyText;
+  }
+}
+
+export function readAccessToken(): { token: string | null; prefix: string | null; length: number; trimmed_diff: number } {
+  const raw = process.env.MERCADO_PAGO_ACCESS_TOKEN ?? null;
+  if (!raw) return { token: null, prefix: null, length: 0, trimmed_diff: 0 };
+  const trimmed = raw.trim();
+  return {
+    token: trimmed,
+    prefix: trimmed.slice(0, 8),
+    length: trimmed.length,
+    trimmed_diff: raw.length - trimmed.length,
+  };
+}
+
 function accessToken(): string {
-  const t = process.env.MERCADO_PAGO_ACCESS_TOKEN;
-  if (!t) throw new Error("MERCADO_PAGO_ACCESS_TOKEN not configured");
-  return t;
+  const { token } = readAccessToken();
+  if (!token) throw new Error("MERCADO_PAGO_ACCESS_TOKEN não configurado no servidor.");
+  return token;
+}
+
+function friendlyFromMp(status: number, code: string | null, mpMessage: string | null): string {
+  if (status === 401 || status === 403) {
+    return "A credencial do Mercado Pago é inválida ou não pertence à conta que criou o plano.";
+  }
+  if (status === 404) {
+    return "Plano de assinatura não encontrado no Mercado Pago.";
+  }
+  const msg = (mpMessage ?? "").toLowerCase();
+  if (msg.includes("payer") && msg.includes("email")) {
+    return "O e-mail do assinante é inválido para o Mercado Pago.";
+  }
+  if (msg.includes("collector") || msg.includes("application")) {
+    return "A credencial não pertence à mesma conta que criou o plano.";
+  }
+  if (status === 400) {
+    return mpMessage
+      ? `Mercado Pago recusou a solicitação: ${mpMessage}`
+      : "O Mercado Pago recusou um campo da solicitação.";
+  }
+  return mpMessage ? `Mercado Pago: ${mpMessage}` : `Mercado Pago retornou HTTP ${status}.`;
 }
 
 async function mpFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -56,18 +132,52 @@ async function mpFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   });
   const text = await resp.text();
   if (!resp.ok) {
-    console.error("[mercado-pago]", path, resp.status, text.slice(0, 500));
-    throw new Error(`Mercado Pago ${resp.status}`);
+    let parsed: Record<string, unknown> | null = null;
+    try {
+      parsed = text ? (JSON.parse(text) as Record<string, unknown>) : null;
+    } catch {
+      /* not JSON */
+    }
+    const mpMessage =
+      (parsed?.message as string | undefined) ??
+      (Array.isArray(parsed?.cause) && (parsed?.cause as Array<{ description?: string }>)[0]?.description) ??
+      null;
+    const code =
+      (parsed?.code as string | undefined) ??
+      (Array.isArray(parsed?.cause) && String((parsed?.cause as Array<{ code?: string | number }>)[0]?.code ?? "")) ??
+      null;
+    console.error(
+      "[mercado-pago]",
+      path,
+      "status=" + resp.status,
+      "code=" + (code ?? "-"),
+      "message=" + (mpMessage ?? "-"),
+      "body=" + text.slice(0, 800),
+    );
+    throw new MercadoPagoApiError({
+      status: resp.status,
+      code: code ? String(code) : null,
+      mpMessage: mpMessage ?? null,
+      cause: parsed?.cause ?? null,
+      bodyText: text.slice(0, 800),
+      friendly: friendlyFromMp(resp.status, code ? String(code) : null, mpMessage),
+    });
   }
   return text ? (JSON.parse(text) as T) : ({} as T);
+}
+
+export async function mpGetPreapprovalPlan(id: string): Promise<MpPreapprovalPlan> {
+  return mpFetch<MpPreapprovalPlan>(`/preapproval_plan/${encodeURIComponent(id)}`);
 }
 
 export async function mpCreatePreapproval(input: {
   payerEmail: string;
   externalReference: string;
+  idempotencyKey: string;
 }): Promise<MpPreapproval> {
   return mpFetch<MpPreapproval>("/preapproval", {
     method: "POST",
+    headers: { "X-Idempotency-Key": input.idempotencyKey },
     body: JSON.stringify({
       preapproval_plan_id: MP_PREAPPROVAL_PLAN_ID,
       payer_email: input.payerEmail,
