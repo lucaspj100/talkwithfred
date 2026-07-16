@@ -145,7 +145,7 @@ function AssinaturaPage() {
               <div className="min-w-0">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Plano</p>
                 <p className="font-display text-lg font-bold">Talk With Fred</p>
-                <p className="text-sm text-muted-foreground">R$ 49 / mês · 120 minutos</p>
+                <p className="text-sm text-muted-foreground">R$ 49 / mês · 90 minutos</p>
               </div>
               <div className="shrink-0 text-right">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
