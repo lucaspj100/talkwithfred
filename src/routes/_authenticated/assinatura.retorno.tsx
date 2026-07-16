@@ -22,10 +22,14 @@ function RetornoPage() {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
 
+    // Mercado Pago redirects with ?preapproval_id=... on success.
+    const url = new URL(window.location.href);
+    const preapprovalId = url.searchParams.get("preapproval_id") ?? undefined;
+
     async function tick(n: number) {
       if (cancelled || doneRef.current) return;
       try {
-        await refresh();
+        await refresh({ data: preapprovalId ? { preapprovalId } : {} });
         const sub = await getSub();
         if (cancelled) return;
         setStatus(sub?.status ?? null);
