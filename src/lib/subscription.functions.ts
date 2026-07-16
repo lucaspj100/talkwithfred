@@ -259,3 +259,70 @@ export const diagnoseMercadoPago = createServerFn({ method: "GET" })
     return result;
   });
 
+/**
+ * User-initiated cancellation. Cancels via Mercado Pago API only,
+ * updates DB from the real API response. Rate-limited to 1 request per 30s
+ * (via last_user_sync_at).
+ */
+export const cancelMySubscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => {
+    const d = (i ?? {}) as { reason?: unknown };
+    const reason = typeof d.reason === "string" ? d.reason.trim().slice(0, 500) : "";
+    return { reason };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: sub } = await context.supabase
+      .from("subscriptions")
+      .select("id, status")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!sub) throw new Error("Nenhuma assinatura encontrada.");
+    if (sub.status === "cancelled") {
+      return { ok: true, already: true, new_status: "cancelled" as const };
+    }
+    const { cancelOne } = await import("@/lib/subscription-admin.server");
+    const res = await cancelOne(
+      sub.id,
+      { type: "user", userId: context.userId },
+      data.reason || "user_requested",
+    );
+    if (!res.ok) throw new Error(res.error ?? "Falha ao cancelar assinatura.");
+    return { ok: true, already: false, new_status: res.new_status };
+  });
+
+/**
+ * User-initiated sync (rate limited to 30s).
+ */
+export const syncMySubscription = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: sub } = await supabaseAdmin
+      .from("subscriptions")
+      .select("id, last_user_sync_at, user_id")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!sub) throw new Error("Nenhuma assinatura encontrada.");
+    if (sub.last_user_sync_at) {
+      const elapsed = Date.now() - new Date(sub.last_user_sync_at as string).getTime();
+      if (elapsed < 30_000) {
+        const wait = Math.ceil((30_000 - elapsed) / 1000);
+        throw new Error(`Aguarde ${wait}s antes de sincronizar novamente.`);
+      }
+    }
+    await supabaseAdmin
+      .from("subscriptions")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update({ last_user_sync_at: new Date().toISOString() } as any)
+      .eq("id", sub.id);
+    const { syncOne } = await import("@/lib/subscription-admin.server");
+    const r = await syncOne(sub.id, { type: "user", userId: context.userId }, "user_resync");
+    if (!r.ok) throw new Error(r.error ?? "Falha ao sincronizar.");
+    return { ok: true, new_status: r.new_status ?? null };
+  });
+
