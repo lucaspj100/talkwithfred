@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { MODES, type Mode } from "@/lib/fred-prompt";
 import { RealtimeConversation, type HistoryMessage } from "@/components/chat/realtime-conversation";
 import { useUsageSession } from "@/hooks/use-usage-session";
+import { mintTtsToken } from "@/lib/tts-token.functions";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 
@@ -340,13 +341,12 @@ function ChatPage() {
     ttsAbortRef.current = ac;
     const speechText = opts.manual ? text : shortenForSpeech(text);
     try {
-      const { data } = await supabase.auth.getSession();
-      const t = data.session?.access_token ?? token;
-      if (!t) throw new Error("no_session");
+      const { token: ttsTicket } = await mintTtsToken();
+      if (!ttsTicket) throw new Error("no_tts_token");
 
       const streamUrl =
         `/api/tts-stream?text=${encodeURIComponent(speechText)}` +
-        `&access_token=${encodeURIComponent(t)}`;
+        `&t=${encodeURIComponent(ttsTicket)}`;
 
       const audio = new Audio();
       audio.preload = "auto";
