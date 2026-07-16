@@ -134,7 +134,14 @@ export const getAiCostSummary = createServerFn({ method: "POST" })
       top_user_id: topUser?.[0] ?? null,
       top_user_cost_brl: topUser?.[1] ?? 0,
       daily_cost_brl: daily,
-      finance,
+      finance: {
+        usd_brl_rate: Number(finance.usd_brl_rate ?? 0),
+        mercado_pago_fee_percent: Number(finance.mercado_pago_fee_percent ?? 0),
+        monthly_fixed_cost_brl: Number(finance.monthly_fixed_cost_brl ?? 0),
+        tax_percent: Number(finance.tax_percent ?? 0),
+        alert_cost_per_user_brl: Number(finance.alert_cost_per_user_brl ?? 0),
+        alert_cost_percent_of_revenue: Number(finance.alert_cost_percent_of_revenue ?? 0),
+      },
       monthly_price_brl: MONTHLY_PRICE_BRL,
     };
   });
