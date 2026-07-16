@@ -648,16 +648,78 @@ function ChatPage() {
 
   const modeLabel = MODES.find((m) => m.id === conversation.mode)?.label ?? conversation.mode;
 
+  const minutesLeftLabel =
+    usage.minutesAvailable != null
+      ? `${Math.max(0, Math.floor(usage.minutesAvailable))} min restantes`
+      : "…";
+
+  // Soft toasts at milestones — 30 / 10 / 5 min remaining.
+  const milestonesShownRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    const m = usage.minutesAvailable;
+    if (m == null) return;
+    const milestones = [30, 10, 5];
+    for (const t of milestones) {
+      if (m <= t && !milestonesShownRef.current.has(t)) {
+        milestonesShownRef.current.add(t);
+        toast.message(`Você ainda tem ${Math.max(0, Math.floor(m))} minutos neste ciclo.`);
+      }
+    }
+  }, [usage.minutesAvailable]);
+
+  const minutesBadge = (
+    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-3 py-1 text-xs text-muted-foreground">
+      <Clock className="size-3" /> {minutesLeftLabel}
+    </span>
+  );
+
+  const outOfMinutesDialog = (
+    <Dialog open={outOfMinutesOpen()} onOpenChange={(v) => { if (!v) setOutOfMinutes(false); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Seus 120 minutos deste mês terminaram</DialogTitle>
+          <DialogDescription>
+            Sua franquia deste ciclo foi consumida. Você pode acompanhar o próximo ciclo em sua assinatura.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>Voltar</Button>
+          <Button onClick={() => navigate({ to: "/assinatura" })}>Ver minha assinatura</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const otherTabDialog = (
+    <Dialog open={busyOtherTab} onOpenChange={(v) => { if (!v) setBusyOtherTab(false); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Já existe uma conversa ativa em outra aba</DialogTitle>
+          <DialogDescription>
+            Para continuar aqui, encerraremos a sessão da outra aba.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>Cancelar</Button>
+          <Button onClick={() => void initUsage(true)}>Encerrar anterior e continuar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  function outOfMinutesOpen() { return outOfMinutes || (usage.ended && usage.ended.reason === "out_of_minutes"); }
+
   if (chatMode === "voice") {
-    // Ensure any old TTS from a previous text-mode turn is silenced before we
-    // open the mic — no double playback across modes.
     return (
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6">
         <header className="mb-4 flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
             <ArrowLeft className="mr-1 size-4" /> Dashboard
           </Button>
-          <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+          <div className="flex items-center gap-2">
+            {minutesBadge}
+            <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+          </div>
           <Button
             type="button"
             variant="outline"
@@ -674,10 +736,24 @@ function ChatPage() {
           onUserFinalTurn={handleVoiceUserFinal}
           onAssistantFinalTurn={handleVoiceAssistantFinal}
           onSwitchToText={() => setChatMode("text")}
+          onVoiceActiveChange={(active) => usage.setActive(active && usageReady)}
+          disabled={!usageReady}
+          disabledReason={
+            busyOtherTab
+              ? "Já existe uma conversa ativa em outra aba."
+              : outOfMinutesOpen()
+                ? "Você utilizou os 120 minutos deste ciclo."
+                : usageInit === "pending"
+                  ? "Verificando sua assinatura…"
+                  : null
+          }
         />
+        {outOfMinutesDialog}
+        {otherTabDialog}
       </div>
     );
   }
+
 
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-6">
