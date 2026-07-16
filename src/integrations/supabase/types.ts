@@ -426,39 +426,65 @@ export type Database = {
       }
       usage_sessions: {
         Row: {
+          close_reason: string | null
           conversation_id: string | null
           created_at: string
           ended_at: string | null
           id: string
           last_heartbeat_at: string | null
           minutes_used: number
+          mode: string
           seconds_used: number
+          session_token_hash: string | null
           started_at: string
+          status: string
+          subscription_id: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
+          close_reason?: string | null
           conversation_id?: string | null
           created_at?: string
           ended_at?: string | null
           id?: string
           last_heartbeat_at?: string | null
           minutes_used?: number
+          mode?: string
           seconds_used?: number
+          session_token_hash?: string | null
           started_at?: string
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
+          close_reason?: string | null
           conversation_id?: string | null
           created_at?: string
           ended_at?: string | null
           id?: string
           last_heartbeat_at?: string | null
           minutes_used?: number
+          mode?: string
           seconds_used?: number
+          session_token_hash?: string | null
           started_at?: string
+          status?: string
+          subscription_id?: string | null
+          updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "usage_sessions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_profiles: {
         Row: {

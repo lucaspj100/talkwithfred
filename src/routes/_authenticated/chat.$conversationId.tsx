@@ -10,10 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FredAvatar } from "@/components/FredBrand";
-import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square, VolumeX, Phone } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square, VolumeX, Phone, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { MODES, type Mode } from "@/lib/fred-prompt";
 import { RealtimeConversation, type HistoryMessage } from "@/components/chat/realtime-conversation";
+import { useUsageSession } from "@/hooks/use-usage-session";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 
 export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
@@ -115,6 +117,65 @@ function ChatPage() {
     });
     return () => { mounted = false; sub.subscription.unsubscribe(); };
   }, [navigate]);
+
+  // ============= Usage session (120-minute quota) =============
+  const usage = useUsageSession();
+  const [usageInit, setUsageInit] = useState<"pending" | "ready" | "blocked">("pending");
+  const [outOfMinutes, setOutOfMinutes] = useState(false);
+  const [busyOtherTab, setBusyOtherTab] = useState(false);
+
+  const initUsage = useCallback(
+    async (force = false) => {
+      const res = await usage.start({
+        conversationId: conversation.id,
+        mode: "voice",
+        force,
+      });
+      if ("ok" in res && res.ok) {
+        setUsageInit("ready");
+        setBusyOtherTab(false);
+        return true;
+      }
+      const fail = res as Exclude<typeof res, { ok: true }>;
+      if (fail.code === "another_active_session") {
+        setBusyOtherTab(true);
+        setUsageInit("blocked");
+        return false;
+      }
+      setUsageInit("blocked");
+      if (fail.code === "no_subscription") {
+        toast.error(fail.message);
+        navigate({ to: "/planos" });
+      } else if (fail.code === "no_minutes") {
+        setOutOfMinutes(true);
+      } else if (fail.code === "pending" || fail.code === "blocked") {
+        toast.error(fail.message);
+        navigate({ to: "/assinatura" });
+      } else {
+        toast.error(fail.message);
+      }
+      return false;
+    },
+    [conversation.id, navigate, usage],
+  );
+
+  useEffect(() => {
+    if (!authReady) return;
+    if (usageInit !== "pending") return;
+    void initUsage(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authReady]);
+
+  // React to running-out-of-minutes signal from heartbeat.
+  useEffect(() => {
+    if (usage.ended && usage.ended.reason === "out_of_minutes") {
+      setOutOfMinutes(true);
+    }
+  }, [usage.ended]);
+
+  const usageReady = usageInit === "ready" && !usage.ended;
+
+
 
   const transport = useMemo(
     () =>
@@ -393,12 +454,28 @@ function ChatPage() {
   const [input, setInput] = useState("");
   const isBusy = status === "submitted" || status === "streaming";
 
+  // TEXT mode billing: only count seconds between "user sent" and
+  // "assistant response finished". No time while just reading history.
+  useEffect(() => {
+    if (chatMode !== "text") return;
+    if (!usageReady) return;
+    usage.setActive(isBusy);
+    return () => { usage.setActive(false); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatMode, isBusy, usageReady]);
+
   async function onSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     const text = input.trim();
     if (!text || isBusy) return;
     if (!authReady) {
       toast.error("Carregando sua sessão, aguarde um instante...");
+      return;
+    }
+    if (!usageReady) {
+      if (usage.ended || outOfMinutes) setOutOfMinutes(true);
+      else if (busyOtherTab) toast.error("Já existe uma conversa ativa em outra aba.");
+      else toast.error("Sua assinatura ainda não está pronta.");
       return;
     }
     const { data } = await supabase.auth.getSession();
@@ -571,16 +648,78 @@ function ChatPage() {
 
   const modeLabel = MODES.find((m) => m.id === conversation.mode)?.label ?? conversation.mode;
 
+  const minutesLeftLabel =
+    usage.minutesAvailable != null
+      ? `${Math.max(0, Math.floor(usage.minutesAvailable))} min restantes`
+      : "…";
+
+  // Soft toasts at milestones — 30 / 10 / 5 min remaining.
+  const milestonesShownRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    const m = usage.minutesAvailable;
+    if (m == null) return;
+    const milestones = [30, 10, 5];
+    for (const t of milestones) {
+      if (m <= t && !milestonesShownRef.current.has(t)) {
+        milestonesShownRef.current.add(t);
+        toast.message(`Você ainda tem ${Math.max(0, Math.floor(m))} minutos neste ciclo.`);
+      }
+    }
+  }, [usage.minutesAvailable]);
+
+  const minutesBadge = (
+    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-background/60 px-3 py-1 text-xs text-muted-foreground">
+      <Clock className="size-3" /> {minutesLeftLabel}
+    </span>
+  );
+
+  const outOfMinutesDialog = (
+    <Dialog open={outOfMinutesOpen()} onOpenChange={(v) => { if (!v) setOutOfMinutes(false); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Seus 120 minutos deste mês terminaram</DialogTitle>
+          <DialogDescription>
+            Sua franquia deste ciclo foi consumida. Você pode acompanhar o próximo ciclo em sua assinatura.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>Voltar</Button>
+          <Button onClick={() => navigate({ to: "/assinatura" })}>Ver minha assinatura</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const otherTabDialog = (
+    <Dialog open={busyOtherTab} onOpenChange={(v) => { if (!v) setBusyOtherTab(false); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Já existe uma conversa ativa em outra aba</DialogTitle>
+          <DialogDescription>
+            Para continuar aqui, encerraremos a sessão da outra aba.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>Cancelar</Button>
+          <Button onClick={() => void initUsage(true)}>Encerrar anterior e continuar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  function outOfMinutesOpen() { return outOfMinutes || (usage.ended && usage.ended.reason === "out_of_minutes"); }
+
   if (chatMode === "voice") {
-    // Ensure any old TTS from a previous text-mode turn is silenced before we
-    // open the mic — no double playback across modes.
     return (
       <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6">
         <header className="mb-4 flex items-center justify-between gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
             <ArrowLeft className="mr-1 size-4" /> Dashboard
           </Button>
-          <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+          <div className="flex items-center gap-2">
+            {minutesBadge}
+            <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+          </div>
           <Button
             type="button"
             variant="outline"
@@ -597,10 +736,24 @@ function ChatPage() {
           onUserFinalTurn={handleVoiceUserFinal}
           onAssistantFinalTurn={handleVoiceAssistantFinal}
           onSwitchToText={() => setChatMode("text")}
+          onVoiceActiveChange={(active) => usage.setActive(active && usageReady)}
+          disabled={!usageReady}
+          disabledReason={
+            busyOtherTab
+              ? "Já existe uma conversa ativa em outra aba."
+              : outOfMinutesOpen()
+                ? "Você utilizou os 120 minutos deste ciclo."
+                : usageInit === "pending"
+                  ? "Verificando sua assinatura…"
+                  : null
+          }
         />
+        {outOfMinutesDialog}
+        {otherTabDialog}
       </div>
     );
   }
+
 
   return (
     <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-6">
@@ -608,7 +761,10 @@ function ChatPage() {
         <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
           <ArrowLeft className="mr-1 size-4" /> Dashboard
         </Button>
-        <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+        <div className="flex items-center gap-2">
+          {minutesBadge}
+          <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             type="button"
@@ -621,6 +777,8 @@ function ChatPage() {
           </Button>
         </div>
       </header>
+      {outOfMinutesDialog}
+      {otherTabDialog}
 
       <div className="mb-3 flex justify-end">
         <Button
@@ -740,7 +898,7 @@ function ChatPage() {
                 size="icon"
                 variant={recording ? "destructive" : "secondary"}
                 onClick={toggleRecord}
-                disabled={transcribing || isBusy}
+                disabled={transcribing || isBusy || !usageReady}
                 title={recording ? "Parar gravação" : "Falar em inglês"}
               >
                 {transcribing ? <Loader2 className="size-4 animate-spin" /> : recording ? <MicOff className="size-4" /> : <Mic className="size-4" />}
@@ -749,12 +907,12 @@ function ChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSubmit(); } }}
-                placeholder={recording ? "Falando..." : "Type in English..."}
-                disabled={recording || transcribing}
+                placeholder={recording ? "Falando..." : !usageReady ? "Aguardando assinatura…" : "Type in English..."}
+                disabled={recording || transcribing || !usageReady}
                 rows={1}
                 className="min-h-[44px] max-h-32 resize-none"
               />
-              <Button type="submit" size="icon" disabled={!input.trim() || isBusy}>
+              <Button type="submit" size="icon" disabled={!input.trim() || isBusy || !usageReady}>
                 {isBusy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
               </Button>
             </div>

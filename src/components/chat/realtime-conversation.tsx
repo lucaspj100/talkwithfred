@@ -24,6 +24,9 @@ export function RealtimeConversation({
   onUserFinalTurn,
   onAssistantFinalTurn,
   onSwitchToText,
+  onVoiceActiveChange,
+  disabled,
+  disabledReason,
 }: {
   conversationId: string;
   userName: string;
@@ -31,6 +34,9 @@ export function RealtimeConversation({
   onUserFinalTurn?: (text: string) => void;
   onAssistantFinalTurn?: (text: string, opts: { interrupted: boolean }) => void;
   onSwitchToText: () => void;
+  onVoiceActiveChange?: (active: boolean) => void;
+  disabled?: boolean;
+  disabledReason?: string | null;
 }) {
   const getSession = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
@@ -84,6 +90,17 @@ export function RealtimeConversation({
   const idle = state === "idle";
   const isError = state === "error";
   const connecting = state === "connecting";
+
+  // Signal "active" only while the voice pipe is actually engaged.
+  const voiceIsActive =
+    state === "listening" ||
+    state === "user-speaking" ||
+    state === "fred-thinking" ||
+    state === "fred-speaking";
+  useEffect(() => {
+    onVoiceActiveChange?.(voiceIsActive);
+  }, [voiceIsActive, onVoiceActiveChange]);
+
   const effectiveMouthLevel = audioPlaying && !userSpeaking ? mouthLevel : 0;
   const effectiveMouthSource = audioPlaying && !userSpeaking ? mouthSource : "none";
   const effectiveAvatarStatus = audioPlaying && !userSpeaking ? "speaking" : avatarStatus(state);
@@ -113,8 +130,13 @@ export function RealtimeConversation({
             {errorMsg}
           </p>
         )}
+        {disabled && disabledReason && (
+          <p className="mx-auto mt-4 max-w-md rounded-md bg-amber-500/10 p-3 text-sm">
+            {disabledReason}
+          </p>
+        )}
         <div className="mt-6 flex flex-col items-center gap-3">
-          <Button size="lg" onClick={() => void start()} disabled={!supported}>
+          <Button size="lg" onClick={() => void start()} disabled={!supported || !!disabled}>
             <Phone className="mr-2 size-4" /> Começar conversa por voz
           </Button>
           <button

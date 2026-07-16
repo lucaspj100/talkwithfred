@@ -28,6 +28,9 @@ import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
+import { Route as ApiUsageStopRouteImport } from './routes/api/usage/stop'
+import { Route as ApiUsageStartRouteImport } from './routes/api/usage/start'
+import { Route as ApiUsageHeartbeatRouteImport } from './routes/api/usage/heartbeat'
 import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public/simulation-chat'
 import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/public/realtime-session'
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
@@ -136,6 +139,21 @@ const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const ApiUsageStopRoute = ApiUsageStopRouteImport.update({
+  id: '/api/usage/stop',
+  path: '/api/usage/stop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUsageStartRoute = ApiUsageStartRouteImport.update({
+  id: '/api/usage/start',
+  path: '/api/usage/start',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUsageHeartbeatRoute = ApiUsageHeartbeatRouteImport.update({
+  id: '/api/usage/heartbeat',
+  path: '/api/usage/heartbeat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSimulationChatRoute = ApiPublicSimulationChatRouteImport.update({
   id: '/api/public/simulation-chat',
   path: '/api/public/simulation-chat',
@@ -233,6 +251,9 @@ export interface FileRoutesByFullPath {
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
+  '/api/usage/heartbeat': typeof ApiUsageHeartbeatRoute
+  '/api/usage/start': typeof ApiUsageStartRoute
+  '/api/usage/stop': typeof ApiUsageStopRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
@@ -263,6 +284,9 @@ export interface FileRoutesByTo {
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
+  '/api/usage/heartbeat': typeof ApiUsageHeartbeatRoute
+  '/api/usage/start': typeof ApiUsageStartRoute
+  '/api/usage/stop': typeof ApiUsageStopRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
@@ -297,6 +321,9 @@ export interface FileRoutesById {
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
+  '/api/usage/heartbeat': typeof ApiUsageHeartbeatRoute
+  '/api/usage/start': typeof ApiUsageStartRoute
+  '/api/usage/stop': typeof ApiUsageStopRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
   '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
@@ -331,6 +358,9 @@ export interface FileRouteTypes {
     | '/settings/onboarding'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
+    | '/api/usage/heartbeat'
+    | '/api/usage/start'
+    | '/api/usage/stop'
     | '/admin/'
     | '/practice/'
     | '/admin/users/$userId'
@@ -361,6 +391,9 @@ export interface FileRouteTypes {
     | '/settings/onboarding'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
+    | '/api/usage/heartbeat'
+    | '/api/usage/start'
+    | '/api/usage/stop'
     | '/admin'
     | '/practice'
     | '/admin/users/$userId'
@@ -394,6 +427,9 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/onboarding'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
+    | '/api/usage/heartbeat'
+    | '/api/usage/start'
+    | '/api/usage/stop'
     | '/_authenticated/admin/'
     | '/_authenticated/practice/'
     | '/_authenticated/admin/users/$userId'
@@ -414,6 +450,9 @@ export interface RootRouteChildren {
   SimulacaoIndexRoute: typeof SimulacaoIndexRoute
   ApiPublicRealtimeSessionRoute: typeof ApiPublicRealtimeSessionRoute
   ApiPublicSimulationChatRoute: typeof ApiPublicSimulationChatRoute
+  ApiUsageHeartbeatRoute: typeof ApiUsageHeartbeatRoute
+  ApiUsageStartRoute: typeof ApiUsageStartRoute
+  ApiUsageStopRoute: typeof ApiUsageStopRoute
   ApiPublicMercadoPagoWebhookRoute: typeof ApiPublicMercadoPagoWebhookRoute
 }
 
@@ -551,6 +590,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/usage/stop': {
+      id: '/api/usage/stop'
+      path: '/api/usage/stop'
+      fullPath: '/api/usage/stop'
+      preLoaderRoute: typeof ApiUsageStopRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/usage/start': {
+      id: '/api/usage/start'
+      path: '/api/usage/start'
+      fullPath: '/api/usage/start'
+      preLoaderRoute: typeof ApiUsageStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/usage/heartbeat': {
+      id: '/api/usage/heartbeat'
+      path: '/api/usage/heartbeat'
+      fullPath: '/api/usage/heartbeat'
+      preLoaderRoute: typeof ApiUsageHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/simulation-chat': {
       id: '/api/public/simulation-chat'
@@ -740,6 +800,9 @@ const rootRouteChildren: RootRouteChildren = {
   SimulacaoIndexRoute: SimulacaoIndexRoute,
   ApiPublicRealtimeSessionRoute: ApiPublicRealtimeSessionRoute,
   ApiPublicSimulationChatRoute: ApiPublicSimulationChatRoute,
+  ApiUsageHeartbeatRoute: ApiUsageHeartbeatRoute,
+  ApiUsageStartRoute: ApiUsageStartRoute,
+  ApiUsageStopRoute: ApiUsageStopRoute,
   ApiPublicMercadoPagoWebhookRoute: ApiPublicMercadoPagoWebhookRoute,
 }
 export const routeTree = rootRouteImport
