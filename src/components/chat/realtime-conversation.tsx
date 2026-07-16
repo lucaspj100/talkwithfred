@@ -24,6 +24,9 @@ export function RealtimeConversation({
   onUserFinalTurn,
   onAssistantFinalTurn,
   onSwitchToText,
+  onVoiceActiveChange,
+  disabled,
+  disabledReason,
 }: {
   conversationId: string;
   userName: string;
@@ -31,6 +34,9 @@ export function RealtimeConversation({
   onUserFinalTurn?: (text: string) => void;
   onAssistantFinalTurn?: (text: string, opts: { interrupted: boolean }) => void;
   onSwitchToText: () => void;
+  onVoiceActiveChange?: (active: boolean) => void;
+  disabled?: boolean;
+  disabledReason?: string | null;
 }) {
   const getSession = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
