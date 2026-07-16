@@ -638,6 +638,18 @@ export function useRealtimeVoice({
           responseId: currentAssistantIdRef.current,
           transcriptFlushed: assistantTranscriptFlushedRef.current,
         });
+        if (ev.type === "response.done" && ev.response?.usage && onUsage) {
+          try {
+            onUsage({
+              usage: ev.response.usage,
+              responseId: ev.response.id ?? ev.response_id ?? null,
+              eventId: ev.event_id ?? null,
+              model: ev.response.model ?? null,
+            });
+          } catch (e) {
+            console.warn("[voice] onUsage handler threw", e);
+          }
+        }
         const pending = partialAssistantRef.current.trim();
         if (!assistantTranscriptFlushedRef.current && pending.length > 0) {
           setPartialAssistant("");
