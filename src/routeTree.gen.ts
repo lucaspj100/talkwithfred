@@ -33,6 +33,7 @@ import { Route as ApiUsageStartRouteImport } from './routes/api/usage/start'
 import { Route as ApiUsageHeartbeatRouteImport } from './routes/api/usage/heartbeat'
 import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public/simulation-chat'
 import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/public/realtime-session'
+import { Route as ApiAiUsageRecordRouteImport } from './routes/api/ai-usage/record'
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
@@ -167,6 +168,11 @@ const ApiPublicRealtimeSessionRoute =
     path: '/api/public/realtime-session',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiAiUsageRecordRoute = ApiAiUsageRecordRouteImport.update({
+  id: '/api/ai-usage/record',
+  path: '/api/ai-usage/record',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedSettingsOnboardingRoute =
   AuthenticatedSettingsOnboardingRouteImport.update({
     id: '/settings/onboarding',
@@ -264,6 +270,7 @@ export interface FileRoutesByFullPath {
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/api/usage/heartbeat': typeof ApiUsageHeartbeatRoute
@@ -299,6 +306,7 @@ export interface FileRoutesByTo {
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/api/usage/heartbeat': typeof ApiUsageHeartbeatRoute
@@ -338,6 +346,7 @@ export interface FileRoutesById {
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
   '/api/usage/heartbeat': typeof ApiUsageHeartbeatRoute
@@ -377,6 +386,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
+    | '/api/ai-usage/record'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
     | '/api/usage/heartbeat'
@@ -412,6 +422,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/settings/onboarding'
+    | '/api/ai-usage/record'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
     | '/api/usage/heartbeat'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
     | '/_authenticated/settings/onboarding'
+    | '/api/ai-usage/record'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
     | '/api/usage/heartbeat'
@@ -474,6 +486,7 @@ export interface RootRouteChildren {
   ApiTtsStreamRoute: typeof ApiTtsStreamRoute
   SimulacaoResultadoRoute: typeof SimulacaoResultadoRoute
   SimulacaoIndexRoute: typeof SimulacaoIndexRoute
+  ApiAiUsageRecordRoute: typeof ApiAiUsageRecordRoute
   ApiPublicRealtimeSessionRoute: typeof ApiPublicRealtimeSessionRoute
   ApiPublicSimulationChatRoute: typeof ApiPublicSimulationChatRoute
   ApiUsageHeartbeatRoute: typeof ApiUsageHeartbeatRoute
@@ -650,6 +663,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/realtime-session'
       fullPath: '/api/public/realtime-session'
       preLoaderRoute: typeof ApiPublicRealtimeSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-usage/record': {
+      id: '/api/ai-usage/record'
+      path: '/api/ai-usage/record'
+      fullPath: '/api/ai-usage/record'
+      preLoaderRoute: typeof ApiAiUsageRecordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/settings/onboarding': {
@@ -855,6 +875,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTtsStreamRoute: ApiTtsStreamRoute,
   SimulacaoResultadoRoute: SimulacaoResultadoRoute,
   SimulacaoIndexRoute: SimulacaoIndexRoute,
+  ApiAiUsageRecordRoute: ApiAiUsageRecordRoute,
   ApiPublicRealtimeSessionRoute: ApiPublicRealtimeSessionRoute,
   ApiPublicSimulationChatRoute: ApiPublicSimulationChatRoute,
   ApiUsageHeartbeatRoute: ApiUsageHeartbeatRoute,
