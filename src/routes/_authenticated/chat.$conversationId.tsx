@@ -454,12 +454,28 @@ function ChatPage() {
   const [input, setInput] = useState("");
   const isBusy = status === "submitted" || status === "streaming";
 
+  // TEXT mode billing: only count seconds between "user sent" and
+  // "assistant response finished". No time while just reading history.
+  useEffect(() => {
+    if (chatMode !== "text") return;
+    if (!usageReady) return;
+    usage.setActive(isBusy);
+    return () => { usage.setActive(false); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatMode, isBusy, usageReady]);
+
   async function onSubmit(e?: React.FormEvent) {
     e?.preventDefault();
     const text = input.trim();
     if (!text || isBusy) return;
     if (!authReady) {
       toast.error("Carregando sua sessão, aguarde um instante...");
+      return;
+    }
+    if (!usageReady) {
+      if (usage.ended || outOfMinutes) setOutOfMinutes(true);
+      else if (busyOtherTab) toast.error("Já existe uma conversa ativa em outra aba.");
+      else toast.error("Sua assinatura ainda não está pronta.");
       return;
     }
     const { data } = await supabase.auth.getSession();
