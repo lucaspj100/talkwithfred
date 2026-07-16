@@ -10,10 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FredAvatar } from "@/components/FredBrand";
-import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square, VolumeX, Phone } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Send, Volume2, Loader2, Square, VolumeX, Phone, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { MODES, type Mode } from "@/lib/fred-prompt";
 import { RealtimeConversation, type HistoryMessage } from "@/components/chat/realtime-conversation";
+import { useUsageSession } from "@/hooks/use-usage-session";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 
 export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
