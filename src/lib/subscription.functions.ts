@@ -147,17 +147,60 @@ export const refreshMySubscription = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
-    const preapprovalId = data.preapprovalId || sub?.provider_subscription_id || null;
+    const {
+      mpGetPreapproval,
+      mpSearchPreapprovals,
+      normalizeStatus,
+      MP_PREAPPROVAL_PLAN_ID,
+    } = await import("@/lib/mercado-pago.server");
+    const { syncPreapprovalById } = await import("@/lib/subscription.server");
+
+    let preapprovalId: string | null =
+      data.preapprovalId || sub?.provider_subscription_id || null;
+
+    // Fallback: no id known locally and the return URL didn't carry one.
+    // Search Mercado Pago by external_reference (our userId) and pick the
+    // best candidate: authorized > pending > paused > past_due > cancelled,
+    // then most recently created.
+    if (!preapprovalId) {
+      try {
+        const search = await mpSearchPreapprovals({
+          external_reference: context.userId,
+          preapproval_plan_id: MP_PREAPPROVAL_PLAN_ID,
+          limit: 20,
+        });
+        const rank: Record<string, number> = {
+          authorized: 0,
+          active: 0,
+          pending: 1,
+          paused: 2,
+          past_due: 3,
+          payment_required: 3,
+          cancelled: 4,
+          canceled: 4,
+        };
+        const best = [...(search.results ?? [])].sort((a, b) => {
+          const ra = rank[(a.status ?? "").toLowerCase()] ?? 9;
+          const rb = rank[(b.status ?? "").toLowerCase()] ?? 9;
+          if (ra !== rb) return ra - rb;
+          return (b.date_created ?? "").localeCompare(a.date_created ?? "");
+        })[0];
+        if (best?.id) preapprovalId = best.id;
+      } catch (e) {
+        console.error("[refreshMySubscription] search failed", e);
+      }
+    }
+
     if (!preapprovalId) return { status: sub?.status ?? null };
 
-    const { mpGetPreapproval, normalizeStatus } = await import("@/lib/mercado-pago.server");
-    const { syncPreapprovalById } = await import("@/lib/subscription.server");
     const remote = await mpGetPreapproval(preapprovalId);
     // Guard: only sync if this preapproval belongs to the caller.
+    // (MP may omit external_reference in the GET response even when set —
+    // in that case we trust the search-by-external_reference above.)
     if (remote.external_reference && remote.external_reference !== context.userId) {
       return { status: sub?.status ?? null };
     }
-    await syncPreapprovalById(remote);
+    await syncPreapprovalById({ ...remote, external_reference: remote.external_reference ?? context.userId });
     return { status: normalizeStatus(remote.status) };
   });
 
