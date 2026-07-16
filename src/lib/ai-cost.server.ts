@@ -225,19 +225,20 @@ async function rollupUsageSession(sessionId: string) {
       "model, input_text_tokens, cached_input_text_tokens, output_text_tokens, input_audio_tokens, cached_input_audio_tokens, output_audio_tokens, estimated_cost_usd, estimated_cost_brl",
     )
     .eq("usage_session_id", sessionId);
-  const list = (rows ?? []) as Array<Record<string, number | string>>;
+  const list = (rows ?? []) as Array<Record<string, unknown>>;
   const totals = list.reduce(
-    (acc, r) => {
-      acc.itt += Number(r.input_text_tokens ?? 0);
-      acc.ott += Number(r.output_text_tokens ?? 0);
-      acc.iat += Number(r.input_audio_tokens ?? 0);
-      acc.oat += Number(r.output_audio_tokens ?? 0);
-      acc.cached +=
-        Number(r.cached_input_text_tokens ?? 0) + Number(r.cached_input_audio_tokens ?? 0);
-      acc.usd += Number(r.estimated_cost_usd ?? 0);
-      acc.brl += Number(r.estimated_cost_brl ?? 0);
-      return acc;
-    },
+    (acc, r) => ({
+      itt: acc.itt + Number(r.input_text_tokens ?? 0),
+      ott: acc.ott + Number(r.output_text_tokens ?? 0),
+      iat: acc.iat + Number(r.input_audio_tokens ?? 0),
+      oat: acc.oat + Number(r.output_audio_tokens ?? 0),
+      cached:
+        acc.cached +
+        Number(r.cached_input_text_tokens ?? 0) +
+        Number(r.cached_input_audio_tokens ?? 0),
+      usd: acc.usd + Number(r.estimated_cost_usd ?? 0),
+      brl: acc.brl + Number(r.estimated_cost_brl ?? 0),
+    }),
     { itt: 0, ott: 0, iat: 0, oat: 0, cached: 0, usd: 0, brl: 0 },
   );
   const model = (list[list.length - 1]?.model as string | undefined) ?? null;
