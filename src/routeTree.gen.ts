@@ -42,6 +42,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminRetentionRouteImport } from './routes/_authenticated/admin.retention'
 import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
 import { Route as AuthenticatedAdminIdentityRouteImport } from './routes/_authenticated/admin.identity'
+import { Route as AuthenticatedAdminCustosIaRouteImport } from './routes/_authenticated/admin.custos-ia'
 import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin.assinaturas'
 import { Route as ApiPublicMercadoPagoWebhookRouteImport } from './routes/api/public/mercado-pago/webhook'
 import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
@@ -219,6 +220,12 @@ const AuthenticatedAdminIdentityRoute =
     path: '/identity',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminCustosIaRoute =
+  AuthenticatedAdminCustosIaRouteImport.update({
+    id: '/custos-ia',
+    path: '/custos-ia',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAssinaturasRoute =
   AuthenticatedAdminAssinaturasRouteImport.update({
     id: '/assinaturas',
@@ -262,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
   '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
+  '/admin/custos-ia': typeof AuthenticatedAdminCustosIaRoute
   '/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
@@ -298,6 +306,7 @@ export interface FileRoutesByTo {
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao': typeof SimulacaoIndexRoute
   '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
+  '/admin/custos-ia': typeof AuthenticatedAdminCustosIaRoute
   '/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
@@ -338,6 +347,7 @@ export interface FileRoutesById {
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
   '/_authenticated/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
+  '/_authenticated/admin/custos-ia': typeof AuthenticatedAdminCustosIaRoute
   '/_authenticated/admin/identity': typeof AuthenticatedAdminIdentityRoute
   '/_authenticated/admin/leads': typeof AuthenticatedAdminLeadsRoute
   '/_authenticated/admin/retention': typeof AuthenticatedAdminRetentionRoute
@@ -378,6 +388,7 @@ export interface FileRouteTypes {
     | '/simulacao/resultado'
     | '/simulacao/'
     | '/admin/assinaturas'
+    | '/admin/custos-ia'
     | '/admin/identity'
     | '/admin/leads'
     | '/admin/retention'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/simulacao/resultado'
     | '/simulacao'
     | '/admin/assinaturas'
+    | '/admin/custos-ia'
     | '/admin/identity'
     | '/admin/leads'
     | '/admin/retention'
@@ -453,6 +465,7 @@ export interface FileRouteTypes {
     | '/simulacao/resultado'
     | '/simulacao/'
     | '/_authenticated/admin/assinaturas'
+    | '/_authenticated/admin/custos-ia'
     | '/_authenticated/admin/identity'
     | '/_authenticated/admin/leads'
     | '/_authenticated/admin/retention'
@@ -728,6 +741,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminIdentityRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/custos-ia': {
+      id: '/_authenticated/admin/custos-ia'
+      path: '/custos-ia'
+      fullPath: '/admin/custos-ia'
+      preLoaderRoute: typeof AuthenticatedAdminCustosIaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/assinaturas': {
       id: '/_authenticated/admin/assinaturas'
       path: '/assinaturas'
@@ -789,6 +809,7 @@ const AuthenticatedAdminUsersRouteWithChildren =
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRouteWithChildren
+  AuthenticatedAdminCustosIaRoute: typeof AuthenticatedAdminCustosIaRoute
   AuthenticatedAdminIdentityRoute: typeof AuthenticatedAdminIdentityRoute
   AuthenticatedAdminLeadsRoute: typeof AuthenticatedAdminLeadsRoute
   AuthenticatedAdminRetentionRoute: typeof AuthenticatedAdminRetentionRoute
@@ -799,6 +820,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAssinaturasRoute:
     AuthenticatedAdminAssinaturasRouteWithChildren,
+  AuthenticatedAdminCustosIaRoute: AuthenticatedAdminCustosIaRoute,
   AuthenticatedAdminIdentityRoute: AuthenticatedAdminIdentityRoute,
   AuthenticatedAdminLeadsRoute: AuthenticatedAdminLeadsRoute,
   AuthenticatedAdminRetentionRoute: AuthenticatedAdminRetentionRoute,
