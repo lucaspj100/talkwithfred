@@ -85,7 +85,7 @@ function Landing() {
             <span className="text-muted-foreground">/mês</span>
           </div>
           <ul className="mt-4 space-y-1.5 text-sm text-muted-foreground">
-            <li>• 120 minutos mensais de conversação</li>
+            <li>• 90 minutos mensais de conversação</li>
             <li>• Prática por voz e texto</li>
             <li>• Correções personalizadas</li>
             <li>• Cancele quando quiser</li>
