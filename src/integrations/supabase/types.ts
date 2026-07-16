@@ -292,6 +292,111 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_events: {
+        Row: {
+          created_at: string
+          event_type: string | null
+          id: string
+          payload: Json | null
+          processed: boolean
+          provider_event_id: string | null
+          provider_status: string | null
+          provider_subscription_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean
+          provider_event_id?: string | null
+          provider_status?: string | null
+          provider_subscription_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string | null
+          id?: string
+          payload?: Json | null
+          processed?: boolean
+          provider_event_id?: string | null
+          provider_status?: string | null
+          provider_subscription_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          canceled_at: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          last_payment_at: string | null
+          last_payment_status: string | null
+          last_renewed_payment_id: string | null
+          minutes_available: number
+          minutes_used: number
+          monthly_minutes: number
+          next_payment_date: string | null
+          payer_email: string | null
+          plan_name: string
+          provider: string
+          provider_plan_id: string | null
+          provider_subscription_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          last_payment_at?: string | null
+          last_payment_status?: string | null
+          last_renewed_payment_id?: string | null
+          minutes_available?: number
+          minutes_used?: number
+          monthly_minutes?: number
+          next_payment_date?: string | null
+          payer_email?: string | null
+          plan_name?: string
+          provider?: string
+          provider_plan_id?: string | null
+          provider_subscription_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          canceled_at?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          last_payment_at?: string | null
+          last_payment_status?: string | null
+          last_renewed_payment_id?: string | null
+          minutes_available?: number
+          minutes_used?: number
+          monthly_minutes?: number
+          next_payment_date?: string | null
+          payer_email?: string | null
+          plan_name?: string
+          provider?: string
+          provider_plan_id?: string | null
+          provider_subscription_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       usage_logs: {
         Row: {
           action_type: string
@@ -316,6 +421,42 @@ export type Database = {
           messages_sent?: number | null
           user_id?: string
           voice_minutes_used?: number | null
+        }
+        Relationships: []
+      }
+      usage_sessions: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          ended_at: string | null
+          id: string
+          last_heartbeat_at: string | null
+          minutes_used: number
+          seconds_used: number
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          last_heartbeat_at?: string | null
+          minutes_used?: number
+          seconds_used?: number
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          last_heartbeat_at?: string | null
+          minutes_used?: number
+          seconds_used?: number
+          started_at?: string
+          user_id?: string
         }
         Relationships: []
       }
