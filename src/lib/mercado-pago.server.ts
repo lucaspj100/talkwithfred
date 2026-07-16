@@ -183,12 +183,32 @@ export function buildCheckoutUrl(input: {
   params.set("preapproval_plan_id", MP_PREAPPROVAL_PLAN_ID);
   params.set("external_reference", input.externalReference);
   params.set("back_url", MP_BACK_URL);
+  params.set("notification_url", MP_NOTIFICATION_URL);
   if (input.payerEmail) params.set("payer_email", input.payerEmail);
   return `https://www.mercadopago.com.br/subscriptions/checkout?${params.toString()}`;
 }
 
 export async function mpGetPreapproval(id: string): Promise<MpPreapproval> {
   return mpFetch<MpPreapproval>(`/preapproval/${encodeURIComponent(id)}`);
+}
+
+/**
+ * Search preapprovals. Used to recover the provider_subscription_id when the
+ * webhook has not (yet) fired and the user came back without ?preapproval_id.
+ */
+export async function mpSearchPreapprovals(params: {
+  external_reference?: string;
+  payer_email?: string;
+  preapproval_plan_id?: string;
+  limit?: number;
+}): Promise<{ results: MpPreapproval[]; paging: { total: number } }> {
+  const qs = new URLSearchParams();
+  if (params.external_reference) qs.set("external_reference", params.external_reference);
+  if (params.payer_email) qs.set("payer_email", params.payer_email);
+  if (params.preapproval_plan_id) qs.set("preapproval_plan_id", params.preapproval_plan_id);
+  qs.set("limit", String(params.limit ?? 20));
+  qs.set("sort", "date_created:desc");
+  return mpFetch(`/preapproval/search?${qs.toString()}`);
 }
 
 export async function mpCancelPreapproval(id: string): Promise<MpPreapproval> {
