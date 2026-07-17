@@ -49,6 +49,7 @@ import { Route as AuthenticatedAdminIdentityRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminCustosIaRouteImport } from './routes/_authenticated/admin.custos-ia'
 import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin.assinaturas'
 import { Route as ApiPublicMercadoPagoWebhookRouteImport } from './routes/api/public/mercado-pago/webhook'
+import { Route as AuthenticatedChatConversationIdRevisaoRouteImport } from './routes/_authenticated/chat.$conversationId.revisao'
 import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
 import { Route as AuthenticatedAdminAssinaturasIdRouteImport } from './routes/_authenticated/admin.assinaturas.$id'
 
@@ -262,6 +263,12 @@ const ApiPublicMercadoPagoWebhookRoute =
     path: '/api/public/mercado-pago/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedChatConversationIdRevisaoRoute =
+  AuthenticatedChatConversationIdRevisaoRouteImport.update({
+    id: '/revisao',
+    path: '/revisao',
+    getParentRoute: () => AuthenticatedChatConversationIdRoute,
+  } as any)
 const AuthenticatedAdminUsersUserIdRoute =
   AuthenticatedAdminUsersUserIdRouteImport.update({
     id: '/$userId',
@@ -303,7 +310,7 @@ export interface FileRoutesByFullPath {
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
   '/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
-  '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
+  '/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
@@ -316,6 +323,7 @@ export interface FileRoutesByFullPath {
   '/practice/': typeof AuthenticatedPracticeIndexRoute
   '/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/chat/$conversationId/revisao': typeof AuthenticatedChatConversationIdRevisaoRoute
   '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -344,7 +352,7 @@ export interface FileRoutesByTo {
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
   '/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
-  '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
+  '/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
@@ -357,6 +365,7 @@ export interface FileRoutesByTo {
   '/practice': typeof AuthenticatedPracticeIndexRoute
   '/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/chat/$conversationId/revisao': typeof AuthenticatedChatConversationIdRevisaoRoute
   '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
 export interface FileRoutesById {
@@ -389,7 +398,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
   '/_authenticated/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
-  '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
+  '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
@@ -402,6 +411,7 @@ export interface FileRoutesById {
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
   '/_authenticated/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/_authenticated/chat/$conversationId/revisao': typeof AuthenticatedChatConversationIdRevisaoRoute
   '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
 export interface FileRouteTypes {
@@ -447,6 +457,7 @@ export interface FileRouteTypes {
     | '/practice/'
     | '/admin/assinaturas/$id'
     | '/admin/users/$userId'
+    | '/chat/$conversationId/revisao'
     | '/api/public/mercado-pago/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -488,6 +499,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/admin/assinaturas/$id'
     | '/admin/users/$userId'
+    | '/chat/$conversationId/revisao'
     | '/api/public/mercado-pago/webhook'
   id:
     | '__root__'
@@ -532,6 +544,7 @@ export interface FileRouteTypes {
     | '/_authenticated/practice/'
     | '/_authenticated/admin/assinaturas/$id'
     | '/_authenticated/admin/users/$userId'
+    | '/_authenticated/chat/$conversationId/revisao'
     | '/api/public/mercado-pago/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -841,6 +854,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicMercadoPagoWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/chat/$conversationId/revisao': {
+      id: '/_authenticated/chat/$conversationId/revisao'
+      path: '/revisao'
+      fullPath: '/chat/$conversationId/revisao'
+      preLoaderRoute: typeof AuthenticatedChatConversationIdRevisaoRouteImport
+      parentRoute: typeof AuthenticatedChatConversationIdRoute
+    }
     '/_authenticated/admin/users/$userId': {
       id: '/_authenticated/admin/users/$userId'
       path: '/$userId'
@@ -939,6 +959,21 @@ const AuthenticatedPracticeRouteWithChildren =
     AuthenticatedPracticeRouteChildren,
   )
 
+interface AuthenticatedChatConversationIdRouteChildren {
+  AuthenticatedChatConversationIdRevisaoRoute: typeof AuthenticatedChatConversationIdRevisaoRoute
+}
+
+const AuthenticatedChatConversationIdRouteChildren: AuthenticatedChatConversationIdRouteChildren =
+  {
+    AuthenticatedChatConversationIdRevisaoRoute:
+      AuthenticatedChatConversationIdRevisaoRoute,
+  }
+
+const AuthenticatedChatConversationIdRouteWithChildren =
+  AuthenticatedChatConversationIdRoute._addFileChildren(
+    AuthenticatedChatConversationIdRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAssinaturaRoute: typeof AuthenticatedAssinaturaRouteWithChildren
@@ -946,7 +981,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPlanosRoute: typeof AuthenticatedPlanosRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRouteWithChildren
-  AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRoute
+  AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRouteWithChildren
   AuthenticatedSettingsOnboardingRoute: typeof AuthenticatedSettingsOnboardingRoute
 }
 
@@ -957,7 +992,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPlanosRoute: AuthenticatedPlanosRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRouteWithChildren,
-  AuthenticatedChatConversationIdRoute: AuthenticatedChatConversationIdRoute,
+  AuthenticatedChatConversationIdRoute:
+    AuthenticatedChatConversationIdRouteWithChildren,
   AuthenticatedSettingsOnboardingRoute: AuthenticatedSettingsOnboardingRoute,
 }
 
