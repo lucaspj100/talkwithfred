@@ -756,18 +756,17 @@ export const submitExerciseAnswer = createServerFn({ method: "POST" })
     }
 
     // Persist attempt
-    const attemptsField = isPractice ? "attempts_first" : "attempts_second";
-    const answerField = isPractice ? "user_answer_first" : "user_answer_second";
     const currentAttempts = ((isPractice ? item.attempts_first : item.attempts_second) ?? 0) as number;
     const newAttempts = currentAttempts + 1;
+    const attemptPatch: ItemUpdate = isPractice
+      ? { attempts_first: newAttempts, user_answer_first: data.userAnswer.slice(0, 500) }
+      : { attempts_second: newAttempts, user_answer_second: data.userAnswer.slice(0, 500) };
 
     await context.supabase
       .from("conversation_review_items")
-      .update({
-        [attemptsField]: newAttempts,
-        [answerField]: data.userAnswer.slice(0, 500),
-      })
+      .update(attemptPatch)
       .eq("id", item.id);
+
 
     return {
       verdict,
