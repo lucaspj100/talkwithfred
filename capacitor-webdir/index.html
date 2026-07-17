@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Talk With Fred</title>
+    <style>
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: #0b0f19;
+        color: #e5e7eb;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+      .box { padding: 24px; max-width: 320px; }
+      h1 { font-size: 18px; margin: 12px 0 6px; }
+      p  { font-size: 14px; opacity: 0.75; line-height: 1.5; }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h1>Talk With Fred</h1>
+      <p>Sem conexão com a internet.<br />Verifique sua rede e tente novamente.</p>
+    </div>
+    <script>
+      // If we somehow land here (offline fallback), retry the remote URL when
+      // the network comes back.
+      window.addEventListener("online", () => {
+        location.href = "https://talkwithfred.live";
+      });
+    </script>
+  </body>
+</html>
