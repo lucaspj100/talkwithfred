@@ -341,6 +341,76 @@ function ChatPage() {
     setPreparingId(null);
   }, []);
 
+  // ============= Centralized "end conversation" flow =============
+  // Ensures the last user utterance is persisted, any in-flight pair persistence
+  // finishes, the realtime peer connection is torn down, the usage session is
+  // stopped, and the review is kicked off — all BEFORE navigating to /revisao.
+  // Guards against duplicate clicks so mobile double-taps don't race.
+  const handleEndConversation = useCallback(
+    async (target: "review" | "dashboard" = "review") => {
+      if (endingRef.current) return;
+      endingRef.current = true;
+      setIsEndingConversation(true);
+      try {
+        // 1) Stop TTS/audio playback and any voice recording.
+        try { stopAudio(); } catch { /* ignore */ }
+        try { recorderRef.current?.stop(); } catch { /* ignore */ }
+        try { stopLiveRecognition(); } catch { /* ignore */ }
+        // 2) Tear down the realtime peer connection (mic tracks, DC, PC).
+        try { endHandleRef.current?.(); } catch { /* ignore */ }
+        // 3) Persist any unpaired last user utterance so the review sees it.
+        const trailingUser = pendingUserRef.current.trim();
+        pendingUserRef.current = "";
+        if (trailingUser) {
+          const p = persistUser({
+            data: {
+              conversationId: conversation.id,
+              userMessage: trailingUser,
+              inputType: "voice",
+            },
+          }).catch((e) => console.error("[persistUserOnly]", e));
+          pendingPersistsRef.current.push(p);
+        }
+        // 4) Wait for pending pair persists (max 5s so we never hang forever).
+        const pending = pendingPersistsRef.current.slice();
+        pendingPersistsRef.current = [];
+        if (pending.length > 0) {
+          await Promise.race([
+            Promise.allSettled(pending),
+            new Promise((r) => setTimeout(r, 5000)),
+          ]);
+        }
+        // 5) Kick off the review analysis (idempotent server-side).
+        try {
+          await startReview({ data: { conversationId: conversation.id } });
+        } catch (e) {
+          console.error("[startReview]", e);
+        }
+        // 6) Stop the usage session so voice minutes stop counting.
+        try { await usage.stop("user_ended", {}); } catch { /* ignore */ }
+        // 7) Invalidate dashboard/reviews caches so they refetch on arrival.
+        queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+        queryClient.invalidateQueries({ queryKey: ["review-by-conv", conversation.id] });
+        // 8) Navigate.
+        if (target === "dashboard") {
+          toast.success("Conversa encerrada. Fred está preparando sua revisão.");
+          navigate({ to: "/dashboard" });
+        } else {
+          navigate({ to: "/chat/$conversationId/revisao", params: { conversationId: conversation.id } });
+        }
+      } finally {
+        // Leave the flag set — component will unmount on navigate. If it doesn't,
+        // release after a short delay to avoid permanent lockout.
+        setTimeout(() => {
+          endingRef.current = false;
+          setIsEndingConversation(false);
+        }, 800);
+      }
+    },
+    [conversation.id, navigate, persistUser, queryClient, startReview, stopAudio, usage],
+  );
+
+
   // Manual playback (button click). Always tries to play; toggles off if already playing.
   async function playMessage(id: string, text: string) {
     if (playingId === id || preparingId === id) { stopAudio(); return; }
