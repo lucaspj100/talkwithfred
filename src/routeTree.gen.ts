@@ -10,11 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
+import { Route as EsqueciSenhaRouteImport } from './routes/esqueci-senha'
+import { Route as ConfirmarEmailRouteImport } from './routes/confirmar-email'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SimulacaoIndexRouteImport } from './routes/simulacao.index'
 import { Route as SimulacaoResultadoRouteImport } from './routes/simulacao.resultado'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ApiTtsStreamRouteImport } from './routes/api/tts-stream'
 import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
@@ -53,6 +57,21 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
+  id: '/redefinir-senha',
+  path: '/redefinir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EsqueciSenhaRoute = EsqueciSenhaRouteImport.update({
+  id: '/esqueci-senha',
+  path: '/esqueci-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmarEmailRoute = ConfirmarEmailRouteImport.update({
+  id: '/confirmar-email',
+  path: '/confirmar-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -76,6 +95,11 @@ const SimulacaoResultadoRoute = SimulacaoResultadoRouteImport.update({
   id: '/simulacao/resultado',
   path: '/simulacao/resultado',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
 } as any)
 const ApiTtsStreamRoute = ApiTtsStreamRouteImport.update({
   id: '/api/tts-stream',
@@ -253,7 +277,10 @@ const AuthenticatedAdminAssinaturasIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
+  '/confirmar-email': typeof ConfirmarEmailRoute
+  '/esqueci-senha': typeof EsqueciSenhaRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/assinatura': typeof AuthenticatedAssinaturaRouteWithChildren
@@ -266,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
   '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
@@ -292,7 +320,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
+  '/confirmar-email': typeof ConfirmarEmailRoute
+  '/esqueci-senha': typeof EsqueciSenhaRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/assinatura': typeof AuthenticatedAssinaturaRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -303,6 +334,7 @@ export interface FileRoutesByTo {
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao': typeof SimulacaoIndexRoute
   '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
@@ -331,7 +363,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/auth': typeof AuthRoute
+  '/auth': typeof AuthRouteWithChildren
+  '/confirmar-email': typeof ConfirmarEmailRoute
+  '/esqueci-senha': typeof EsqueciSenhaRoute
+  '/redefinir-senha': typeof RedefinirSenhaRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/assinatura': typeof AuthenticatedAssinaturaRouteWithChildren
@@ -344,6 +379,7 @@ export interface FileRoutesById {
   '/api/stt': typeof ApiSttRoute
   '/api/tts': typeof ApiTtsRoute
   '/api/tts-stream': typeof ApiTtsStreamRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/simulacao/resultado': typeof SimulacaoResultadoRoute
   '/simulacao/': typeof SimulacaoIndexRoute
   '/_authenticated/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRouteWithChildren
@@ -373,6 +409,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/confirmar-email'
+    | '/esqueci-senha'
+    | '/redefinir-senha'
     | '/sitemap.xml'
     | '/admin'
     | '/assinatura'
@@ -385,6 +424,7 @@ export interface FileRouteTypes {
     | '/api/stt'
     | '/api/tts'
     | '/api/tts-stream'
+    | '/auth/callback'
     | '/simulacao/resultado'
     | '/simulacao/'
     | '/admin/assinaturas'
@@ -412,6 +452,9 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/confirmar-email'
+    | '/esqueci-senha'
+    | '/redefinir-senha'
     | '/sitemap.xml'
     | '/assinatura'
     | '/dashboard'
@@ -422,6 +465,7 @@ export interface FileRouteTypes {
     | '/api/stt'
     | '/api/tts'
     | '/api/tts-stream'
+    | '/auth/callback'
     | '/simulacao/resultado'
     | '/simulacao'
     | '/admin/assinaturas'
@@ -450,6 +494,9 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/confirmar-email'
+    | '/esqueci-senha'
+    | '/redefinir-senha'
     | '/sitemap.xml'
     | '/_authenticated/admin'
     | '/_authenticated/assinatura'
@@ -462,6 +509,7 @@ export interface FileRouteTypes {
     | '/api/stt'
     | '/api/tts'
     | '/api/tts-stream'
+    | '/auth/callback'
     | '/simulacao/resultado'
     | '/simulacao/'
     | '/_authenticated/admin/assinaturas'
@@ -490,7 +538,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  AuthRoute: typeof AuthRoute
+  AuthRoute: typeof AuthRouteWithChildren
+  ConfirmarEmailRoute: typeof ConfirmarEmailRoute
+  EsqueciSenhaRoute: typeof EsqueciSenhaRoute
+  RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiRealtimeSessionRoute: typeof ApiRealtimeSessionRoute
@@ -515,6 +566,27 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redefinir-senha': {
+      id: '/redefinir-senha'
+      path: '/redefinir-senha'
+      fullPath: '/redefinir-senha'
+      preLoaderRoute: typeof RedefinirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/esqueci-senha': {
+      id: '/esqueci-senha'
+      path: '/esqueci-senha'
+      fullPath: '/esqueci-senha'
+      preLoaderRoute: typeof EsqueciSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmar-email': {
+      id: '/confirmar-email'
+      path: '/confirmar-email'
+      fullPath: '/confirmar-email'
+      preLoaderRoute: typeof ConfirmarEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -551,6 +623,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/simulacao/resultado'
       preLoaderRoute: typeof SimulacaoResultadoRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
     }
     '/api/tts-stream': {
       id: '/api/tts-stream'
@@ -885,10 +964,23 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  AuthRoute: AuthRoute,
+  AuthRoute: AuthRouteWithChildren,
+  ConfirmarEmailRoute: ConfirmarEmailRoute,
+  EsqueciSenhaRoute: EsqueciSenhaRoute,
+  RedefinirSenhaRoute: RedefinirSenhaRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiChatRoute: ApiChatRoute,
   ApiRealtimeSessionRoute: ApiRealtimeSessionRoute,
