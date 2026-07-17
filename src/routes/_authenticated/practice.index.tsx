@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getTodayTrainingSummary, getFocusPoints, listMyVocabulary } from "@/lib/training.functions";
 import { getMyStats } from "@/lib/learning.functions";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen, ClipboardCheck, Flame, History, Loader2, Sparkles, Target, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, ClipboardCheck, Flame, History, Sparkles, Target, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/practice/")({
   loader: async () => {
