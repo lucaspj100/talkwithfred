@@ -28,6 +28,8 @@ export function RealtimeConversation({
   onUsage,
   disabled,
   disabledReason,
+  hideEndButton,
+  registerEnd,
 }: {
   conversationId: string;
   userName: string;
@@ -44,6 +46,8 @@ export function RealtimeConversation({
   }) => void;
   disabled?: boolean;
   disabledReason?: string | null;
+  hideEndButton?: boolean;
+  registerEnd?: (fn: (() => void) | null) => void;
 }) {
   const getSession = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
@@ -112,6 +116,14 @@ export function RealtimeConversation({
   useEffect(() => {
     onVoiceActiveChange?.(voiceIsActive);
   }, [voiceIsActive, onVoiceActiveChange]);
+
+  // Expose stop() to parent so the "Encerrar" button can trigger a clean disconnect
+  // (close peer connection, stop microphone tracks, cancel audio) before navigating.
+  useEffect(() => {
+    registerEnd?.(stop);
+    return () => registerEnd?.(null);
+  }, [registerEnd, stop]);
+
 
   const effectiveMouthLevel = audioPlaying && !userSpeaking ? mouthLevel : 0;
   const effectiveMouthSource = audioPlaying && !userSpeaking ? mouthSource : "none";
@@ -193,9 +205,11 @@ export function RealtimeConversation({
           {muted ? <MicOff className="mr-1 size-4" /> : <Mic className="mr-1 size-4" />}
           {muted ? "Ativar microfone" : "Silenciar"}
         </Button>
-        <Button variant="ghost" size="sm" onClick={stop}>
-          <PhoneOff className="mr-1 size-4" /> Encerrar
-        </Button>
+        {!hideEndButton && (
+          <Button variant="ghost" size="sm" onClick={stop}>
+            <PhoneOff className="mr-1 size-4" /> Encerrar
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onClick={onSwitchToText}>
           <Keyboard className="mr-1 size-4" /> Prefiro digitar
         </Button>

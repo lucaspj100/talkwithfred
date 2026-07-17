@@ -1,8 +1,10 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { getConversation, persistTurn } from "@/lib/conversations.functions";
+import { useQueryClient } from "@tanstack/react-query";
+import { getConversation, persistTurn, persistUserOnly } from "@/lib/conversations.functions";
 import { getSubscriptionAccess } from "@/lib/subscription.functions";
 import { extractLearningItems } from "@/lib/learning.functions";
+import { startConversationReview } from "@/lib/reviews.functions";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -49,22 +51,34 @@ function extractText(m: UIMessage): string {
 function ChatPage() {
   const { conversation, messages: initialMsgs } = Route.useLoaderData();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const persist = useServerFn(persistTurn);
+  const persistUser = useServerFn(persistUserOnly);
   const extract = useServerFn(extractLearningItems);
+  const startReview = useServerFn(startConversationReview);
   const initialUI = useMemo(() => toUIMessages(initialMsgs as DBMessage[]), [initialMsgs]);
   const [token, setToken] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [inputType, setInputType] = useState<"text" | "voice">("text");
   const [chatMode, setChatMode] = useState<"voice" | "text">("voice");
   const pendingUserRef = useRef<string>("");
+  const pendingPersistsRef = useRef<Promise<unknown>[]>([]);
+  const endHandleRef = useRef<(() => void) | null>(null);
+  const endingRef = useRef(false);
+  const [isEndingConversation, setIsEndingConversation] = useState(false);
+  const [confirmDashboardOpen, setConfirmDashboardOpen] = useState(false);
   const [voiceHistory, setVoiceHistory] = useState<HistoryMessage[]>(() =>
     (initialMsgs as DBMessage[]).map((m) => ({ id: m.id, role: m.role, content: m.content })),
   );
+  // Track whether the user has produced any content in this session so we can
+  // decide if a "leave to dashboard" click should confirm-and-end vs just navigate.
+  const sessionHasContentRef = useRef(false);
 
   const handleVoiceUserFinal = useCallback((text: string) => {
     const clean = text.trim();
     if (!clean) return;
     pendingUserRef.current = clean;
+    sessionHasContentRef.current = true;
   }, []);
 
   const handleVoiceAssistantFinal = useCallback(
@@ -73,33 +87,35 @@ function ChatPage() {
       if (!assistantText) return;
       const userText = pendingUserRef.current.trim();
       pendingUserRef.current = "";
-      // No paired user turn (e.g. Fred's opening greeting) → skip DB persistence
-      // (persistTurn requires both sides) but still keep it in the voice transcript.
       if (!userText) return;
-      try {
-        await persist({
-          data: {
-            conversationId: conversation.id,
-            userMessage: userText,
-            assistantMessage: assistantText,
-            inputType: "voice",
-          },
-        });
-        setVoiceHistory((h) => [
-          ...h,
-          { id: `vu_${Date.now()}`, role: "user", content: userText },
-          { id: `va_${Date.now() + 1}`, role: "assistant", content: assistantText },
-        ]);
-        void extract({
-          data: {
-            conversationId: conversation.id,
-            userMessage: userText,
-            assistantMessage: assistantText,
-          },
-        }).catch((e) => console.error("[extract]", e));
-      } catch (e) {
-        console.error("[voice persist]", e);
-      }
+      const p = (async () => {
+        try {
+          await persist({
+            data: {
+              conversationId: conversation.id,
+              userMessage: userText,
+              assistantMessage: assistantText,
+              inputType: "voice",
+            },
+          });
+          setVoiceHistory((h) => [
+            ...h,
+            { id: `vu_${Date.now()}`, role: "user", content: userText },
+            { id: `va_${Date.now() + 1}`, role: "assistant", content: assistantText },
+          ]);
+          void extract({
+            data: {
+              conversationId: conversation.id,
+              userMessage: userText,
+              assistantMessage: assistantText,
+            },
+          }).catch((e) => console.error("[extract]", e));
+        } catch (e) {
+          console.error("[voice persist]", e);
+        }
+      })();
+      pendingPersistsRef.current.push(p);
+      await p;
     },
     [conversation.id, persist, extract],
   );
@@ -324,6 +340,76 @@ function ChatPage() {
     setPlayingId(null);
     setPreparingId(null);
   }, []);
+
+  // ============= Centralized "end conversation" flow =============
+  // Ensures the last user utterance is persisted, any in-flight pair persistence
+  // finishes, the realtime peer connection is torn down, the usage session is
+  // stopped, and the review is kicked off — all BEFORE navigating to /revisao.
+  // Guards against duplicate clicks so mobile double-taps don't race.
+  const handleEndConversation = useCallback(
+    async (target: "review" | "dashboard" = "review") => {
+      if (endingRef.current) return;
+      endingRef.current = true;
+      setIsEndingConversation(true);
+      try {
+        // 1) Stop TTS/audio playback and any voice recording.
+        try { stopAudio(); } catch { /* ignore */ }
+        try { recorderRef.current?.stop(); } catch { /* ignore */ }
+        try { stopLiveRecognition(); } catch { /* ignore */ }
+        // 2) Tear down the realtime peer connection (mic tracks, DC, PC).
+        try { endHandleRef.current?.(); } catch { /* ignore */ }
+        // 3) Persist any unpaired last user utterance so the review sees it.
+        const trailingUser = pendingUserRef.current.trim();
+        pendingUserRef.current = "";
+        if (trailingUser) {
+          const p = persistUser({
+            data: {
+              conversationId: conversation.id,
+              userMessage: trailingUser,
+              inputType: "voice",
+            },
+          }).catch((e) => console.error("[persistUserOnly]", e));
+          pendingPersistsRef.current.push(p);
+        }
+        // 4) Wait for pending pair persists (max 5s so we never hang forever).
+        const pending = pendingPersistsRef.current.slice();
+        pendingPersistsRef.current = [];
+        if (pending.length > 0) {
+          await Promise.race([
+            Promise.allSettled(pending),
+            new Promise((r) => setTimeout(r, 5000)),
+          ]);
+        }
+        // 5) Kick off the review analysis (idempotent server-side).
+        try {
+          await startReview({ data: { conversationId: conversation.id } });
+        } catch (e) {
+          console.error("[startReview]", e);
+        }
+        // 6) Stop the usage session so voice minutes stop counting.
+        try { await usage.stop("user_ended", {}); } catch { /* ignore */ }
+        // 7) Invalidate dashboard/reviews caches so they refetch on arrival.
+        queryClient.invalidateQueries({ queryKey: ["my-reviews"] });
+        queryClient.invalidateQueries({ queryKey: ["review-by-conv", conversation.id] });
+        // 8) Navigate.
+        if (target === "dashboard") {
+          toast.success("Conversa encerrada. Fred está preparando sua revisão.");
+          navigate({ to: "/dashboard" });
+        } else {
+          navigate({ to: "/chat/$conversationId/revisao", params: { conversationId: conversation.id } });
+        }
+      } finally {
+        // Leave the flag set — component will unmount on navigate. If it doesn't,
+        // release after a short delay to avoid permanent lockout.
+        setTimeout(() => {
+          endingRef.current = false;
+          setIsEndingConversation(false);
+        }, 800);
+      }
+    },
+    [conversation.id, navigate, persistUser, queryClient, startReview, stopAudio, usage],
+  );
+
 
   // Manual playback (button click). Always tries to play; toggles off if already playing.
   async function playMessage(id: string, text: string) {
@@ -709,11 +795,59 @@ function ChatPage() {
 
   function outOfMinutesOpen() { return outOfMinutes || (usage.ended && usage.ended.reason === "out_of_minutes"); }
 
+  const hasSessionContent = () =>
+    sessionHasContentRef.current ||
+    messages.length > initialUI.length ||
+    voiceHistory.length > (initialMsgs as DBMessage[]).length;
+
+  function handleDashboardClick() {
+    if (isEndingConversation) return;
+    if (hasSessionContent()) {
+      setConfirmDashboardOpen(true);
+    } else {
+      navigate({ to: "/dashboard" });
+    }
+  }
+
+  const exitConfirmDialog = (
+    <Dialog open={confirmDashboardOpen} onOpenChange={setConfirmDashboardOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Deseja encerrar esta conversa?</DialogTitle>
+          <DialogDescription>
+            Fred pode preparar uma revisão personalizada com o que vocês conversaram.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button variant="outline" onClick={() => setConfirmDashboardOpen(false)} disabled={isEndingConversation}>
+            Continuar conversando
+          </Button>
+          <Button
+            onClick={() => { setConfirmDashboardOpen(false); void handleEndConversation("dashboard"); }}
+            disabled={isEndingConversation}
+          >
+            {isEndingConversation ? <Loader2 className="mr-1 size-4 animate-spin" /> : null}
+            Encerrar e ir ao dashboard
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
   if (chatMode === "voice") {
     return (
-      <div className="mx-auto flex min-h-screen max-w-3xl flex-col px-4 py-6">
-        <header className="mb-4 flex items-center justify-between gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
+      <div
+        className="mx-auto flex min-h-[100dvh] max-w-3xl flex-col px-4 py-6"
+        style={{ paddingTop: "max(env(safe-area-inset-top), 1.5rem)", paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
+      >
+        <header className="relative z-20 mb-4 flex items-center justify-between gap-2" style={{ pointerEvents: "auto" }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDashboardClick}
+            disabled={isEndingConversation}
+            className="min-h-11"
+          >
             <ArrowLeft className="mr-1 size-4" /> Dashboard
           </Button>
           <div className="flex items-center gap-2">
@@ -726,16 +860,24 @@ function ChatPage() {
               variant="outline"
               size="sm"
               onClick={() => setChatMode("text")}
+              disabled={isEndingConversation}
+              className="min-h-11"
             >
               Modo digitado
             </Button>
             <Button
               type="button"
               size="sm"
-              onClick={() => navigate({ to: "/chat/$conversationId/revisao", params: { conversationId: conversation.id } })}
+              onClick={() => void handleEndConversation("review")}
+              disabled={isEndingConversation}
               title="Encerrar e revisar"
+              className="min-h-11 min-w-[110px]"
             >
-              Encerrar
+              {isEndingConversation ? (
+                <><Loader2 className="mr-1 size-4 animate-spin" /> Encerrando…</>
+              ) : (
+                "Encerrar"
+              )}
             </Button>
           </div>
         </header>
@@ -747,6 +889,8 @@ function ChatPage() {
           onAssistantFinalTurn={handleVoiceAssistantFinal}
           onSwitchToText={() => setChatMode("text")}
           onVoiceActiveChange={(active) => usage.setActive(active && usageReady)}
+          hideEndButton
+          registerEnd={(fn) => { endHandleRef.current = fn; }}
           onUsage={async (u) => {
             try {
               const { data } = await supabase.auth.getSession();
@@ -785,15 +929,26 @@ function ChatPage() {
         />
         {outOfMinutesDialog}
         {otherTabDialog}
+        {exitConfirmDialog}
       </div>
     );
   }
 
 
+
   return (
-    <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-6">
-      <header className="mb-4 flex items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
+    <div
+      className="mx-auto flex min-h-[100dvh] max-w-5xl flex-col px-4 py-6"
+      style={{ paddingTop: "max(env(safe-area-inset-top), 1.5rem)", paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
+    >
+      <header className="relative z-20 mb-4 flex items-center justify-between gap-2" style={{ pointerEvents: "auto" }}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDashboardClick}
+          disabled={isEndingConversation}
+          className="min-h-11"
+        >
           <ArrowLeft className="mr-1 size-4" /> Dashboard
         </Button>
         <div className="flex items-center gap-2">
@@ -807,21 +962,31 @@ function ChatPage() {
             size="sm"
             onClick={() => { stopAudio(); setChatMode("voice"); }}
             title="Voltar para conversa por voz"
+            disabled={isEndingConversation}
+            className="min-h-11"
           >
             <Phone className="mr-1 size-4" /> Voz
           </Button>
           <Button
             type="button"
             size="sm"
-            onClick={() => navigate({ to: "/chat/$conversationId/revisao", params: { conversationId: conversation.id } })}
+            onClick={() => void handleEndConversation("review")}
+            disabled={isEndingConversation}
             title="Encerrar e revisar"
+            className="min-h-11 min-w-[110px]"
           >
-            Encerrar
+            {isEndingConversation ? (
+              <><Loader2 className="mr-1 size-4 animate-spin" /> Encerrando…</>
+            ) : (
+              "Encerrar"
+            )}
           </Button>
         </div>
       </header>
       {outOfMinutesDialog}
       {otherTabDialog}
+      {exitConfirmDialog}
+
 
       <div className="mb-3 flex justify-end">
         <Button

@@ -8,7 +8,7 @@ import { MODES, type Mode } from "@/lib/fred-prompt";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X, CreditCard, User as UserIcon } from "lucide-react";
+import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X, CreditCard, User as UserIcon, Loader2, RefreshCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { FredBrand } from "@/components/FredBrand";
@@ -224,28 +224,9 @@ function Dashboard() {
       <SubscriptionSummaryCard />
 
       {reviews.count > 0 && reviews.latest && (
-        <Link
-          to="/revisoes/$reviewId"
-          params={{ reviewId: reviews.latest.id }}
-          className="mt-6 flex items-center justify-between gap-3 rounded-3xl border border-primary/30 bg-primary/5 p-5 transition hover:bg-primary/10"
-        >
-          <div className="flex items-start gap-3 min-w-0">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <Sparkles className="size-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                {reviews.count === 1 ? "Revisão pendente" : `${reviews.count} revisões pendentes`}
-              </p>
-              <p className="truncate font-medium">{reviews.latest.title || "Sua última conversa"}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {reviews.latest.total_items} ponto{reviews.latest.total_items === 1 ? "" : "s"} · ~{reviews.latest.estimated_minutes} min
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="size-5 shrink-0 text-primary" />
-        </Link>
+        <ReviewShortcut latest={reviews.latest} count={reviews.count} />
       )}
+
 
       <h2 className="mt-10 font-display text-xl font-bold">Suas últimas conversas</h2>
       <div className="mt-4 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card/40">
@@ -514,5 +495,79 @@ function ModePickerDialog({
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
+  );
+}
+
+type ReviewShortcutLatest = {
+  id: string;
+  conversation_id: string;
+  title: string | null;
+  status: string;
+  total_items: number;
+  completed_items: number;
+  estimated_minutes: number;
+  updated_at: string;
+};
+
+function ReviewShortcut({ latest, count }: { latest: ReviewShortcutLatest; count: number }) {
+  const isProcessing = latest.status === "processing";
+  const isFailed = latest.status === "failed";
+  const isInProgress = latest.status === "in_progress";
+
+  const badge = isProcessing
+    ? "Fred está preparando sua revisão"
+    : isFailed
+      ? "Revisão com erro — tente novamente"
+      : isInProgress
+        ? "Revisão em andamento"
+        : count === 1
+          ? "Revisão pendente"
+          : `${count} revisões pendentes`;
+
+  const cta = isProcessing
+    ? "Ver progresso"
+    : isFailed
+      ? "Tentar novamente"
+      : isInProgress
+        ? "Continuar"
+        : "Revisar agora";
+
+  const to = isProcessing || isFailed ? "/chat/$conversationId/revisao" : "/revisoes/$reviewId";
+  const params = isProcessing || isFailed
+    ? { conversationId: latest.conversation_id }
+    : { reviewId: latest.id };
+
+  const description = isProcessing
+    ? "Vamos separar os pontos mais importantes para você praticar."
+    : isFailed
+      ? "Podemos tentar preparar sua revisão de novo agora."
+      : `${latest.total_items} ponto${latest.total_items === 1 ? "" : "s"} · ~${latest.estimated_minutes} min`;
+
+  const borderClass = isFailed ? "border-destructive/40 bg-destructive/5" : "border-primary/30 bg-primary/5 hover:bg-primary/10";
+  const iconClass = isFailed ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary";
+
+  return (
+    <Link
+      to={to}
+      params={params}
+      className={`mt-6 flex items-center justify-between gap-3 rounded-3xl border p-5 transition ${borderClass}`}
+    >
+      <div className="flex items-start gap-3 min-w-0">
+        <div className={`flex size-10 shrink-0 items-center justify-center rounded-full ${iconClass}`}>
+          {isProcessing ? <Loader2 className="size-5 animate-spin" /> : isFailed ? <RefreshCw className="size-5" /> : <Sparkles className="size-5" />}
+        </div>
+        <div className="min-w-0">
+          <p className={`text-xs font-semibold uppercase tracking-wide ${isFailed ? "text-destructive" : "text-primary"}`}>
+            {badge}
+          </p>
+          <p className="truncate font-medium">{latest.title || "Sua última conversa"}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary">
+        <span className="hidden sm:inline">{cta}</span>
+        <ChevronRight className="size-5" />
+      </div>
+    </Link>
   );
 }
