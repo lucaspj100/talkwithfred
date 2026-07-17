@@ -51,22 +51,34 @@ function extractText(m: UIMessage): string {
 function ChatPage() {
   const { conversation, messages: initialMsgs } = Route.useLoaderData();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const persist = useServerFn(persistTurn);
+  const persistUser = useServerFn(persistUserOnly);
   const extract = useServerFn(extractLearningItems);
+  const startReview = useServerFn(startConversationReview);
   const initialUI = useMemo(() => toUIMessages(initialMsgs as DBMessage[]), [initialMsgs]);
   const [token, setToken] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [inputType, setInputType] = useState<"text" | "voice">("text");
   const [chatMode, setChatMode] = useState<"voice" | "text">("voice");
   const pendingUserRef = useRef<string>("");
+  const pendingPersistsRef = useRef<Promise<unknown>[]>([]);
+  const endHandleRef = useRef<(() => void) | null>(null);
+  const endingRef = useRef(false);
+  const [isEndingConversation, setIsEndingConversation] = useState(false);
+  const [confirmDashboardOpen, setConfirmDashboardOpen] = useState(false);
   const [voiceHistory, setVoiceHistory] = useState<HistoryMessage[]>(() =>
     (initialMsgs as DBMessage[]).map((m) => ({ id: m.id, role: m.role, content: m.content })),
   );
+  // Track whether the user has produced any content in this session so we can
+  // decide if a "leave to dashboard" click should confirm-and-end vs just navigate.
+  const sessionHasContentRef = useRef(false);
 
   const handleVoiceUserFinal = useCallback((text: string) => {
     const clean = text.trim();
     if (!clean) return;
     pendingUserRef.current = clean;
+    sessionHasContentRef.current = true;
   }, []);
 
   const handleVoiceAssistantFinal = useCallback(
@@ -75,33 +87,35 @@ function ChatPage() {
       if (!assistantText) return;
       const userText = pendingUserRef.current.trim();
       pendingUserRef.current = "";
-      // No paired user turn (e.g. Fred's opening greeting) → skip DB persistence
-      // (persistTurn requires both sides) but still keep it in the voice transcript.
       if (!userText) return;
-      try {
-        await persist({
-          data: {
-            conversationId: conversation.id,
-            userMessage: userText,
-            assistantMessage: assistantText,
-            inputType: "voice",
-          },
-        });
-        setVoiceHistory((h) => [
-          ...h,
-          { id: `vu_${Date.now()}`, role: "user", content: userText },
-          { id: `va_${Date.now() + 1}`, role: "assistant", content: assistantText },
-        ]);
-        void extract({
-          data: {
-            conversationId: conversation.id,
-            userMessage: userText,
-            assistantMessage: assistantText,
-          },
-        }).catch((e) => console.error("[extract]", e));
-      } catch (e) {
-        console.error("[voice persist]", e);
-      }
+      const p = (async () => {
+        try {
+          await persist({
+            data: {
+              conversationId: conversation.id,
+              userMessage: userText,
+              assistantMessage: assistantText,
+              inputType: "voice",
+            },
+          });
+          setVoiceHistory((h) => [
+            ...h,
+            { id: `vu_${Date.now()}`, role: "user", content: userText },
+            { id: `va_${Date.now() + 1}`, role: "assistant", content: assistantText },
+          ]);
+          void extract({
+            data: {
+              conversationId: conversation.id,
+              userMessage: userText,
+              assistantMessage: assistantText,
+            },
+          }).catch((e) => console.error("[extract]", e));
+        } catch (e) {
+          console.error("[voice persist]", e);
+        }
+      })();
+      pendingPersistsRef.current.push(p);
+      await p;
     },
     [conversation.id, persist, extract],
   );
