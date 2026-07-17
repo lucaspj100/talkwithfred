@@ -29,8 +29,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   loader: async () => {
     const me = await getMyProfile();
     if (!me.userProfile) throw redirect({ to: "/onboarding" });
-    const [convs, stats] = await Promise.all([listConversations(), getMyStats()]);
-    return { me, convs, stats };
+    const [convs, stats, reviews] = await Promise.all([
+      listConversations(),
+      getMyStats(),
+      getPendingReviewsSummary().catch(() => ({ pending_count: 0, latest: null })),
+    ]);
+    return { me, convs, stats, reviews };
   },
   component: Dashboard,
 });
