@@ -937,9 +937,18 @@ function ChatPage() {
 
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-6">
-      <header className="mb-4 flex items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate({ to: "/dashboard" })}>
+    <div
+      className="mx-auto flex min-h-[100dvh] max-w-5xl flex-col px-4 py-6"
+      style={{ paddingTop: "max(env(safe-area-inset-top), 1.5rem)", paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
+    >
+      <header className="relative z-20 mb-4 flex items-center justify-between gap-2" style={{ pointerEvents: "auto" }}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleDashboardClick}
+          disabled={isEndingConversation}
+          className="min-h-11"
+        >
           <ArrowLeft className="mr-1 size-4" /> Dashboard
         </Button>
         <div className="flex items-center gap-2">
@@ -953,21 +962,31 @@ function ChatPage() {
             size="sm"
             onClick={() => { stopAudio(); setChatMode("voice"); }}
             title="Voltar para conversa por voz"
+            disabled={isEndingConversation}
+            className="min-h-11"
           >
             <Phone className="mr-1 size-4" /> Voz
           </Button>
           <Button
             type="button"
             size="sm"
-            onClick={() => navigate({ to: "/chat/$conversationId/revisao", params: { conversationId: conversation.id } })}
+            onClick={() => void handleEndConversation("review")}
+            disabled={isEndingConversation}
             title="Encerrar e revisar"
+            className="min-h-11 min-w-[110px]"
           >
-            Encerrar
+            {isEndingConversation ? (
+              <><Loader2 className="mr-1 size-4 animate-spin" /> Encerrando…</>
+            ) : (
+              "Encerrar"
+            )}
           </Button>
         </div>
       </header>
       {outOfMinutesDialog}
       {otherTabDialog}
+      {exitConfirmDialog}
+
 
       <div className="mb-3 flex justify-end">
         <Button
