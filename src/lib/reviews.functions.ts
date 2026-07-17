@@ -466,9 +466,9 @@ export const getPendingReviewsSummary = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data } = await context.supabase
       .from("conversation_reviews")
-      .select("id, title, status, total_items, completed_items, estimated_minutes, updated_at")
+      .select("id, conversation_id, title, status, total_items, completed_items, estimated_minutes, updated_at")
       .eq("user_id", context.userId)
-      .in("status", ["ready", "in_progress"])
+      .in("status", ["ready", "in_progress", "processing", "failed"])
       .order("updated_at", { ascending: false })
       .limit(5);
     const rows = data ?? [];
