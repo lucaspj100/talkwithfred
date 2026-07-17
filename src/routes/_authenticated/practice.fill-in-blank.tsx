@@ -128,7 +128,10 @@ function FillInBlankPage() {
     <div className="mx-auto max-w-xl">
       <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
         <span>Completar frase</span>
-        <span>{idx + 1} / {items.length}</span>
+        <div className="flex items-center gap-3">
+          <span>{idx + 1} / {items.length}</span>
+          <SoundToggle />
+        </div>
       </div>
       <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
         <div className="h-full bg-primary transition-all" style={{ width: `${((idx) / items.length) * 100}%` }} />
