@@ -720,14 +720,24 @@ function ChatPage() {
             {minutesBadge}
             <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setChatMode("text")}
-          >
-            Modo digitado
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setChatMode("text")}
+            >
+              Modo digitado
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => navigate({ to: "/chat/$conversationId/revisao", params: { conversationId: conversation.id } })}
+              title="Encerrar e revisar"
+            >
+              Encerrar
+            </Button>
+          </div>
         </header>
         <RealtimeConversation
           conversationId={conversation.id}
@@ -799,6 +809,14 @@ function ChatPage() {
             title="Voltar para conversa por voz"
           >
             <Phone className="mr-1 size-4" /> Voz
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => navigate({ to: "/chat/$conversationId/revisao", params: { conversationId: conversation.id } })}
+            title="Encerrar e revisar"
+          >
+            Encerrar
           </Button>
         </div>
       </header>
