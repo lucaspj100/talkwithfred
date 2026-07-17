@@ -3,6 +3,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { createLovableGateway } from "@/lib/ai-gateway.server";
 import { generateText } from "ai";
+import type { Database } from "@/integrations/supabase/types";
+
+type ItemUpdate = Database["public"]["Tables"]["conversation_review_items"]["Update"];
+
 
 const MODEL = "google/gemini-3-flash-preview";
 
