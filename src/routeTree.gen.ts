@@ -40,6 +40,7 @@ import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public
 import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/public/realtime-session'
 import { Route as ApiAiUsageRecordRouteImport } from './routes/api/ai-usage/record'
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
+import { Route as AuthenticatedRevisoesReviewIdRouteImport } from './routes/_authenticated/revisoes.$reviewId'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
 import { Route as AuthenticatedAssinaturaRetornoRouteImport } from './routes/_authenticated/assinatura.retorno'
@@ -212,6 +213,12 @@ const AuthenticatedSettingsOnboardingRoute =
     path: '/settings/onboarding',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRevisoesReviewIdRoute =
+  AuthenticatedRevisoesReviewIdRouteImport.update({
+    id: '/revisoes/$reviewId',
+    path: '/revisoes/$reviewId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPracticeFillInBlankRoute =
   AuthenticatedPracticeFillInBlankRouteImport.update({
     id: '/fill-in-blank',
@@ -319,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
@@ -362,6 +370,7 @@ export interface FileRoutesByTo {
   '/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
@@ -409,6 +418,7 @@ export interface FileRoutesById {
   '/_authenticated/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/_authenticated/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/assinatura/retorno'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
+    | '/revisoes/$reviewId'
     | '/settings/onboarding'
     | '/api/ai-usage/record'
     | '/api/public/realtime-session'
@@ -499,6 +510,7 @@ export interface FileRouteTypes {
     | '/assinatura/retorno'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
+    | '/revisoes/$reviewId'
     | '/settings/onboarding'
     | '/api/ai-usage/record'
     | '/api/public/realtime-session'
@@ -545,6 +557,7 @@ export interface FileRouteTypes {
     | '/_authenticated/assinatura/retorno'
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
+    | '/_authenticated/revisoes/$reviewId'
     | '/_authenticated/settings/onboarding'
     | '/api/ai-usage/record'
     | '/api/public/realtime-session'
@@ -804,6 +817,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsOnboardingRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/revisoes/$reviewId': {
+      id: '/_authenticated/revisoes/$reviewId'
+      path: '/revisoes/$reviewId'
+      fullPath: '/revisoes/$reviewId'
+      preLoaderRoute: typeof AuthenticatedRevisoesReviewIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/practice/fill-in-blank': {
       id: '/_authenticated/practice/fill-in-blank'
       path: '/fill-in-blank'
@@ -1002,6 +1022,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlanosRoute: typeof AuthenticatedPlanosRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRouteWithChildren
   AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRouteWithChildren
+  AuthenticatedRevisoesReviewIdRoute: typeof AuthenticatedRevisoesReviewIdRoute
   AuthenticatedSettingsOnboardingRoute: typeof AuthenticatedSettingsOnboardingRoute
   AuthenticatedRevisoesIndexRoute: typeof AuthenticatedRevisoesIndexRoute
 }
@@ -1015,6 +1036,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPracticeRoute: AuthenticatedPracticeRouteWithChildren,
   AuthenticatedChatConversationIdRoute:
     AuthenticatedChatConversationIdRouteWithChildren,
+  AuthenticatedRevisoesReviewIdRoute: AuthenticatedRevisoesReviewIdRoute,
   AuthenticatedSettingsOnboardingRoute: AuthenticatedSettingsOnboardingRoute,
   AuthenticatedRevisoesIndexRoute: AuthenticatedRevisoesIndexRoute,
 }

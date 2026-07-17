@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { getMyProfile, updateSpeakingSpeed } from "@/lib/profile.functions";
 import { listConversations, createConversation } from "@/lib/conversations.functions";
 import { getMyStats } from "@/lib/learning.functions";
+import { getPendingReviewsSummary } from "@/lib/reviews.functions";
 import { MODES, type Mode } from "@/lib/fred-prompt";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
