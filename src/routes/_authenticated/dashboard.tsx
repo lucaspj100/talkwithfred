@@ -44,7 +44,7 @@ const LABEL: Record<string, string> = {
 };
 
 function Dashboard() {
-  const { me, convs, stats } = Route.useLoaderData();
+  const { me, convs, stats, reviews } = Route.useLoaderData();
   const navigate = useNavigate();
   const create = useServerFn(createConversation);
   const [picking, setPicking] = useState(false);
@@ -222,6 +222,30 @@ function Dashboard() {
       </div>
 
       <SubscriptionSummaryCard />
+
+      {reviews.count > 0 && reviews.latest && (
+        <Link
+          to="/revisoes/$reviewId"
+          params={{ reviewId: reviews.latest.id }}
+          className="mt-6 flex items-center justify-between gap-3 rounded-3xl border border-primary/30 bg-primary/5 p-5 transition hover:bg-primary/10"
+        >
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <Sparkles className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                {reviews.count === 1 ? "Revisão pendente" : `${reviews.count} revisões pendentes`}
+              </p>
+              <p className="truncate font-medium">{reviews.latest.title || "Sua última conversa"}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {reviews.latest.total_items} ponto{reviews.latest.total_items === 1 ? "" : "s"} · ~{reviews.latest.estimated_minutes} min
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="size-5 shrink-0 text-primary" />
+        </Link>
+      )}
 
       <h2 className="mt-10 font-display text-xl font-bold">Suas últimas conversas</h2>
       <div className="mt-4 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card/40">
