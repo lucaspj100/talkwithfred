@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     const [convs, stats, reviews] = await Promise.all([
       listConversations(),
       getMyStats(),
-      getPendingReviewsSummary().catch(() => ({ pending_count: 0, latest: null })),
+      getPendingReviewsSummary().catch(() => ({ count: 0, latest: null })),
     ]);
     return { me, convs, stats, reviews };
   },
