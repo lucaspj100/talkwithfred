@@ -487,9 +487,11 @@ export const beginReview = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!rev) throw new Error("Revisão não encontrada");
     if (rev.status === "completed") return { ok: true };
-    const patch: Record<string, unknown> = { status: "in_progress" };
-    if (!rev.started_at) patch.started_at = new Date().toISOString();
-    await context.supabase.from("conversation_reviews").update(patch).eq("id", rev.id);
+    const startedAt = rev.started_at ?? new Date().toISOString();
+    await context.supabase
+      .from("conversation_reviews")
+      .update({ status: "in_progress", started_at: startedAt })
+      .eq("id", rev.id);
     return { ok: true };
   });
 
