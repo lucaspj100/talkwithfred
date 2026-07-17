@@ -131,6 +131,9 @@ function Dashboard() {
               <DropdownMenuItem asChild>
                 <Link to="/settings/onboarding"><UserIcon className="mr-2 size-4" />Meu perfil</Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/preferencias"><Volume2 className="mr-2 size-4" />Preferências</Link>
+              </DropdownMenuItem>
               {me.isAdmin && (
                 <DropdownMenuItem asChild>
                   <Link to="/admin"><ShieldAlert className="mr-2 size-4" />Administração</Link>
