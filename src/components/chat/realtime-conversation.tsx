@@ -28,6 +28,8 @@ export function RealtimeConversation({
   onUsage,
   disabled,
   disabledReason,
+  hideEndButton,
+  registerEnd,
 }: {
   conversationId: string;
   userName: string;
@@ -44,6 +46,8 @@ export function RealtimeConversation({
   }) => void;
   disabled?: boolean;
   disabledReason?: string | null;
+  hideEndButton?: boolean;
+  registerEnd?: (fn: (() => void) | null) => void;
 }) {
   const getSession = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
