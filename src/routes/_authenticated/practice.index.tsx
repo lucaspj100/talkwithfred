@@ -150,6 +150,25 @@ function TrainingHome() {
         )}
       </section>
 
+      {/* Prática Livre */}
+      <section className="mt-10">
+        <div className="mb-3">
+          <h2 className="font-display text-xl font-bold flex items-center gap-2">
+            <InfinityIcon className="size-5 text-primary" /> Continue praticando
+          </h2>
+          <p className="text-xs text-muted-foreground">Prática livre e ilimitada — do jeito que você quiser.</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ModeCard to="/practice/livre" search={{ mode: "fill_blank" as const }} icon={<PenLine className="size-5" />} title="Completar frases" desc="Escolha a palavra que falta." />
+          <ModeCard to="/practice/livre" search={{ mode: "choice" as const }} icon={<ListChecks className="size-5" />} title="Múltipla escolha" desc="Gramática, vocabulário e contexto." />
+          <ModeCard to="/practice/livre" search={{ mode: "correct_error" as const }} icon={<Shuffle className="size-5" />} title="Corrigir erros" desc="Ache o erro na frase." />
+          <ModeCard to="/practice/livre" search={{ mode: "my_errors" as const }} icon={<Target className="size-5" />} title="Meus erros" desc="Reveja o que você errou com Fred." />
+          <ModeCard to="/practice/livre" search={{ mode: "quick_challenge" as const }} icon={<Timer className="size-5" />} title="Desafio rápido" desc="60 segundos, no ritmo!" />
+          <ModeCard to="/practice/livre" search={{ mode: "infinite" as const }} icon={<Layers className="size-5" />} title="Modo infinito" desc="Sem tempo, sem limite." />
+        </div>
+      </section>
+
+
       {/* Secondary actions */}
       <section className="mt-8 grid gap-3 md:grid-cols-2">
         <Link to="/practice/historico" className="rounded-2xl border border-border bg-card/60 p-4 hover:border-primary/60">
