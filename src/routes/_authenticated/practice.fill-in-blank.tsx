@@ -5,6 +5,8 @@ import { generateFillBlank, submitPracticeResult, type FillBlankItem } from "@/l
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Check, X, Loader2, MessageCircle, RotateCcw, Trophy } from "lucide-react";
+import { useExerciseFeedback } from "@/hooks/use-exercise-feedback";
+import { SoundToggle } from "@/components/exercise/SoundToggle";
 
 export const Route = createFileRoute("/_authenticated/practice/fill-in-blank")({
   component: FillInBlankPage,
@@ -23,6 +25,8 @@ function FillInBlankPage() {
   const navigate = useNavigate();
   const gen = useServerFn(generateFillBlank);
   const submit = useServerFn(submitPracticeResult);
+
+  const { play } = useExerciseFeedback();
 
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<FillBlankItem[]>([]);
@@ -48,7 +52,9 @@ function FillInBlankPage() {
   function pick(opt: string) {
     if (selected) return;
     setSelected(opt);
-    if (opt === current.answer) setCorrectCount((c) => c + 1);
+    const isCorrect = opt === current.answer;
+    if (isCorrect) setCorrectCount((c) => c + 1);
+    play(isCorrect ? "correct" : "incorrect", `${idx}`);
   }
 
   async function next() {
@@ -61,6 +67,7 @@ function FillInBlankPage() {
     try {
       const r = await submit({ data: { activity: "fill_in_blank", total: items.length, correct: correctCount } });
       setResult({ xp_earned: r.xp_earned, xp: r.xp, streak_days: r.streak_days });
+      play("completed", "fib-done");
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -121,7 +128,10 @@ function FillInBlankPage() {
     <div className="mx-auto max-w-xl">
       <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
         <span>Completar frase</span>
-        <span>{idx + 1} / {items.length}</span>
+        <div className="flex items-center gap-3">
+          <span>{idx + 1} / {items.length}</span>
+          <SoundToggle />
+        </div>
       </div>
       <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
         <div className="h-full bg-primary transition-all" style={{ width: `${((idx) / items.length) * 100}%` }} />

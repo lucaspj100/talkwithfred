@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ArrowRight, Check, Flame, Loader2, RotateCcw, Sparkles, Trophy, X, Zap } from "lucide-react";
+import { useExerciseFeedback } from "@/hooks/use-exercise-feedback";
+import { SoundToggle } from "@/components/exercise/SoundToggle";
 
 const searchSchema = z.object({
   mode: z.enum(["fill_blank", "choice", "correct_error", "my_errors", "quick_challenge", "infinite"]).default("choice"),
@@ -42,6 +44,7 @@ function FreePracticePlayer() {
   const nextFn = useServerFn(getNextFreeExercise);
   const submitFn = useServerFn(submitFreeAnswer);
   const endFn = useServerFn(endFreeSession);
+  const { play } = useExerciseFeedback();
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [timeLimit, setTimeLimit] = useState<number | null>(null);
@@ -134,6 +137,7 @@ function FreePracticePlayer() {
         },
       });
       setFeedback({ verdict: res.verdict, correct: exercise.correct_answer, explanation_pt: exercise.explanation_pt });
+      play(res.verdict === "correct" ? "correct" : res.verdict === "close" ? "close" : "incorrect", `${exercise.source_id}`);
       setStats((s) => ({
         correct: s.correct + (res.correct ? 1 : 0),
         wrong: s.wrong + (res.correct ? 0 : 1),
@@ -155,8 +159,9 @@ function FreePracticePlayer() {
 
   const handleFinish = useCallback(async () => {
     if (sessionId) await endFn({ data: { sessionId } }).catch(() => {});
+    play("completed", `done:${sessionId ?? "x"}`);
     setFinished(true);
-  }, [sessionId, endFn]);
+  }, [sessionId, endFn, play]);
 
   const info = MODE_LABEL[mode as FreeMode];
 
@@ -208,6 +213,7 @@ function FreePracticePlayer() {
               <Flame className="size-4" />{remaining}s
             </span>
           )}
+          <SoundToggle />
         </div>
       </div>
 

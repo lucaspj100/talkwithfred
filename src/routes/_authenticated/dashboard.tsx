@@ -9,7 +9,7 @@ import { MODES, type Mode } from "@/lib/fred-prompt";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X, CreditCard, User as UserIcon, Loader2, RefreshCw, Trophy } from "lucide-react";
+import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X, CreditCard, User as UserIcon, Loader2, RefreshCw, Trophy, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { FredBrand } from "@/components/FredBrand";
@@ -130,6 +130,9 @@ function Dashboard() {
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/settings/onboarding"><UserIcon className="mr-2 size-4" />Meu perfil</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/preferencias"><Volume2 className="mr-2 size-4" />Preferências</Link>
               </DropdownMenuItem>
               {me.isAdmin && (
                 <DropdownMenuItem asChild>

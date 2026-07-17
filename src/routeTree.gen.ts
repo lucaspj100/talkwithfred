@@ -24,6 +24,7 @@ import { Route as ApiTtsRouteImport } from './routes/api/tts'
 import { Route as ApiSttRouteImport } from './routes/api/stt'
 import { Route as ApiRealtimeSessionRouteImport } from './routes/api/realtime-session'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedPreferenciasRouteImport } from './routes/_authenticated/preferencias'
 import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
 import { Route as AuthenticatedPlanosRouteImport } from './routes/_authenticated/planos'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -133,6 +134,12 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPreferenciasRoute =
+  AuthenticatedPreferenciasRouteImport.update({
+    id: '/preferencias',
+    path: '/preferencias',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPracticeRoute = AuthenticatedPracticeRouteImport.update({
   id: '/practice',
   path: '/practice',
@@ -337,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/planos': typeof AuthenticatedPlanosRoute
   '/practice': typeof AuthenticatedPracticeRouteWithChildren
+  '/preferencias': typeof AuthenticatedPreferenciasRoute
   '/api/chat': typeof ApiChatRoute
   '/api/realtime-session': typeof ApiRealtimeSessionRoute
   '/api/stt': typeof ApiSttRoute
@@ -385,6 +393,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/planos': typeof AuthenticatedPlanosRoute
+  '/preferencias': typeof AuthenticatedPreferenciasRoute
   '/api/chat': typeof ApiChatRoute
   '/api/realtime-session': typeof ApiRealtimeSessionRoute
   '/api/stt': typeof ApiSttRoute
@@ -437,6 +446,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/planos': typeof AuthenticatedPlanosRoute
   '/_authenticated/practice': typeof AuthenticatedPracticeRouteWithChildren
+  '/_authenticated/preferencias': typeof AuthenticatedPreferenciasRoute
   '/api/chat': typeof ApiChatRoute
   '/api/realtime-session': typeof ApiRealtimeSessionRoute
   '/api/stt': typeof ApiSttRoute
@@ -489,6 +499,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/planos'
     | '/practice'
+    | '/preferencias'
     | '/api/chat'
     | '/api/realtime-session'
     | '/api/stt'
@@ -537,6 +548,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/onboarding'
     | '/planos'
+    | '/preferencias'
     | '/api/chat'
     | '/api/realtime-session'
     | '/api/stt'
@@ -588,6 +600,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/planos'
     | '/_authenticated/practice'
+    | '/_authenticated/preferencias'
     | '/api/chat'
     | '/api/realtime-session'
     | '/api/stt'
@@ -756,6 +769,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/chat'
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/preferencias': {
+      id: '/_authenticated/preferencias'
+      path: '/preferencias'
+      fullPath: '/preferencias'
+      preLoaderRoute: typeof AuthenticatedPreferenciasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/practice': {
       id: '/_authenticated/practice'
@@ -1109,6 +1129,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPlanosRoute: typeof AuthenticatedPlanosRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRouteWithChildren
+  AuthenticatedPreferenciasRoute: typeof AuthenticatedPreferenciasRoute
   AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRouteWithChildren
   AuthenticatedRevisoesReviewIdRoute: typeof AuthenticatedRevisoesReviewIdRoute
   AuthenticatedSettingsOnboardingRoute: typeof AuthenticatedSettingsOnboardingRoute
@@ -1122,6 +1143,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPlanosRoute: AuthenticatedPlanosRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRouteWithChildren,
+  AuthenticatedPreferenciasRoute: AuthenticatedPreferenciasRoute,
   AuthenticatedChatConversationIdRoute:
     AuthenticatedChatConversationIdRouteWithChildren,
   AuthenticatedRevisoesReviewIdRoute: AuthenticatedRevisoesReviewIdRoute,
