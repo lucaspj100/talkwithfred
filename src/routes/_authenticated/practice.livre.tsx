@@ -366,5 +366,3 @@ function ReorderInput({
   );
 }
 
-// consumed to avoid unused warning
-void getFreePracticeFilters;
