@@ -213,6 +213,7 @@ function FreePracticePlayer() {
               <Flame className="size-4" />{remaining}s
             </span>
           )}
+          <SoundToggle />
         </div>
       </div>
 
