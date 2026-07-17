@@ -159,7 +159,7 @@ function FreePracticePlayer() {
     setFinished(true);
   }, [sessionId, endFn]);
 
-  const info = MODE_LABEL[mode];
+  const info = MODE_LABEL[mode as FreeMode];
 
   if (finished) {
     return (

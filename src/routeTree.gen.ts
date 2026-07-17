@@ -43,6 +43,7 @@ import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_a
 import { Route as AuthenticatedRevisoesReviewIdRouteImport } from './routes/_authenticated/revisoes.$reviewId'
 import { Route as AuthenticatedPracticeVocabularioRouteImport } from './routes/_authenticated/practice.vocabulario'
 import { Route as AuthenticatedPracticeTodayRouteImport } from './routes/_authenticated/practice.today'
+import { Route as AuthenticatedPracticeLivreRouteImport } from './routes/_authenticated/practice.livre'
 import { Route as AuthenticatedPracticeHistoricoRouteImport } from './routes/_authenticated/practice.historico'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
@@ -234,6 +235,12 @@ const AuthenticatedPracticeTodayRoute =
     path: '/today',
     getParentRoute: () => AuthenticatedPracticeRoute,
   } as any)
+const AuthenticatedPracticeLivreRoute =
+  AuthenticatedPracticeLivreRouteImport.update({
+    id: '/livre',
+    path: '/livre',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
 const AuthenticatedPracticeHistoricoRoute =
   AuthenticatedPracticeHistoricoRouteImport.update({
     id: '/historico',
@@ -348,6 +355,7 @@ export interface FileRoutesByFullPath {
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/practice/historico': typeof AuthenticatedPracticeHistoricoRoute
+  '/practice/livre': typeof AuthenticatedPracticeLivreRoute
   '/practice/today': typeof AuthenticatedPracticeTodayRoute
   '/practice/vocabulario': typeof AuthenticatedPracticeVocabularioRoute
   '/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
@@ -395,6 +403,7 @@ export interface FileRoutesByTo {
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/practice/historico': typeof AuthenticatedPracticeHistoricoRoute
+  '/practice/livre': typeof AuthenticatedPracticeLivreRoute
   '/practice/today': typeof AuthenticatedPracticeTodayRoute
   '/practice/vocabulario': typeof AuthenticatedPracticeVocabularioRoute
   '/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
@@ -446,6 +455,7 @@ export interface FileRoutesById {
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
   '/_authenticated/practice/historico': typeof AuthenticatedPracticeHistoricoRoute
+  '/_authenticated/practice/livre': typeof AuthenticatedPracticeLivreRoute
   '/_authenticated/practice/today': typeof AuthenticatedPracticeTodayRoute
   '/_authenticated/practice/vocabulario': typeof AuthenticatedPracticeVocabularioRoute
   '/_authenticated/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
@@ -497,6 +507,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/practice/historico'
+    | '/practice/livre'
     | '/practice/today'
     | '/practice/vocabulario'
     | '/revisoes/$reviewId'
@@ -544,6 +555,7 @@ export interface FileRouteTypes {
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
     | '/practice/historico'
+    | '/practice/livre'
     | '/practice/today'
     | '/practice/vocabulario'
     | '/revisoes/$reviewId'
@@ -594,6 +606,7 @@ export interface FileRouteTypes {
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
     | '/_authenticated/practice/historico'
+    | '/_authenticated/practice/livre'
     | '/_authenticated/practice/today'
     | '/_authenticated/practice/vocabulario'
     | '/_authenticated/revisoes/$reviewId'
@@ -877,6 +890,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPracticeTodayRouteImport
       parentRoute: typeof AuthenticatedPracticeRoute
     }
+    '/_authenticated/practice/livre': {
+      id: '/_authenticated/practice/livre'
+      path: '/livre'
+      fullPath: '/practice/livre'
+      preLoaderRoute: typeof AuthenticatedPracticeLivreRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
     '/_authenticated/practice/historico': {
       id: '/_authenticated/practice/historico'
       path: '/historico'
@@ -1047,6 +1067,7 @@ const AuthenticatedAssinaturaRouteWithChildren =
 interface AuthenticatedPracticeRouteChildren {
   AuthenticatedPracticeFillInBlankRoute: typeof AuthenticatedPracticeFillInBlankRoute
   AuthenticatedPracticeHistoricoRoute: typeof AuthenticatedPracticeHistoricoRoute
+  AuthenticatedPracticeLivreRoute: typeof AuthenticatedPracticeLivreRoute
   AuthenticatedPracticeTodayRoute: typeof AuthenticatedPracticeTodayRoute
   AuthenticatedPracticeVocabularioRoute: typeof AuthenticatedPracticeVocabularioRoute
   AuthenticatedPracticeIndexRoute: typeof AuthenticatedPracticeIndexRoute
@@ -1055,6 +1076,7 @@ interface AuthenticatedPracticeRouteChildren {
 const AuthenticatedPracticeRouteChildren: AuthenticatedPracticeRouteChildren = {
   AuthenticatedPracticeFillInBlankRoute: AuthenticatedPracticeFillInBlankRoute,
   AuthenticatedPracticeHistoricoRoute: AuthenticatedPracticeHistoricoRoute,
+  AuthenticatedPracticeLivreRoute: AuthenticatedPracticeLivreRoute,
   AuthenticatedPracticeTodayRoute: AuthenticatedPracticeTodayRoute,
   AuthenticatedPracticeVocabularioRoute: AuthenticatedPracticeVocabularioRoute,
   AuthenticatedPracticeIndexRoute: AuthenticatedPracticeIndexRoute,
