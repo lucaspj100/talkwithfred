@@ -5,6 +5,8 @@ import { generateFillBlank, submitPracticeResult, type FillBlankItem } from "@/l
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Check, X, Loader2, MessageCircle, RotateCcw, Trophy } from "lucide-react";
+import { useExerciseFeedback } from "@/hooks/use-exercise-feedback";
+import { SoundToggle } from "@/components/exercise/SoundToggle";
 
 export const Route = createFileRoute("/_authenticated/practice/fill-in-blank")({
   component: FillInBlankPage,

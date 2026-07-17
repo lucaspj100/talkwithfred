@@ -44,6 +44,7 @@ function TrainingPlayer() {
   const load = useServerFn(getOrCreateTodayTraining);
   const submit = useServerFn(submitTrainingAnswer);
   const complete = useServerFn(completeTraining);
+  const { play } = useExerciseFeedback();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +114,7 @@ function TrainingPlayer() {
         revealed: !!res.revealed,
         completed: !!res.completed,
       });
+      play(res.verdict === "correct" ? "correct" : res.verdict === "close" ? "close" : "incorrect", `${current.id}:${res.attempts ?? 0}`);
       // Local update
       setItems((prev) =>
         prev.map((it, i) =>
@@ -140,6 +142,7 @@ function TrainingPlayer() {
     try {
       const r = await complete({ data: { sessionId: session.id } });
       setResult({ xp_earned: r.xp_earned ?? 0, streak_days: r.streak_days ?? 0 });
+      play("completed", `done:${session.id}`);
       setDone(true);
       qc.invalidateQueries({ queryKey: ["today-training"] });
     } catch (e) {
@@ -224,7 +227,10 @@ function TrainingPlayer() {
     <div className="mx-auto max-w-xl pb-32">
       <div className="mb-3 flex items-center justify-between text-sm text-muted-foreground">
         <span>Exercício {idx + 1} de {total}</span>
-        <span>{exerciseLabel(current.exercise_type)}</span>
+        <div className="flex items-center gap-2">
+          <span>{exerciseLabel(current.exercise_type)}</span>
+          <SoundToggle />
+        </div>
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
         <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
