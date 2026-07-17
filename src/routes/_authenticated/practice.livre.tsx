@@ -7,7 +7,6 @@ import {
   getNextFreeExercise,
   submitFreeAnswer,
   endFreeSession,
-  getFreePracticeFilters,
   type FreeMode,
 } from "@/lib/free-practice.functions";
 import { Button } from "@/components/ui/button";
