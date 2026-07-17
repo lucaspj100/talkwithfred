@@ -116,3 +116,52 @@ export const persistTurn = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+/**
+ * Persist an unpaired user turn — used when the user ends the conversation
+ * before Fred's reply is captured, so the last utterance isn't lost.
+ * Dedupes against the most recent user message with identical content.
+ */
+export const persistUserOnly = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({
+      conversationId: z.string().uuid(),
+      userMessage: z.string().min(1).max(4000),
+      inputType: z.enum(["text", "voice"]).default("voice"),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: conv } = await context.supabase
+      .from("conversations").select("id, title").eq("id", data.conversationId).eq("user_id", context.userId).maybeSingle();
+    if (!conv) throw new Error("Conversation not found");
+
+    const clean = data.userMessage.trim();
+    if (!clean) return { ok: true, skipped: true };
+
+    const { data: last } = await context.supabase
+      .from("messages")
+      .select("id, role, content")
+      .eq("conversation_id", data.conversationId)
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (last && last.role === "user" && (last.content ?? "").trim() === clean) {
+      return { ok: true, deduped: true };
+    }
+
+    await context.supabase.from("messages").insert({
+      conversation_id: data.conversationId,
+      user_id: context.userId,
+      role: "user",
+      content: clean,
+      input_type: data.inputType,
+    });
+    if (conv.title === "New conversation") {
+      await context.supabase.from("conversations").update({ title: clean.slice(0, 60), updated_at: new Date().toISOString() }).eq("id", data.conversationId);
+    } else {
+      await context.supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", data.conversationId);
+    }
+    return { ok: true };
+  });
