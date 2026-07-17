@@ -96,6 +96,12 @@ function RootComponent() {
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        if (typeof window !== "undefined" && !window.location.pathname.startsWith("/redefinir-senha")) {
+          router.navigate({ to: "/redefinir-senha" });
+        }
+        return;
+      }
       if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       router.invalidate();
       if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
