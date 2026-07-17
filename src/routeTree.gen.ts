@@ -30,6 +30,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authenticated/assinatura'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedRevisoesIndexRouteImport } from './routes/_authenticated/revisoes.index'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as ApiUsageStopRouteImport } from './routes/api/usage/stop'
@@ -157,6 +158,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRevisoesIndexRoute =
+  AuthenticatedRevisoesIndexRouteImport.update({
+    id: '/revisoes/',
+    path: '/revisoes/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPracticeIndexRoute =
   AuthenticatedPracticeIndexRouteImport.update({
     id: '/',
@@ -321,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/api/usage/stop': typeof ApiUsageStopRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
+  '/revisoes/': typeof AuthenticatedRevisoesIndexRoute
   '/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/chat/$conversationId/revisao': typeof AuthenticatedChatConversationIdRevisaoRoute
@@ -363,6 +371,7 @@ export interface FileRoutesByTo {
   '/api/usage/stop': typeof ApiUsageStopRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
+  '/revisoes': typeof AuthenticatedRevisoesIndexRoute
   '/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/chat/$conversationId/revisao': typeof AuthenticatedChatConversationIdRevisaoRoute
@@ -409,6 +418,7 @@ export interface FileRoutesById {
   '/api/usage/stop': typeof ApiUsageStopRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
+  '/_authenticated/revisoes/': typeof AuthenticatedRevisoesIndexRoute
   '/_authenticated/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
   '/_authenticated/chat/$conversationId/revisao': typeof AuthenticatedChatConversationIdRevisaoRoute
@@ -455,6 +465,7 @@ export interface FileRouteTypes {
     | '/api/usage/stop'
     | '/admin/'
     | '/practice/'
+    | '/revisoes/'
     | '/admin/assinaturas/$id'
     | '/admin/users/$userId'
     | '/chat/$conversationId/revisao'
@@ -497,6 +508,7 @@ export interface FileRouteTypes {
     | '/api/usage/stop'
     | '/admin'
     | '/practice'
+    | '/revisoes'
     | '/admin/assinaturas/$id'
     | '/admin/users/$userId'
     | '/chat/$conversationId/revisao'
@@ -542,6 +554,7 @@ export interface FileRouteTypes {
     | '/api/usage/stop'
     | '/_authenticated/admin/'
     | '/_authenticated/practice/'
+    | '/_authenticated/revisoes/'
     | '/_authenticated/admin/assinaturas/$id'
     | '/_authenticated/admin/users/$userId'
     | '/_authenticated/chat/$conversationId/revisao'
@@ -719,6 +732,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/revisoes/': {
+      id: '/_authenticated/revisoes/'
+      path: '/revisoes'
+      fullPath: '/revisoes/'
+      preLoaderRoute: typeof AuthenticatedRevisoesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/practice/': {
@@ -983,6 +1003,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRouteWithChildren
   AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRouteWithChildren
   AuthenticatedSettingsOnboardingRoute: typeof AuthenticatedSettingsOnboardingRoute
+  AuthenticatedRevisoesIndexRoute: typeof AuthenticatedRevisoesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -995,6 +1016,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedChatConversationIdRoute:
     AuthenticatedChatConversationIdRouteWithChildren,
   AuthenticatedSettingsOnboardingRoute: AuthenticatedSettingsOnboardingRoute,
+  AuthenticatedRevisoesIndexRoute: AuthenticatedRevisoesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
