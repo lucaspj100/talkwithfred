@@ -6,6 +6,8 @@ import { getOrCreateTodayTraining, submitTrainingAnswer, completeTraining } from
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { ArrowRight, Check, Loader2, MessageCircle, RotateCcw, Trophy, X, Target } from "lucide-react";
+import { useExerciseFeedback } from "@/hooks/use-exercise-feedback";
+import { SoundToggle } from "@/components/exercise/SoundToggle";
 
 export const Route = createFileRoute("/_authenticated/practice/today")({
   component: TrainingPlayer,
