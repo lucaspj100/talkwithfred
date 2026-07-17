@@ -30,6 +30,7 @@ import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authenticated/assinatura'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedRevisoesIndexRouteImport } from './routes/_authenticated/revisoes.index'
 import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as ApiUsageStopRouteImport } from './routes/api/usage/stop'
@@ -39,6 +40,7 @@ import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public
 import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/public/realtime-session'
 import { Route as ApiAiUsageRecordRouteImport } from './routes/api/ai-usage/record'
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
+import { Route as AuthenticatedRevisoesReviewIdRouteImport } from './routes/_authenticated/revisoes.$reviewId'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
 import { Route as AuthenticatedAssinaturaRetornoRouteImport } from './routes/_authenticated/assinatura.retorno'
@@ -49,6 +51,7 @@ import { Route as AuthenticatedAdminIdentityRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminCustosIaRouteImport } from './routes/_authenticated/admin.custos-ia'
 import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin.assinaturas'
 import { Route as ApiPublicMercadoPagoWebhookRouteImport } from './routes/api/public/mercado-pago/webhook'
+import { Route as AuthenticatedChatConversationIdRevisaoRouteImport } from './routes/_authenticated/chat.$conversationId.revisao'
 import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
 import { Route as AuthenticatedAdminAssinaturasIdRouteImport } from './routes/_authenticated/admin.assinaturas.$id'
 
@@ -156,6 +159,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRevisoesIndexRoute =
+  AuthenticatedRevisoesIndexRouteImport.update({
+    id: '/revisoes/',
+    path: '/revisoes/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedPracticeIndexRoute =
   AuthenticatedPracticeIndexRouteImport.update({
     id: '/',
@@ -202,6 +211,12 @@ const AuthenticatedSettingsOnboardingRoute =
   AuthenticatedSettingsOnboardingRouteImport.update({
     id: '/settings/onboarding',
     path: '/settings/onboarding',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRevisoesReviewIdRoute =
+  AuthenticatedRevisoesReviewIdRouteImport.update({
+    id: '/revisoes/$reviewId',
+    path: '/revisoes/$reviewId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPracticeFillInBlankRoute =
@@ -262,6 +277,12 @@ const ApiPublicMercadoPagoWebhookRoute =
     path: '/api/public/mercado-pago/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedChatConversationIdRevisaoRoute =
+  AuthenticatedChatConversationIdRevisaoRouteImport.update({
+    id: '/revisao',
+    path: '/revisao',
+    getParentRoute: () => AuthenticatedChatConversationIdRoute,
+  } as any)
 const AuthenticatedAdminUsersUserIdRoute =
   AuthenticatedAdminUsersUserIdRouteImport.update({
     id: '/$userId',
@@ -303,8 +324,9 @@ export interface FileRoutesByFullPath {
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
   '/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
-  '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
+  '/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
@@ -314,8 +336,10 @@ export interface FileRoutesByFullPath {
   '/api/usage/stop': typeof ApiUsageStopRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/practice/': typeof AuthenticatedPracticeIndexRoute
+  '/revisoes/': typeof AuthenticatedRevisoesIndexRoute
   '/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/chat/$conversationId/revisao': typeof AuthenticatedChatConversationIdRevisaoRoute
   '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -344,8 +368,9 @@ export interface FileRoutesByTo {
   '/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
   '/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
-  '/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
+  '/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
@@ -355,8 +380,10 @@ export interface FileRoutesByTo {
   '/api/usage/stop': typeof ApiUsageStopRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/practice': typeof AuthenticatedPracticeIndexRoute
+  '/revisoes': typeof AuthenticatedRevisoesIndexRoute
   '/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/chat/$conversationId/revisao': typeof AuthenticatedChatConversationIdRevisaoRoute
   '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
 export interface FileRoutesById {
@@ -389,8 +416,9 @@ export interface FileRoutesById {
   '/_authenticated/admin/retention': typeof AuthenticatedAdminRetentionRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRouteWithChildren
   '/_authenticated/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
-  '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRoute
+  '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/_authenticated/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
@@ -400,8 +428,10 @@ export interface FileRoutesById {
   '/api/usage/stop': typeof ApiUsageStopRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/practice/': typeof AuthenticatedPracticeIndexRoute
+  '/_authenticated/revisoes/': typeof AuthenticatedRevisoesIndexRoute
   '/_authenticated/admin/assinaturas/$id': typeof AuthenticatedAdminAssinaturasIdRoute
   '/_authenticated/admin/users/$userId': typeof AuthenticatedAdminUsersUserIdRoute
+  '/_authenticated/chat/$conversationId/revisao': typeof AuthenticatedChatConversationIdRevisaoRoute
   '/api/public/mercado-pago/webhook': typeof ApiPublicMercadoPagoWebhookRoute
 }
 export interface FileRouteTypes {
@@ -436,6 +466,7 @@ export interface FileRouteTypes {
     | '/assinatura/retorno'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
+    | '/revisoes/$reviewId'
     | '/settings/onboarding'
     | '/api/ai-usage/record'
     | '/api/public/realtime-session'
@@ -445,8 +476,10 @@ export interface FileRouteTypes {
     | '/api/usage/stop'
     | '/admin/'
     | '/practice/'
+    | '/revisoes/'
     | '/admin/assinaturas/$id'
     | '/admin/users/$userId'
+    | '/chat/$conversationId/revisao'
     | '/api/public/mercado-pago/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -477,6 +510,7 @@ export interface FileRouteTypes {
     | '/assinatura/retorno'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
+    | '/revisoes/$reviewId'
     | '/settings/onboarding'
     | '/api/ai-usage/record'
     | '/api/public/realtime-session'
@@ -486,8 +520,10 @@ export interface FileRouteTypes {
     | '/api/usage/stop'
     | '/admin'
     | '/practice'
+    | '/revisoes'
     | '/admin/assinaturas/$id'
     | '/admin/users/$userId'
+    | '/chat/$conversationId/revisao'
     | '/api/public/mercado-pago/webhook'
   id:
     | '__root__'
@@ -521,6 +557,7 @@ export interface FileRouteTypes {
     | '/_authenticated/assinatura/retorno'
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
+    | '/_authenticated/revisoes/$reviewId'
     | '/_authenticated/settings/onboarding'
     | '/api/ai-usage/record'
     | '/api/public/realtime-session'
@@ -530,8 +567,10 @@ export interface FileRouteTypes {
     | '/api/usage/stop'
     | '/_authenticated/admin/'
     | '/_authenticated/practice/'
+    | '/_authenticated/revisoes/'
     | '/_authenticated/admin/assinaturas/$id'
     | '/_authenticated/admin/users/$userId'
+    | '/_authenticated/chat/$conversationId/revisao'
     | '/api/public/mercado-pago/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -708,6 +747,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/revisoes/': {
+      id: '/_authenticated/revisoes/'
+      path: '/revisoes'
+      fullPath: '/revisoes/'
+      preLoaderRoute: typeof AuthenticatedRevisoesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/practice/': {
       id: '/_authenticated/practice/'
       path: '/'
@@ -769,6 +815,13 @@ declare module '@tanstack/react-router' {
       path: '/settings/onboarding'
       fullPath: '/settings/onboarding'
       preLoaderRoute: typeof AuthenticatedSettingsOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/revisoes/$reviewId': {
+      id: '/_authenticated/revisoes/$reviewId'
+      path: '/revisoes/$reviewId'
+      fullPath: '/revisoes/$reviewId'
+      preLoaderRoute: typeof AuthenticatedRevisoesReviewIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/practice/fill-in-blank': {
@@ -840,6 +893,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/mercado-pago/webhook'
       preLoaderRoute: typeof ApiPublicMercadoPagoWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/chat/$conversationId/revisao': {
+      id: '/_authenticated/chat/$conversationId/revisao'
+      path: '/revisao'
+      fullPath: '/chat/$conversationId/revisao'
+      preLoaderRoute: typeof AuthenticatedChatConversationIdRevisaoRouteImport
+      parentRoute: typeof AuthenticatedChatConversationIdRoute
     }
     '/_authenticated/admin/users/$userId': {
       id: '/_authenticated/admin/users/$userId'
@@ -939,6 +999,21 @@ const AuthenticatedPracticeRouteWithChildren =
     AuthenticatedPracticeRouteChildren,
   )
 
+interface AuthenticatedChatConversationIdRouteChildren {
+  AuthenticatedChatConversationIdRevisaoRoute: typeof AuthenticatedChatConversationIdRevisaoRoute
+}
+
+const AuthenticatedChatConversationIdRouteChildren: AuthenticatedChatConversationIdRouteChildren =
+  {
+    AuthenticatedChatConversationIdRevisaoRoute:
+      AuthenticatedChatConversationIdRevisaoRoute,
+  }
+
+const AuthenticatedChatConversationIdRouteWithChildren =
+  AuthenticatedChatConversationIdRoute._addFileChildren(
+    AuthenticatedChatConversationIdRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedAssinaturaRoute: typeof AuthenticatedAssinaturaRouteWithChildren
@@ -946,8 +1021,10 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPlanosRoute: typeof AuthenticatedPlanosRoute
   AuthenticatedPracticeRoute: typeof AuthenticatedPracticeRouteWithChildren
-  AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRoute
+  AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRouteWithChildren
+  AuthenticatedRevisoesReviewIdRoute: typeof AuthenticatedRevisoesReviewIdRoute
   AuthenticatedSettingsOnboardingRoute: typeof AuthenticatedSettingsOnboardingRoute
+  AuthenticatedRevisoesIndexRoute: typeof AuthenticatedRevisoesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -957,8 +1034,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPlanosRoute: AuthenticatedPlanosRoute,
   AuthenticatedPracticeRoute: AuthenticatedPracticeRouteWithChildren,
-  AuthenticatedChatConversationIdRoute: AuthenticatedChatConversationIdRoute,
+  AuthenticatedChatConversationIdRoute:
+    AuthenticatedChatConversationIdRouteWithChildren,
+  AuthenticatedRevisoesReviewIdRoute: AuthenticatedRevisoesReviewIdRoute,
   AuthenticatedSettingsOnboardingRoute: AuthenticatedSettingsOnboardingRoute,
+  AuthenticatedRevisoesIndexRoute: AuthenticatedRevisoesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

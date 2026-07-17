@@ -178,6 +178,161 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_review_items: {
+        Row: {
+          category: string | null
+          completed: boolean
+          completed_at: string | null
+          context_text: string | null
+          conversation_id: string
+          corrected_text: string | null
+          created_at: string
+          display_order: number
+          exercise_type: string | null
+          explanation_pt: string | null
+          id: string
+          importance: string
+          natural_text: string | null
+          original_text: string | null
+          review_id: string
+          score: number | null
+          translation_pt: string | null
+          type: string
+          user_answer: string | null
+          user_id: string
+          vocabulary: Json
+        }
+        Insert: {
+          category?: string | null
+          completed?: boolean
+          completed_at?: string | null
+          context_text?: string | null
+          conversation_id: string
+          corrected_text?: string | null
+          created_at?: string
+          display_order?: number
+          exercise_type?: string | null
+          explanation_pt?: string | null
+          id?: string
+          importance?: string
+          natural_text?: string | null
+          original_text?: string | null
+          review_id: string
+          score?: number | null
+          translation_pt?: string | null
+          type: string
+          user_answer?: string | null
+          user_id: string
+          vocabulary?: Json
+        }
+        Update: {
+          category?: string | null
+          completed?: boolean
+          completed_at?: string | null
+          context_text?: string | null
+          conversation_id?: string
+          corrected_text?: string | null
+          created_at?: string
+          display_order?: number
+          exercise_type?: string | null
+          explanation_pt?: string | null
+          id?: string
+          importance?: string
+          natural_text?: string | null
+          original_text?: string | null
+          review_id?: string
+          score?: number | null
+          translation_pt?: string | null
+          type?: string
+          user_answer?: string | null
+          user_id?: string
+          vocabulary?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_review_items_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_review_items_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_reviews: {
+        Row: {
+          analysis_error: string | null
+          analysis_status: string
+          completed_at: string | null
+          completed_items: number
+          conversation_id: string
+          created_at: string
+          estimated_minutes: number
+          id: string
+          level_detected: string | null
+          source: string
+          started_at: string | null
+          status: string
+          summary: string | null
+          title: string | null
+          total_items: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          analysis_error?: string | null
+          analysis_status?: string
+          completed_at?: string | null
+          completed_items?: number
+          conversation_id: string
+          created_at?: string
+          estimated_minutes?: number
+          id?: string
+          level_detected?: string | null
+          source?: string
+          started_at?: string | null
+          status?: string
+          summary?: string | null
+          title?: string | null
+          total_items?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          analysis_error?: string | null
+          analysis_status?: string
+          completed_at?: string | null
+          completed_items?: number
+          conversation_id?: string
+          created_at?: string
+          estimated_minutes?: number
+          id?: string
+          level_detected?: string | null
+          source?: string
+          started_at?: string | null
+          status?: string
+          summary?: string | null
+          title?: string | null
+          total_items?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_reviews_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: true
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           created_at: string
