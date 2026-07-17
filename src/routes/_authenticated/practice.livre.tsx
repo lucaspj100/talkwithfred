@@ -324,8 +324,6 @@ function ReorderInput({
   onChange: (v: string[]) => void;
   disabled?: boolean;
 }) {
-  const available = tokens.filter((_, i) => !value.includes(`${tokens[i]}@${i}`)).map((t, i) => ({ label: t, key: `${t}@${i}` }));
-  // Simpler: use index-based tokens
   const remaining = tokens
     .map((t, i) => ({ label: t, key: `${i}` }))
     .filter((t) => !value.includes(t.key));
