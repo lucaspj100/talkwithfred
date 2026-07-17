@@ -3,6 +3,10 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { createLovableGateway } from "@/lib/ai-gateway.server";
 import { generateText } from "ai";
+import type { Database } from "@/integrations/supabase/types";
+
+type ItemUpdate = Database["public"]["Tables"]["conversation_review_items"]["Update"];
+
 
 const MODEL = "google/gemini-3-flash-preview";
 
@@ -21,12 +25,14 @@ type Importance = "low" | "medium" | "high";
 
 const EXERCISE_TYPES = [
   "multiple_choice",
-  "reorder_sentence",
+  "fill_blank",
   "rewrite_sentence",
   "translate",
-  "contextual_response",
-  "vocabulary_review",
+  "reorder_sentence",
+  "listen_repeat",
+  "vocabulary_match",
 ] as const;
+type ExerciseType = (typeof EXERCISE_TYPES)[number];
 
 function gateway() {
   const key = process.env.LOVABLE_API_KEY;
@@ -55,19 +61,8 @@ async function fetchConversationContext(
   conversationId: string,
 ) {
   const [{ data: conv }, { data: msgs }] = await Promise.all([
-    supabase
-      .from("conversations")
-      .select("id, title, mode, custom_topic, created_at")
-      .eq("id", conversationId)
-      .eq("user_id", userId)
-      .maybeSingle(),
-    supabase
-      .from("messages")
-      .select("role, content, created_at")
-      .eq("conversation_id", conversationId)
-      .eq("user_id", userId)
-      .order("created_at", { ascending: true })
-      .limit(200),
+    supabase.from("conversations").select("id, title, mode, custom_topic, created_at").eq("id", conversationId).eq("user_id", userId).maybeSingle(),
+    supabase.from("messages").select("role, content, created_at").eq("conversation_id", conversationId).eq("user_id", userId).order("created_at", { ascending: true }).limit(200),
   ]);
   return { conv, msgs: (msgs ?? []) as { role: "user" | "assistant"; content: string; created_at: string }[] };
 }
@@ -79,110 +74,266 @@ function hasEnoughContent(msgs: { role: string; content: string }[]): boolean {
   return totalChars >= 40;
 }
 
-// -------- Analysis (server-only) --------
+// -------- Analysis --------
 
+type ExerciseSpec = {
+  type: ExerciseType;
+  prompt: string;
+  instructions?: string | null;
+  options?: string[] | null;
+  correct_answer: string;
+  acceptable_answers?: string[];
+};
+
+type AnalysisItem = {
+  type: ReviewType;
+  category?: string | null;
+  original_text?: string | null;
+  corrected_text?: string | null;
+  natural_text?: string | null;
+  explanation_pt: string;
+  translation_pt?: string | null;
+  context_text?: string | null;
+  vocabulary?: { word: string; explanation_pt?: string }[];
+  importance?: Importance;
+  exercise?: ExerciseSpec | null;
+  second_exercise?: ExerciseSpec | null;
+};
 type AnalysisResult = {
   title: string;
   summary: string;
   level_detected?: string | null;
-  items: {
-    type: ReviewType;
-    category?: string | null;
-    original_text?: string | null;
-    corrected_text?: string | null;
-    natural_text?: string | null;
-    explanation_pt: string;
-    translation_pt?: string | null;
-    context_text?: string | null;
-    vocabulary?: { word: string; explanation_pt?: string }[];
-    importance?: Importance;
-    exercise_type?: string | null;
-  }[];
+  items: AnalysisItem[];
 };
+
+const ANALYSIS_PROMPT_TEMPLATE = (transcript: string, meta: { mode: string; topic: string | null; level: string | null }) => `Você analisa uma conversa em inglês entre um estudante brasileiro e o tutor Fred.
+
+Tema/modo: ${meta.mode}${meta.topic ? ` (${meta.topic})` : ""}. Nível: ${meta.level ?? "desconhecido"}.
+
+TRANSCRIÇÃO:
+"""
+${transcript}
+"""
+
+Analise APENAS as falas do USUÁRIO. Selecione até 5 pontos MAIS ÚTEIS (erros reais ou frases pouco naturais). Para CADA ponto, crie DOIS exercícios interativos personalizados baseados no erro real do usuário.
+
+Retorne JSON estrito, sem prosa:
+{
+  "title": "Título curto em PT (máx 60 chars)",
+  "summary": "Resumo em PT (máx 200 chars)",
+  "level_detected": "beginner|basic|intermediate|advanced (opcional)",
+  "items": [
+    {
+      "type": "grammar_error|unnatural_phrase|vocabulary|word_choice|incomplete_answer|positive_feedback|general_improvement",
+      "category": "curta em PT (ex: 'Preposição', 'Past simple')",
+      "original_text": "trecho exato dito pelo usuário",
+      "corrected_text": "versão correta em inglês",
+      "natural_text": "versão mais natural em inglês",
+      "explanation_pt": "explicação curta e amigável em PT-BR (máx 240 chars)",
+      "translation_pt": "tradução em PT-BR da versão correta",
+      "context_text": "opcional",
+      "importance": "low|medium|high",
+      "exercise": {
+        "type": "multiple_choice|fill_blank|rewrite_sentence|translate|reorder_sentence|vocabulary_match",
+        "prompt": "Frase do exercício em inglês (use ___ para lacuna quando fill_blank)",
+        "instructions": "Instrução curta em PT (ex: 'Complete a frase', 'Escolha a mais natural')",
+        "options": ["opção A", "opção B", "opção C"],
+        "correct_answer": "resposta correta exata",
+        "acceptable_answers": ["variações aceitas"]
+      },
+      "second_exercise": {
+        "type": "translate|rewrite_sentence|fill_blank|multiple_choice",
+        "prompt": "NOVO contexto aplicando a mesma regra (ex: para tradução, frase em PT)",
+        "instructions": "Instrução em PT",
+        "options": null,
+        "correct_answer": "resposta principal correta em inglês",
+        "acceptable_answers": ["outras formas naturais aceitas, incluindo contrações"]
+      }
+    }
+  ]
+}
+
+REGRAS:
+- Cada exercício DEVE ser baseado no erro real e na regra específica desse ponto.
+- Para GRAMMAR_ERROR: use fill_blank ou multiple_choice para o primeiro; translate ou rewrite para o segundo.
+- Para UNNATURAL_PHRASE: use multiple_choice (escolher a mais natural) no primeiro; rewrite ou translate no segundo.
+- Para WORD_CHOICE: use multiple_choice ou fill_blank em ambos.
+- Para VOCABULARY: use vocabulary_match ou fill_blank no primeiro; translate no segundo.
+- Para INCOMPLETE_ANSWER: primeiro exercício expandir a resposta (rewrite_sentence com instrução para adicionar detalhes); segundo, rewrite com contexto novo.
+- Para POSITIVE_FEEDBACK: exercícios são desafio leve aplicando a mesma estrutura.
+- multiple_choice DEVE ter 3-4 options e correct_answer DEVE estar entre elas exatamente igual.
+- acceptable_answers para tradução SEMPRE inclua contrações naturais (I'd/I would, don't/do not) quando aplicável.
+- NUNCA use exercícios genéricos — devem se conectar ao contexto da conversa.
+- Não invente erros. Máx 5 itens.`;
 
 async function runAnalysis(
   transcript: { role: string; content: string }[],
   meta: { mode: string; topic: string | null; level: string | null },
 ): Promise<AnalysisResult> {
-  const lines = transcript
-    .map((m) => `${m.role === "user" ? "USUÁRIO" : "FRED"}: ${m.content}`)
-    .join("\n");
-
-  const prompt = `Você analisa uma conversa em inglês entre um estudante brasileiro e o tutor Fred.
-
-Tema/modo da conversa: ${meta.mode}${meta.topic ? ` (${meta.topic})` : ""}.
-Nível declarado do aluno: ${meta.level ?? "desconhecido"}.
-
-TRANSCRIÇÃO:
-"""
-${lines}
-"""
-
-Analise APENAS as falas do USUÁRIO. As falas do FRED são o modelo correto.
-
-Retorne JSON estrito com este formato, sem prosa:
-{
-  "title": "Título curto em português sobre o tema (máx 60 caracteres)",
-  "summary": "Resumo em português com 1-2 frases (máx 200 caracteres) descrevendo sobre o que foi a conversa e quantos pontos serão revisados.",
-  "level_detected": "beginner | basic | intermediate | advanced (opcional, só se tiver confiança)",
-  "items": [
-    {
-      "type": "grammar_error | unnatural_phrase | vocabulary | word_choice | incomplete_answer | positive_feedback | general_improvement",
-      "category": "curta em PT (ex: 'Present perfect', 'Preposição', 'Escolha de palavra')",
-      "original_text": "trecho exato dito pelo usuário (obrigatório para itens de erro)",
-      "corrected_text": "versão gramaticalmente correta em inglês",
-      "natural_text": "versão mais natural em inglês (pode ser igual ao corrected)",
-      "explanation_pt": "explicação curta e amigável em português brasileiro (máx 240 caracteres)",
-      "translation_pt": "tradução em PT-BR da versão correta/natural",
-      "context_text": "situação da conversa em PT (opcional)",
-      "vocabulary": [{"word": "palavra", "explanation_pt": "significado em PT"}],
-      "importance": "low | medium | high",
-      "exercise_type": "multiple_choice | rewrite_sentence | translate | contextual_response | vocabulary_review"
-    }
-  ]
-}
-
-REGRAS RÍGIDAS:
-- Máximo 5 itens. Selecione APENAS os mais úteis.
-- Não invente erros: se a frase do usuário estiver correta e natural, não inclua como erro.
-- Diferencie "incorreto" de "correto mas pouco natural" (use unnatural_phrase).
-- Vocabulary: palavras/expressões úteis usadas pelo Fred que o aluno pode aprender.
-- positive_feedback: opcional, no máximo 1 item, para reforço.
-- Tom encorajador e positivo em PT-BR.
-- Se o usuário praticamente não falou ou só disse coisas triviais ("hi", "ok"), retorne items: [].`;
-
+  const lines = transcript.map((m) => `${m.role === "user" ? "USUÁRIO" : "FRED"}: ${m.content}`).join("\n");
   const { text } = await generateText({
     model: gateway()(MODEL),
-    prompt,
+    prompt: ANALYSIS_PROMPT_TEMPLATE(lines, meta),
     temperature: 0.3,
   });
-
   const parsed = safeJson<AnalysisResult>(text);
-  if (!parsed || !Array.isArray(parsed.items)) {
-    throw new Error("Análise da IA retornou formato inválido");
-  }
+  if (!parsed || !Array.isArray(parsed.items)) throw new Error("Análise da IA retornou formato inválido");
   parsed.items = parsed.items
     .filter((it) => it && REVIEW_TYPES.includes(it.type as ReviewType))
     .slice(0, 5)
     .map((it) => ({
       ...it,
-      importance: (["low", "medium", "high"] as const).includes(it.importance as Importance)
-        ? (it.importance as Importance)
-        : "medium",
-      exercise_type: it.exercise_type && (EXERCISE_TYPES as readonly string[]).includes(it.exercise_type)
-        ? it.exercise_type
-        : (it.type === "vocabulary" ? "vocabulary_review" : "multiple_choice"),
+      importance: (["low", "medium", "high"] as const).includes(it.importance as Importance) ? (it.importance as Importance) : "medium",
+      exercise: sanitizeExercise(it.exercise),
+      second_exercise: sanitizeExercise(it.second_exercise),
     }));
   return parsed;
 }
 
+function sanitizeExercise(ex: ExerciseSpec | null | undefined): ExerciseSpec | null {
+  if (!ex || !ex.correct_answer || !ex.prompt) return null;
+  const type = (EXERCISE_TYPES as readonly string[]).includes(ex.type) ? (ex.type as ExerciseType) : "multiple_choice";
+  const opts = Array.isArray(ex.options) ? ex.options.filter((o) => typeof o === "string") : null;
+  return {
+    type,
+    prompt: String(ex.prompt).slice(0, 500),
+    instructions: ex.instructions ? String(ex.instructions).slice(0, 300) : null,
+    options: opts && opts.length > 0 ? opts.slice(0, 6) : null,
+    correct_answer: String(ex.correct_answer).slice(0, 300),
+    acceptable_answers: Array.isArray(ex.acceptable_answers) ? ex.acceptable_answers.map((a) => String(a).slice(0, 300)).slice(0, 10) : [],
+  };
+}
+
+// -------- Exercise generation for legacy items --------
+
+async function generateExercisesForLegacyItem(item: {
+  type: string;
+  original_text: string | null;
+  corrected_text: string | null;
+  natural_text: string | null;
+  explanation_pt: string | null;
+  category: string | null;
+}): Promise<{ first: ExerciseSpec | null; second: ExerciseSpec | null }> {
+  const prompt = `Você gera dois exercícios interativos personalizados a partir de um erro real de um aluno de inglês brasileiro.
+
+DADOS DO ERRO:
+- Tipo: ${item.type}
+- Categoria: ${item.category ?? "-"}
+- Frase original do aluno: ${item.original_text ?? "-"}
+- Versão correta/natural: ${item.natural_text ?? item.corrected_text ?? "-"}
+- Explicação: ${item.explanation_pt ?? "-"}
+
+Retorne APENAS JSON estrito:
+{
+  "exercise": { "type": "multiple_choice|fill_blank|rewrite_sentence|translate|reorder_sentence|vocabulary_match", "prompt": "...", "instructions": "PT curto", "options": ["a","b","c"] ou null, "correct_answer": "...", "acceptable_answers": ["..."] },
+  "second_exercise": { "type": "translate|rewrite_sentence|fill_blank|multiple_choice", "prompt": "novo contexto", "instructions": "PT", "options": null, "correct_answer": "...", "acceptable_answers": ["..."] }
+}
+
+REGRAS:
+- Cada exercício deve testar a MESMA regra do erro em contexto NOVO.
+- multiple_choice DEVE ter 3-4 options e correct_answer entre elas.
+- acceptable_answers para tradução DEVE incluir contrações naturais.
+- Nada genérico.`;
+  const { text } = await generateText({
+    model: gateway()(MODEL),
+    prompt,
+    temperature: 0.3,
+  });
+  const parsed = safeJson<{ exercise?: ExerciseSpec; second_exercise?: ExerciseSpec }>(text);
+  return {
+    first: sanitizeExercise(parsed?.exercise),
+    second: sanitizeExercise(parsed?.second_exercise),
+  };
+}
+
+// -------- Answer validation --------
+
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[.,!?;:"'`´]/g, "")
+    .replace(/\s+/g, " ")
+    // Common contractions expand for comparison
+    .replace(/\bi'd\b/g, "i would")
+    .replace(/\bi'll\b/g, "i will")
+    .replace(/\bi'm\b/g, "i am")
+    .replace(/\bi've\b/g, "i have")
+    .replace(/\bdon't\b/g, "do not")
+    .replace(/\bdoesn't\b/g, "does not")
+    .replace(/\bdidn't\b/g, "did not")
+    .replace(/\bwon't\b/g, "will not")
+    .replace(/\bwouldn't\b/g, "would not")
+    .replace(/\bcan't\b/g, "cannot")
+    .replace(/\bit's\b/g, "it is")
+    .replace(/\bthat's\b/g, "that is")
+    .replace(/\bwhat's\b/g, "what is")
+    .replace(/\bhe's\b/g, "he is")
+    .replace(/\bshe's\b/g, "she is")
+    .replace(/\byou're\b/g, "you are")
+    .replace(/\bthey're\b/g, "they are")
+    .replace(/\bwe're\b/g, "we are")
+    .replace(/\bisn't\b/g, "is not")
+    .replace(/\baren't\b/g, "are not")
+    .replace(/\bwasn't\b/g, "was not")
+    .replace(/\bweren't\b/g, "were not");
+}
+
+function localValidate(userAnswer: string, correct: string, acceptable: string[]): "correct" | "close" | "wrong" {
+  const n = normalize(userAnswer);
+  if (!n) return "wrong";
+  const targets = [correct, ...(acceptable ?? [])].filter(Boolean).map(normalize);
+  if (targets.includes(n)) return "correct";
+  // close = same words, minor variation, or edit distance <= 3 for short answers
+  for (const t of targets) {
+    if (levenshtein(n, t) <= Math.max(2, Math.floor(t.length * 0.15))) return "close";
+  }
+  return "wrong";
+}
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+async function aiJudge(userAnswer: string, correct: string, contextPrompt: string, instructions: string | null): Promise<{ verdict: "correct" | "close" | "wrong"; feedback_pt: string }> {
+  const prompt = `Um aluno brasileiro respondeu a um exercício de inglês. Avalie se a resposta é aceitável.
+
+Exercício: ${contextPrompt}
+Instrução: ${instructions ?? "-"}
+Resposta esperada: ${correct}
+Resposta do aluno: ${userAnswer}
+
+Retorne APENAS JSON: {"verdict": "correct|close|wrong", "feedback_pt": "feedback curto em PT-BR, no máx 160 chars, começando pelo ponto forte se houver"}
+
+Considere "correct" se semanticamente equivalente (contrações, sinônimos comuns, ordem levemente diferente).
+Considere "close" se quase certo com um pequeno erro (concordância, artigo, preposição).
+Considere "wrong" se estruturalmente diferente ou incorreto.`;
+  try {
+    const { text } = await generateText({ model: gateway()(MODEL), prompt, temperature: 0.1 });
+    const parsed = safeJson<{ verdict: string; feedback_pt: string }>(text);
+    const v = parsed?.verdict;
+    if (v === "correct" || v === "close" || v === "wrong") {
+      return { verdict: v, feedback_pt: parsed?.feedback_pt?.slice(0, 200) ?? "" };
+    }
+  } catch (e) {
+    console.error("[aiJudge]", e);
+  }
+  return { verdict: "wrong", feedback_pt: "Compare com a resposta esperada e tente novamente." };
+}
+
 // -------- Server Functions --------
 
-/**
- * Idempotently create a review for a conversation.
- * If already exists, returns the existing row.
- * Fires analysis inline (small model). Frontend polls via getReviewByConversation.
- */
 export const startConversationReview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i: unknown) => z.object({ conversationId: z.string().uuid() }).parse(i))
@@ -197,13 +348,7 @@ export const startConversationReview = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
 
-    if (existing) {
-      // Idempotent: don't reprocess unless previous failed.
-      if (existing.status === "failed" || existing.analysis_status === "failed") {
-        // Reset for retry (handled by retryConversationReview).
-      }
-      return { id: existing.id, reused: true };
-    }
+    if (existing) return { id: existing.id, reused: true };
 
     const { conv, msgs } = await fetchConversationContext(supabase, userId, data.conversationId);
     if (!conv) throw new Error("Conversa não encontrada");
@@ -226,7 +371,6 @@ export const startConversationReview = createServerFn({ method: "POST" })
       return { id: skipped.id, reused: false, skipped: true };
     }
 
-    // Insert placeholder row.
     const { data: row, error: insErr } = await supabase
       .from("conversation_reviews")
       .insert({
@@ -240,7 +384,6 @@ export const startConversationReview = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (insErr) {
-      // Race condition: another concurrent call already inserted.
       const { data: again } = await supabase
         .from("conversation_reviews")
         .select("id")
@@ -252,7 +395,6 @@ export const startConversationReview = createServerFn({ method: "POST" })
     }
     const reviewId = row.id as string;
 
-    // Run analysis inline. On failure, mark as failed.
     try {
       const level = await supabase
         .from("user_profiles")
@@ -294,14 +436,25 @@ export const startConversationReview = createServerFn({ method: "POST" })
         context_text: it.context_text ?? null,
         vocabulary: it.vocabulary ?? [],
         importance: it.importance ?? "medium",
-        exercise_type: it.exercise_type ?? null,
         display_order: idx,
+        exercise_type: it.exercise?.type ?? null,
+        exercise_prompt: it.exercise?.prompt ?? null,
+        exercise_instructions: it.exercise?.instructions ?? null,
+        exercise_options: it.exercise?.options ?? null,
+        correct_answer: it.exercise?.correct_answer ?? null,
+        acceptable_answers: it.exercise?.acceptable_answers ?? [],
+        second_exercise_type: it.second_exercise?.type ?? null,
+        second_exercise_prompt: it.second_exercise?.prompt ?? null,
+        second_exercise_options: it.second_exercise?.options ?? null,
+        second_correct_answer: it.second_exercise?.correct_answer ?? null,
+        second_acceptable_answers: it.second_exercise?.acceptable_answers ?? [],
+        exercise_generated_at: it.exercise ? new Date().toISOString() : null,
       }));
 
       const { error: itemsErr } = await supabase.from("conversation_review_items").insert(rows);
       if (itemsErr) throw new Error(itemsErr.message);
 
-      const estimated = Math.max(2, Math.round(rows.length * 1.2));
+      const estimated = Math.max(3, Math.round(rows.length * 2));
       await supabase
         .from("conversation_reviews")
         .update({
@@ -344,7 +497,6 @@ export const retryConversationReview = createServerFn({ method: "POST" })
     if (!rev) throw new Error("Revisão não encontrada");
     if (rev.status !== "failed") return { id: rev.id, ok: true };
 
-    // Wipe stale items, reset status, rerun.
     await supabase.from("conversation_review_items").delete().eq("review_id", rev.id).eq("user_id", userId);
     await supabase
       .from("conversation_reviews")
@@ -380,12 +532,21 @@ export const retryConversationReview = createServerFn({ method: "POST" })
         context_text: it.context_text ?? null,
         vocabulary: it.vocabulary ?? [],
         importance: it.importance ?? "medium",
-        exercise_type: it.exercise_type ?? null,
         display_order: idx,
+        exercise_type: it.exercise?.type ?? null,
+        exercise_prompt: it.exercise?.prompt ?? null,
+        exercise_instructions: it.exercise?.instructions ?? null,
+        exercise_options: it.exercise?.options ?? null,
+        correct_answer: it.exercise?.correct_answer ?? null,
+        acceptable_answers: it.exercise?.acceptable_answers ?? [],
+        second_exercise_type: it.second_exercise?.type ?? null,
+        second_exercise_prompt: it.second_exercise?.prompt ?? null,
+        second_exercise_options: it.second_exercise?.options ?? null,
+        second_correct_answer: it.second_exercise?.correct_answer ?? null,
+        second_acceptable_answers: it.second_exercise?.acceptable_answers ?? [],
+        exercise_generated_at: it.exercise ? new Date().toISOString() : null,
       }));
-      if (rows.length > 0) {
-        await supabase.from("conversation_review_items").insert(rows);
-      }
+      if (rows.length > 0) await supabase.from("conversation_review_items").insert(rows);
       await supabase
         .from("conversation_reviews")
         .update({
@@ -394,7 +555,7 @@ export const retryConversationReview = createServerFn({ method: "POST" })
           title: (result.title || conv.title || "Revisão").slice(0, 120),
           summary: (result.summary || "").slice(0, 400),
           total_items: rows.length,
-          estimated_minutes: Math.max(2, Math.round(rows.length * 1.2)),
+          estimated_minutes: Math.max(3, Math.round(rows.length * 2)),
         })
         .eq("id", rev.id);
       return { id: rev.id, ok: true };
@@ -495,35 +656,167 @@ export const beginReview = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-export const completeReviewItem = createServerFn({ method: "POST" })
+/** Ensures a review item has exercises (generates on-demand for legacy items). */
+export const ensureItemExercises = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) =>
-    z.object({ itemId: z.string().uuid(), userAnswer: z.string().max(500).optional() }).parse(i),
-  )
+  .inputValidator((i: unknown) => z.object({ itemId: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { data: item } = await context.supabase
       .from("conversation_review_items")
-      .select("id, review_id, completed")
+      .select("*")
       .eq("id", data.itemId)
       .eq("user_id", context.userId)
       .maybeSingle();
     if (!item) throw new Error("Item não encontrado");
-    if (item.completed) return { ok: true };
-    await context.supabase
+    if (item.exercise_prompt && item.correct_answer) return { item };
+
+    try {
+      const { first, second } = await generateExercisesForLegacyItem({
+        type: item.type,
+        original_text: item.original_text,
+        corrected_text: item.corrected_text,
+        natural_text: item.natural_text,
+        explanation_pt: item.explanation_pt,
+        category: item.category,
+      });
+      const patch: ItemUpdate = {
+        exercise_generated_at: new Date().toISOString(),
+      };
+      if (first) {
+        patch.exercise_type = first.type;
+        patch.exercise_prompt = first.prompt;
+        patch.exercise_instructions = first.instructions ?? null;
+        patch.exercise_options = (first.options ?? null) as ItemUpdate["exercise_options"];
+        patch.correct_answer = first.correct_answer;
+        patch.acceptable_answers = (first.acceptable_answers ?? []) as ItemUpdate["acceptable_answers"];
+      }
+      if (second) {
+        patch.second_exercise_type = second.type;
+        patch.second_exercise_prompt = second.prompt;
+        patch.second_exercise_options = (second.options ?? null) as ItemUpdate["second_exercise_options"];
+        patch.second_correct_answer = second.correct_answer;
+        patch.second_acceptable_answers = (second.acceptable_answers ?? []) as ItemUpdate["second_acceptable_answers"];
+      }
+
+      const { data: updated } = await context.supabase
+        .from("conversation_review_items")
+        .update(patch)
+        .eq("id", item.id)
+        .select("*")
+        .single();
+      return { item: updated };
+    } catch (e) {
+      console.error("[ensureItemExercises]", e);
+      throw new Error("Não conseguimos gerar o exercício agora. Tente de novo.");
+    }
+  });
+
+/** Submits an answer for stage 1 (practice) or stage 2 (apply). Returns verdict. */
+export const submitExerciseAnswer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        itemId: z.string().uuid(),
+        stage: z.enum(["practice", "apply"]),
+        userAnswer: z.string().min(1).max(500),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: item } = await context.supabase
       .from("conversation_review_items")
-      .update({ completed: true, completed_at: new Date().toISOString(), user_answer: data.userAnswer ?? null })
-      .eq("id", item.id);
-    // Increment counter on parent review.
-    const { data: countRow } = await context.supabase
-      .from("conversation_review_items")
-      .select("id", { count: "exact", head: true })
-      .eq("review_id", item.review_id)
+      .select("*")
+      .eq("id", data.itemId)
       .eq("user_id", context.userId)
-      .eq("completed", true);
+      .maybeSingle();
+    if (!item) throw new Error("Item não encontrado");
+
+    const isPractice = data.stage === "practice";
+    const correct = (isPractice ? item.correct_answer : item.second_correct_answer) as string | null;
+    const acceptable = ((isPractice ? item.acceptable_answers : item.second_acceptable_answers) ?? []) as string[];
+    const options = (isPractice ? item.exercise_options : item.second_exercise_options) as string[] | null;
+    const type = (isPractice ? item.exercise_type : item.second_exercise_type) as string | null;
+    const promptText = (isPractice ? item.exercise_prompt : item.second_exercise_prompt) as string | null;
+    const instructions = item.exercise_instructions as string | null;
+
+    if (!correct) throw new Error("Exercício sem resposta esperada");
+
+    // Local validation
+    let verdict = localValidate(data.userAnswer, correct, acceptable);
+    let feedback: string | null = null;
+
+    // If multiple_choice or fill_blank with options: strict local check only
+    const isChoice = type === "multiple_choice" || (options && options.length > 0);
+    if (!isChoice && verdict !== "correct") {
+      // Fall back to AI judge for open-ended
+      const ai = await aiJudge(data.userAnswer, correct, promptText ?? "", instructions);
+      verdict = ai.verdict;
+      feedback = ai.feedback_pt || null;
+    }
+
+    // Persist attempt
+    const currentAttempts = ((isPractice ? item.attempts_first : item.attempts_second) ?? 0) as number;
+    const newAttempts = currentAttempts + 1;
+    const attemptPatch: ItemUpdate = isPractice
+      ? { attempts_first: newAttempts, user_answer_first: data.userAnswer.slice(0, 500) }
+      : { attempts_second: newAttempts, user_answer_second: data.userAnswer.slice(0, 500) };
+
     await context.supabase
-      .from("conversation_reviews")
-      .update({ completed_items: (countRow as unknown as { count?: number } | null)?.count ?? undefined })
-      .eq("id", item.review_id);
+      .from("conversation_review_items")
+      .update(attemptPatch)
+      .eq("id", item.id);
+
+
+    return {
+      verdict,
+      feedback_pt: feedback,
+      correct_answer: correct,
+      attempts: newAttempts,
+    };
+  });
+
+/** Advances an item to the next stage or marks it completed. */
+export const advanceItemStage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ itemId: z.string().uuid(), toStage: z.enum(["practice", "apply", "done"]) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: item } = await context.supabase
+      .from("conversation_review_items")
+      .select("id, review_id, stage, completed, attempts_first, attempts_second")
+      .eq("id", data.itemId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!item) throw new Error("Item não encontrado");
+
+    const patch: ItemUpdate = { stage: data.toStage };
+    if (data.toStage === "done") {
+      patch.completed = true;
+      patch.completed_at = new Date().toISOString();
+      const attempts = ((item.attempts_first ?? 0) + (item.attempts_second ?? 0)) as number;
+      patch.score = attempts <= 2 ? 1 : attempts <= 4 ? 0.6 : 0.3;
+    }
+
+    await context.supabase
+      .from("conversation_review_items")
+      .update(patch)
+      .eq("id", item.id);
+
+    // Recount completed
+    if (data.toStage === "done") {
+      const { count } = await context.supabase
+        .from("conversation_review_items")
+        .select("id", { count: "exact", head: true })
+        .eq("review_id", item.review_id)
+        .eq("user_id", context.userId)
+        .eq("completed", true);
+      await context.supabase
+        .from("conversation_reviews")
+        .update({ completed_items: count ?? undefined })
+        .eq("id", item.review_id);
+    }
     return { ok: true };
   });
 
@@ -546,5 +839,37 @@ export const completeReview = createServerFn({ method: "POST" })
         completed_items: rev.total_items,
       })
       .eq("id", rev.id);
+    return { ok: true };
+  });
+
+// Kept for backwards compat; now a thin wrapper.
+export const completeReviewItem = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ itemId: z.string().uuid(), userAnswer: z.string().max(500).optional() }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: item } = await context.supabase
+      .from("conversation_review_items")
+      .select("id, review_id, completed")
+      .eq("id", data.itemId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!item) throw new Error("Item não encontrado");
+    if (item.completed) return { ok: true };
+    await context.supabase
+      .from("conversation_review_items")
+      .update({ completed: true, stage: "done", completed_at: new Date().toISOString(), user_answer: data.userAnswer ?? null })
+      .eq("id", item.id);
+    const { count } = await context.supabase
+      .from("conversation_review_items")
+      .select("id", { count: "exact", head: true })
+      .eq("review_id", item.review_id)
+      .eq("user_id", context.userId)
+      .eq("completed", true);
+    await context.supabase
+      .from("conversation_reviews")
+      .update({ completed_items: count ?? undefined })
+      .eq("id", item.review_id);
     return { ok: true };
   });

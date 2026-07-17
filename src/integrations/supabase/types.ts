@@ -180,14 +180,22 @@ export type Database = {
       }
       conversation_review_items: {
         Row: {
+          acceptable_answers: Json
+          attempts_first: number
+          attempts_second: number
           category: string | null
           completed: boolean
           completed_at: string | null
           context_text: string | null
           conversation_id: string
+          correct_answer: string | null
           corrected_text: string | null
           created_at: string
           display_order: number
+          exercise_generated_at: string | null
+          exercise_instructions: string | null
+          exercise_options: Json | null
+          exercise_prompt: string | null
           exercise_type: string | null
           explanation_pt: string | null
           id: string
@@ -196,21 +204,37 @@ export type Database = {
           original_text: string | null
           review_id: string
           score: number | null
+          second_acceptable_answers: Json
+          second_correct_answer: string | null
+          second_exercise_options: Json | null
+          second_exercise_prompt: string | null
+          second_exercise_type: string | null
+          stage: string
           translation_pt: string | null
           type: string
           user_answer: string | null
+          user_answer_first: string | null
+          user_answer_second: string | null
           user_id: string
           vocabulary: Json
         }
         Insert: {
+          acceptable_answers?: Json
+          attempts_first?: number
+          attempts_second?: number
           category?: string | null
           completed?: boolean
           completed_at?: string | null
           context_text?: string | null
           conversation_id: string
+          correct_answer?: string | null
           corrected_text?: string | null
           created_at?: string
           display_order?: number
+          exercise_generated_at?: string | null
+          exercise_instructions?: string | null
+          exercise_options?: Json | null
+          exercise_prompt?: string | null
           exercise_type?: string | null
           explanation_pt?: string | null
           id?: string
@@ -219,21 +243,37 @@ export type Database = {
           original_text?: string | null
           review_id: string
           score?: number | null
+          second_acceptable_answers?: Json
+          second_correct_answer?: string | null
+          second_exercise_options?: Json | null
+          second_exercise_prompt?: string | null
+          second_exercise_type?: string | null
+          stage?: string
           translation_pt?: string | null
           type: string
           user_answer?: string | null
+          user_answer_first?: string | null
+          user_answer_second?: string | null
           user_id: string
           vocabulary?: Json
         }
         Update: {
+          acceptable_answers?: Json
+          attempts_first?: number
+          attempts_second?: number
           category?: string | null
           completed?: boolean
           completed_at?: string | null
           context_text?: string | null
           conversation_id?: string
+          correct_answer?: string | null
           corrected_text?: string | null
           created_at?: string
           display_order?: number
+          exercise_generated_at?: string | null
+          exercise_instructions?: string | null
+          exercise_options?: Json | null
+          exercise_prompt?: string | null
           exercise_type?: string | null
           explanation_pt?: string | null
           id?: string
@@ -242,9 +282,17 @@ export type Database = {
           original_text?: string | null
           review_id?: string
           score?: number | null
+          second_acceptable_answers?: Json
+          second_correct_answer?: string | null
+          second_exercise_options?: Json | null
+          second_exercise_prompt?: string | null
+          second_exercise_type?: string | null
+          stage?: string
           translation_pt?: string | null
           type?: string
           user_answer?: string | null
+          user_answer_first?: string | null
+          user_answer_second?: string | null
           user_id?: string
           vocabulary?: Json
         }
