@@ -679,24 +679,25 @@ export const ensureItemExercises = createServerFn({ method: "POST" })
         explanation_pt: item.explanation_pt,
         category: item.category,
       });
-      const patch: Record<string, unknown> = {
+      const patch: ItemUpdate = {
         exercise_generated_at: new Date().toISOString(),
       };
       if (first) {
         patch.exercise_type = first.type;
         patch.exercise_prompt = first.prompt;
         patch.exercise_instructions = first.instructions ?? null;
-        patch.exercise_options = first.options ?? null;
+        patch.exercise_options = (first.options ?? null) as ItemUpdate["exercise_options"];
         patch.correct_answer = first.correct_answer;
-        patch.acceptable_answers = first.acceptable_answers ?? [];
+        patch.acceptable_answers = (first.acceptable_answers ?? []) as ItemUpdate["acceptable_answers"];
       }
       if (second) {
         patch.second_exercise_type = second.type;
         patch.second_exercise_prompt = second.prompt;
-        patch.second_exercise_options = second.options ?? null;
+        patch.second_exercise_options = (second.options ?? null) as ItemUpdate["second_exercise_options"];
         patch.second_correct_answer = second.correct_answer;
-        patch.second_acceptable_answers = second.acceptable_answers ?? [];
+        patch.second_acceptable_answers = (second.acceptable_answers ?? []) as ItemUpdate["second_acceptable_answers"];
       }
+
       const { data: updated } = await context.supabase
         .from("conversation_review_items")
         .update(patch)
