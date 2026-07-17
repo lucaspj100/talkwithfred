@@ -117,6 +117,14 @@ export function RealtimeConversation({
     onVoiceActiveChange?.(voiceIsActive);
   }, [voiceIsActive, onVoiceActiveChange]);
 
+  // Expose stop() to parent so the "Encerrar" button can trigger a clean disconnect
+  // (close peer connection, stop microphone tracks, cancel audio) before navigating.
+  useEffect(() => {
+    registerEnd?.(stop);
+    return () => registerEnd?.(null);
+  }, [registerEnd, stop]);
+
+
   const effectiveMouthLevel = audioPlaying && !userSpeaking ? mouthLevel : 0;
   const effectiveMouthSource = audioPlaying && !userSpeaking ? mouthSource : "none";
   const effectiveAvatarStatus = audioPlaying && !userSpeaking ? "speaking" : avatarStatus(state);
