@@ -26,6 +26,8 @@ function FillInBlankPage() {
   const gen = useServerFn(generateFillBlank);
   const submit = useServerFn(submitPracticeResult);
 
+  const { play } = useExerciseFeedback();
+
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<FillBlankItem[]>([]);
   const [idx, setIdx] = useState(0);
@@ -50,7 +52,9 @@ function FillInBlankPage() {
   function pick(opt: string) {
     if (selected) return;
     setSelected(opt);
-    if (opt === current.answer) setCorrectCount((c) => c + 1);
+    const isCorrect = opt === current.answer;
+    if (isCorrect) setCorrectCount((c) => c + 1);
+    play(isCorrect ? "correct" : "incorrect", `${idx}`);
   }
 
   async function next() {
@@ -63,6 +67,7 @@ function FillInBlankPage() {
     try {
       const r = await submit({ data: { activity: "fill_in_blank", total: items.length, correct: correctCount } });
       setResult({ xp_earned: r.xp_earned, xp: r.xp, streak_days: r.streak_days });
+      play("completed", "fib-done");
     } catch (e) {
       toast.error((e as Error).message);
     }
