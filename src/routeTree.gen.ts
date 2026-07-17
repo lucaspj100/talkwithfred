@@ -41,6 +41,9 @@ import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/publi
 import { Route as ApiAiUsageRecordRouteImport } from './routes/api/ai-usage/record'
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
 import { Route as AuthenticatedRevisoesReviewIdRouteImport } from './routes/_authenticated/revisoes.$reviewId'
+import { Route as AuthenticatedPracticeVocabularioRouteImport } from './routes/_authenticated/practice.vocabulario'
+import { Route as AuthenticatedPracticeTodayRouteImport } from './routes/_authenticated/practice.today'
+import { Route as AuthenticatedPracticeHistoricoRouteImport } from './routes/_authenticated/practice.historico'
 import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
 import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
 import { Route as AuthenticatedAssinaturaRetornoRouteImport } from './routes/_authenticated/assinatura.retorno'
@@ -219,6 +222,24 @@ const AuthenticatedRevisoesReviewIdRoute =
     path: '/revisoes/$reviewId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPracticeVocabularioRoute =
+  AuthenticatedPracticeVocabularioRouteImport.update({
+    id: '/vocabulario',
+    path: '/vocabulario',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
+const AuthenticatedPracticeTodayRoute =
+  AuthenticatedPracticeTodayRouteImport.update({
+    id: '/today',
+    path: '/today',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
+const AuthenticatedPracticeHistoricoRoute =
+  AuthenticatedPracticeHistoricoRouteImport.update({
+    id: '/historico',
+    path: '/historico',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
 const AuthenticatedPracticeFillInBlankRoute =
   AuthenticatedPracticeFillInBlankRouteImport.update({
     id: '/fill-in-blank',
@@ -326,6 +347,9 @@ export interface FileRoutesByFullPath {
   '/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/practice/historico': typeof AuthenticatedPracticeHistoricoRoute
+  '/practice/today': typeof AuthenticatedPracticeTodayRoute
+  '/practice/vocabulario': typeof AuthenticatedPracticeVocabularioRoute
   '/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
@@ -370,6 +394,9 @@ export interface FileRoutesByTo {
   '/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
   '/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/practice/historico': typeof AuthenticatedPracticeHistoricoRoute
+  '/practice/today': typeof AuthenticatedPracticeTodayRoute
+  '/practice/vocabulario': typeof AuthenticatedPracticeVocabularioRoute
   '/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
@@ -418,6 +445,9 @@ export interface FileRoutesById {
   '/_authenticated/assinatura/retorno': typeof AuthenticatedAssinaturaRetornoRoute
   '/_authenticated/chat/$conversationId': typeof AuthenticatedChatConversationIdRouteWithChildren
   '/_authenticated/practice/fill-in-blank': typeof AuthenticatedPracticeFillInBlankRoute
+  '/_authenticated/practice/historico': typeof AuthenticatedPracticeHistoricoRoute
+  '/_authenticated/practice/today': typeof AuthenticatedPracticeTodayRoute
+  '/_authenticated/practice/vocabulario': typeof AuthenticatedPracticeVocabularioRoute
   '/_authenticated/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
@@ -466,6 +496,9 @@ export interface FileRouteTypes {
     | '/assinatura/retorno'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
+    | '/practice/historico'
+    | '/practice/today'
+    | '/practice/vocabulario'
     | '/revisoes/$reviewId'
     | '/settings/onboarding'
     | '/api/ai-usage/record'
@@ -510,6 +543,9 @@ export interface FileRouteTypes {
     | '/assinatura/retorno'
     | '/chat/$conversationId'
     | '/practice/fill-in-blank'
+    | '/practice/historico'
+    | '/practice/today'
+    | '/practice/vocabulario'
     | '/revisoes/$reviewId'
     | '/settings/onboarding'
     | '/api/ai-usage/record'
@@ -557,6 +593,9 @@ export interface FileRouteTypes {
     | '/_authenticated/assinatura/retorno'
     | '/_authenticated/chat/$conversationId'
     | '/_authenticated/practice/fill-in-blank'
+    | '/_authenticated/practice/historico'
+    | '/_authenticated/practice/today'
+    | '/_authenticated/practice/vocabulario'
     | '/_authenticated/revisoes/$reviewId'
     | '/_authenticated/settings/onboarding'
     | '/api/ai-usage/record'
@@ -824,6 +863,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRevisoesReviewIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/practice/vocabulario': {
+      id: '/_authenticated/practice/vocabulario'
+      path: '/vocabulario'
+      fullPath: '/practice/vocabulario'
+      preLoaderRoute: typeof AuthenticatedPracticeVocabularioRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
+    '/_authenticated/practice/today': {
+      id: '/_authenticated/practice/today'
+      path: '/today'
+      fullPath: '/practice/today'
+      preLoaderRoute: typeof AuthenticatedPracticeTodayRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
+    '/_authenticated/practice/historico': {
+      id: '/_authenticated/practice/historico'
+      path: '/historico'
+      fullPath: '/practice/historico'
+      preLoaderRoute: typeof AuthenticatedPracticeHistoricoRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
     '/_authenticated/practice/fill-in-blank': {
       id: '/_authenticated/practice/fill-in-blank'
       path: '/fill-in-blank'
@@ -986,11 +1046,17 @@ const AuthenticatedAssinaturaRouteWithChildren =
 
 interface AuthenticatedPracticeRouteChildren {
   AuthenticatedPracticeFillInBlankRoute: typeof AuthenticatedPracticeFillInBlankRoute
+  AuthenticatedPracticeHistoricoRoute: typeof AuthenticatedPracticeHistoricoRoute
+  AuthenticatedPracticeTodayRoute: typeof AuthenticatedPracticeTodayRoute
+  AuthenticatedPracticeVocabularioRoute: typeof AuthenticatedPracticeVocabularioRoute
   AuthenticatedPracticeIndexRoute: typeof AuthenticatedPracticeIndexRoute
 }
 
 const AuthenticatedPracticeRouteChildren: AuthenticatedPracticeRouteChildren = {
   AuthenticatedPracticeFillInBlankRoute: AuthenticatedPracticeFillInBlankRoute,
+  AuthenticatedPracticeHistoricoRoute: AuthenticatedPracticeHistoricoRoute,
+  AuthenticatedPracticeTodayRoute: AuthenticatedPracticeTodayRoute,
+  AuthenticatedPracticeVocabularioRoute: AuthenticatedPracticeVocabularioRoute,
   AuthenticatedPracticeIndexRoute: AuthenticatedPracticeIndexRoute,
 }
 
