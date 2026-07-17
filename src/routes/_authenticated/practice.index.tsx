@@ -184,6 +184,37 @@ function TrainingHome() {
   );
 }
 
+function ModeCard({
+  to,
+  search,
+  icon,
+  title,
+  desc,
+}: {
+  to: string;
+  search: Record<string, string>;
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <Link
+      to={to}
+      search={search}
+      className="group rounded-2xl border border-border bg-card/60 p-4 transition hover:border-primary/60 hover:bg-card"
+    >
+      <div className="flex items-center gap-2 text-primary">
+        {icon}
+        <span className="font-medium text-foreground">{title}</span>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">{desc}</p>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs text-primary opacity-0 transition group-hover:opacity-100">
+        Começar <ArrowRight className="size-3" />
+      </span>
+    </Link>
+  );
+}
+
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-border bg-card/60 p-4">
