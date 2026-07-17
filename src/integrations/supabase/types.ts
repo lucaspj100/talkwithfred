@@ -578,6 +578,119 @@ export type Database = {
         }
         Relationships: []
       }
+      free_practice_attempts: {
+        Row: {
+          attempts: number
+          correct: boolean
+          correct_snapshot: string
+          created_at: string
+          exercise_type: string
+          id: string
+          prompt_snapshot: string
+          response_time_ms: number | null
+          session_id: string
+          source_id: string | null
+          source_type: string
+          used_ai_fallback: boolean
+          user_answer: string | null
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          correct?: boolean
+          correct_snapshot: string
+          created_at?: string
+          exercise_type: string
+          id?: string
+          prompt_snapshot: string
+          response_time_ms?: number | null
+          session_id: string
+          source_id?: string | null
+          source_type: string
+          used_ai_fallback?: boolean
+          user_answer?: string | null
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          correct?: boolean
+          correct_snapshot?: string
+          created_at?: string
+          exercise_type?: string
+          id?: string
+          prompt_snapshot?: string
+          response_time_ms?: number | null
+          session_id?: string
+          source_id?: string | null
+          source_type?: string
+          used_ai_fallback?: boolean
+          user_answer?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "free_practice_attempts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "free_practice_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      free_practice_sessions: {
+        Row: {
+          ai_fallback_count: number
+          correct_answers: number
+          created_at: string
+          ended_at: string | null
+          id: string
+          incorrect_answers: number
+          level: string | null
+          mode: string
+          started_at: string
+          time_limit_seconds: number | null
+          topic: string | null
+          total_answered: number
+          updated_at: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          ai_fallback_count?: number
+          correct_answers?: number
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          incorrect_answers?: number
+          level?: string | null
+          mode: string
+          started_at?: string
+          time_limit_seconds?: number | null
+          topic?: string | null
+          total_answered?: number
+          updated_at?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          ai_fallback_count?: number
+          correct_answers?: number
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          incorrect_answers?: number
+          level?: string | null
+          mode?: string
+          started_at?: string
+          time_limit_seconds?: number | null
+          topic?: string | null
+          total_answered?: number
+          updated_at?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           already_lost_opportunity: string | null
@@ -766,6 +879,63 @@ export type Database = {
           },
         ]
       }
+      practice_exercise_bank: {
+        Row: {
+          acceptable_answers: Json
+          correct_answer: string
+          created_at: string
+          difficulty: number
+          exercise_type: string
+          explanation_pt: string | null
+          grammar_tag: string | null
+          id: string
+          instructions: string | null
+          is_active: boolean
+          level: string
+          options: Json
+          prompt: string
+          topic: string
+          updated_at: string
+          vocabulary_tag: string | null
+        }
+        Insert: {
+          acceptable_answers?: Json
+          correct_answer: string
+          created_at?: string
+          difficulty?: number
+          exercise_type: string
+          explanation_pt?: string | null
+          grammar_tag?: string | null
+          id?: string
+          instructions?: string | null
+          is_active?: boolean
+          level: string
+          options?: Json
+          prompt: string
+          topic?: string
+          updated_at?: string
+          vocabulary_tag?: string | null
+        }
+        Update: {
+          acceptable_answers?: Json
+          correct_answer?: string
+          created_at?: string
+          difficulty?: number
+          exercise_type?: string
+          explanation_pt?: string | null
+          grammar_tag?: string | null
+          id?: string
+          instructions?: string | null
+          is_active?: boolean
+          level?: string
+          options?: Json
+          prompt?: string
+          topic?: string
+          updated_at?: string
+          vocabulary_tag?: string | null
+        }
+        Relationships: []
+      }
       practice_sessions: {
         Row: {
           activity: string
@@ -793,6 +963,51 @@ export type Database = {
           items_total?: number
           user_id?: string
           xp_earned?: number
+        }
+        Relationships: []
+      }
+      practice_templates: {
+        Row: {
+          answer_rule: Json
+          created_at: string
+          exercise_type: string
+          explanation_pt: string | null
+          grammar_tag: string | null
+          id: string
+          is_active: boolean
+          level: string
+          template_text: string
+          template_variables: Json
+          topic: string
+          updated_at: string
+        }
+        Insert: {
+          answer_rule?: Json
+          created_at?: string
+          exercise_type: string
+          explanation_pt?: string | null
+          grammar_tag?: string | null
+          id?: string
+          is_active?: boolean
+          level: string
+          template_text: string
+          template_variables?: Json
+          topic?: string
+          updated_at?: string
+        }
+        Update: {
+          answer_rule?: Json
+          created_at?: string
+          exercise_type?: string
+          explanation_pt?: string | null
+          grammar_tag?: string | null
+          id?: string
+          is_active?: boolean
+          level?: string
+          template_text?: string
+          template_variables?: Json
+          topic?: string
+          updated_at?: string
         }
         Relationships: []
       }
