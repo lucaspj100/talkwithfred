@@ -205,9 +205,11 @@ export function RealtimeConversation({
           {muted ? <MicOff className="mr-1 size-4" /> : <Mic className="mr-1 size-4" />}
           {muted ? "Ativar microfone" : "Silenciar"}
         </Button>
-        <Button variant="ghost" size="sm" onClick={stop}>
-          <PhoneOff className="mr-1 size-4" /> Encerrar
-        </Button>
+        {!hideEndButton && (
+          <Button variant="ghost" size="sm" onClick={stop}>
+            <PhoneOff className="mr-1 size-4" /> Encerrar
+          </Button>
+        )}
         <Button variant="ghost" size="sm" onClick={onSwitchToText}>
           <Keyboard className="mr-1 size-4" /> Prefiro digitar
         </Button>
