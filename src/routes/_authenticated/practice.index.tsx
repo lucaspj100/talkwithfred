@@ -174,5 +174,3 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-// Prevent unused import warnings in some builds
-export const _keep = Loader2;
