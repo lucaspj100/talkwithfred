@@ -4,11 +4,12 @@ import { getMyProfile, updateSpeakingSpeed } from "@/lib/profile.functions";
 import { listConversations, createConversation } from "@/lib/conversations.functions";
 import { getMyStats } from "@/lib/learning.functions";
 import { getPendingReviewsSummary } from "@/lib/reviews.functions";
+import { getTodayTrainingSummary } from "@/lib/training.functions";
 import { MODES, type Mode } from "@/lib/fred-prompt";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X, CreditCard, User as UserIcon, Loader2, RefreshCw } from "lucide-react";
+import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X, CreditCard, User as UserIcon, Loader2, RefreshCw, Trophy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { FredBrand } from "@/components/FredBrand";
@@ -29,12 +30,13 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   loader: async () => {
     const me = await getMyProfile();
     if (!me.userProfile) throw redirect({ to: "/onboarding" });
-    const [convs, stats, reviews] = await Promise.all([
+    const [convs, stats, reviews, today] = await Promise.all([
       listConversations(),
       getMyStats(),
       getPendingReviewsSummary().catch(() => ({ count: 0, latest: null })),
+      getTodayTrainingSummary().catch(() => null),
     ]);
-    return { me, convs, stats, reviews };
+    return { me, convs, stats, reviews, today };
   },
   component: Dashboard,
 });
@@ -44,7 +46,7 @@ const LABEL: Record<string, string> = {
 };
 
 function Dashboard() {
-  const { me, convs, stats, reviews } = Route.useLoaderData();
+  const { me, convs, stats, reviews, today } = Route.useLoaderData();
   const navigate = useNavigate();
   const create = useServerFn(createConversation);
   const [picking, setPicking] = useState(false);
@@ -222,6 +224,8 @@ function Dashboard() {
       </div>
 
       <SubscriptionSummaryCard />
+
+      <TrainingShortcut today={today} />
 
       {reviews.count > 0 && reviews.latest && (
         <ReviewShortcut latest={reviews.latest} count={reviews.count} />
@@ -566,6 +570,75 @@ function ReviewShortcut({ latest, count }: { latest: ReviewShortcutLatest; count
       </div>
       <div className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary">
         <span className="hidden sm:inline">{cta}</span>
+        <ChevronRight className="size-5" />
+      </div>
+    </Link>
+  );
+}
+
+type TodaySummary = {
+  id: string;
+  status: "ready" | "in_progress" | "completed";
+  total_items: number;
+  completed_items: number;
+  correct_items: number;
+  estimated_minutes: number;
+} | null;
+
+function TrainingShortcut({ today }: { today: TodaySummary }) {
+  const status = today?.status ?? null;
+  const total = today?.total_items ?? 0;
+  const completed = today?.completed_items ?? 0;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  if (status === "completed") {
+    return (
+      <Link
+        to="/practice"
+        className="mt-6 flex items-center justify-between gap-3 rounded-3xl border border-border bg-card/40 p-5 transition hover:border-primary/40 hover:bg-card/60"
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-500">
+            <Trophy className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-emerald-500">Treino de hoje</p>
+            <p className="font-medium">Concluído · {today?.correct_items ?? 0}/{total} acertos</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">Volte amanhã para o próximo treino.</p>
+          </div>
+        </div>
+        <ChevronRight className="size-5 text-primary" />
+      </Link>
+    );
+  }
+
+  const title = status === "in_progress" ? "Continue seu treino de hoje" : "Treino de hoje pronto";
+  const desc = total > 0
+    ? `${total} exercícios personalizados · ~${today?.estimated_minutes ?? 5} min`
+    : "Poucos minutos, feito pra você.";
+
+  return (
+    <Link
+      to="/practice/today"
+      className="mt-6 flex items-center justify-between gap-3 rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-5 transition hover:border-primary/60"
+    >
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <Target className="size-5" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Treino de hoje</p>
+          <p className="truncate font-medium">{title}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{desc}</p>
+          {status === "in_progress" && (
+            <div className="mt-2 h-1 w-40 overflow-hidden rounded-full bg-muted">
+              <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary">
+        <span className="hidden sm:inline">{status === "in_progress" ? "Continuar" : "Começar"}</span>
         <ChevronRight className="size-5" />
       </div>
     </Link>

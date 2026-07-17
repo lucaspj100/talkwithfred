@@ -1,96 +1,166 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { getMyStats, listLearningItems } from "@/lib/learning.functions";
-import { Flame, Sparkles, BookOpen, MessageSquareQuote, ClipboardCheck, ArrowRight, Zap } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { getTodayTrainingSummary, getFocusPoints, listMyVocabulary } from "@/lib/training.functions";
+import { getMyStats } from "@/lib/learning.functions";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, BookOpen, ClipboardCheck, Flame, History, Sparkles, Target, Zap } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/practice/")({
   loader: async () => {
-    const [stats, errors, vocab] = await Promise.all([
+    const [stats, today, focus, vocab] = await Promise.all([
       getMyStats(),
-      listLearningItems({ data: { kind: "error", limit: 5 } }),
-      listLearningItems({ data: { kind: "vocabulary", limit: 5 } }),
+      getTodayTrainingSummary().catch(() => null),
+      getFocusPoints().catch(() => []),
+      listMyVocabulary({ data: { limit: 5 } }).catch(() => []),
     ]);
-    return { stats, errors, vocab };
+    return { stats, today, focus, vocab };
   },
-  component: PracticeIndex,
+  component: TrainingHome,
 });
 
-function PracticeIndex() {
-  const { stats, errors, vocab } = Route.useLoaderData();
+function TrainingHome() {
+  const initial = Route.useLoaderData();
+  const navigate = useNavigate();
+  const getToday = useServerFn(getTodayTrainingSummary);
+  const { data: today } = useQuery({
+    queryKey: ["today-training"],
+    queryFn: () => getToday(),
+    initialData: initial.today,
+    staleTime: 5_000,
+  });
+
+  const { stats, focus, vocab } = initial;
+
+  const total = today?.total_items ?? 0;
+  const completed = today?.completed_items ?? 0;
+  const status = today?.status ?? null;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  const cta =
+    status === "completed"
+      ? "Treino de hoje concluído"
+      : status === "in_progress"
+        ? "Continuar treino"
+        : "Começar treino";
+
   return (
-    <div>
+    <div className="pb-24 md:pb-6">
       <div className="mb-6">
-        <h1 className="font-display text-3xl font-bold md:text-4xl">Praticar sem falar</h1>
+        <h1 className="font-display text-3xl font-bold md:text-4xl">Treinos</h1>
         <p className="mt-2 text-muted-foreground">
-          Treinos rápidos e silenciosos. Perfeitos para metrô, ônibus, trabalho ou intervalo.
+          Pratique seus pontos mais importantes em poucos minutos.
         </p>
       </div>
 
+      {/* Stats */}
       <div className="grid gap-3 sm:grid-cols-3">
         <StatCard icon={<Zap className="size-4" />} label="XP" value={stats.xp} />
         <StatCard icon={<Flame className="size-4" />} label="Streak" value={`${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"}`} />
         <StatCard icon={<Sparkles className="size-4" />} label="Recorde" value={`${stats.longest_streak} dia${stats.longest_streak === 1 ? "" : "s"}`} />
       </div>
 
-      <h2 className="mt-10 font-display text-xl font-bold">Atividades</h2>
-      <div className="mt-3 grid gap-3 md:grid-cols-2">
-        <ActivityCard
-          to="/practice/fill-in-blank"
-          title="Completar frase"
-          desc="Escolha a palavra certa para preencher a lacuna. IA monta os exercícios com base nos seus erros recentes."
-          icon={<ClipboardCheck className="size-5" />}
-          ready
-        />
-        <ActivityCard
-          to="/practice"
-          title="Montar frase"
-          desc="Coloque as palavras na ordem certa."
-          icon={<MessageSquareQuote className="size-5" />}
-        />
-        <ActivityCard
-          to="/practice"
-          title="Tradução inteligente"
-          desc="Traduza do português para o inglês com feedback da IA."
-          icon={<BookOpen className="size-5" />}
-        />
-        <ActivityCard
-          to="/practice"
-          title="Quiz de gramática"
-          desc="Perguntas rápidas de múltipla escolha."
-          icon={<Sparkles className="size-5" />}
-        />
-      </div>
+      {/* Today's training */}
+      <section className="mt-8 rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-6">
+        <p className="text-xs uppercase text-primary">Treino de hoje</p>
+        {status === "completed" ? (
+          <>
+            <h2 className="mt-1 font-display text-2xl font-bold">Você já concluiu o treino de hoje 🎉</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {completed} de {total} exercícios · {today?.correct_items ?? 0} acertos
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button onClick={() => navigate({ to: "/practice/today" })}>Ver resultado</Button>
+              <Button variant="outline" onClick={() => navigate({ to: "/dashboard" })}>
+                Voltar ao início
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-1 font-display text-2xl font-bold">
+              {total > 0 ? `${total} exercícios · ~${today?.estimated_minutes ?? 5} min` : "Seu treino personalizado está pronto"}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {total > 0 ? "Conteúdo baseado nas suas conversas com Fred e reforço geral." : "Vamos montar um treino do seu jeito quando você começar."}
+            </p>
+            {status === "in_progress" && (
+              <div className="mt-4">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{completed} de {total} concluídos</span>
+                  <span>{pct}%</span>
+                </div>
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            )}
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button size="lg" onClick={() => navigate({ to: "/practice/today" })}>
+                {cta} <ArrowRight className="ml-1 size-4" />
+              </Button>
+            </div>
+          </>
+        )}
+      </section>
 
-      <div className="mt-10 grid gap-4 md:grid-cols-2">
-        <Panel title={`Meus erros (${stats.errors_count})`} subtitle="Capturados nas conversas com Fred.">
-          {errors.length === 0 ? (
-            <Empty text="Sem erros registrados ainda. Converse com Fred para começarmos a capturar." />
-          ) : (
-            <ul className="divide-y divide-border">
-              {errors.map((e: typeof errors[number]) => (
-                <li key={e.id} className="py-3 text-sm">
-                  <p className="line-through text-muted-foreground">{e.original}</p>
-                  <p className="font-medium text-foreground">{e.correction}</p>
-                  {e.explanation_pt && <p className="mt-1 text-xs text-muted-foreground">{e.explanation_pt}</p>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-        <Panel title={`Vocabulário (${stats.vocabulary_count})`} subtitle="Palavras novas que Fred usou com você.">
-          {vocab.length === 0 ? (
-            <Empty text="Sem vocabulário ainda. Quanto mais conversas, mais palavras." />
-          ) : (
-            <ul className="divide-y divide-border">
-              {vocab.map((v: typeof vocab[number]) => (
-                <li key={v.id} className="py-3 text-sm">
-                  <p className="font-medium">{v.original}</p>
-                  {v.explanation_pt && <p className="text-xs text-muted-foreground">{v.explanation_pt}</p>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </Panel>
-      </div>
+      {/* Focus points */}
+      <section className="mt-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-display text-xl font-bold flex items-center gap-2"><Target className="size-5 text-primary" /> Pontos para reforçar</h2>
+        </div>
+        {focus.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+            Conforme você conversar com Fred, os pontos que precisam de reforço aparecem aqui.
+          </div>
+        ) : (
+          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card/40">
+            {focus.map((f: typeof focus[number]) => (
+              <li key={f.id} className="p-4">
+                <p className="line-through text-muted-foreground text-sm">{f.original}</p>
+                {f.correction && <p className="font-medium">{f.correction}</p>}
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {(f.incorrect_count ?? 0)} erros · {(f.total_attempts ?? 0)} tentativas · nível {f.mastery_level ?? 0}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Vocabulary preview */}
+      <section className="mt-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-display text-xl font-bold flex items-center gap-2"><BookOpen className="size-5 text-primary" /> Meu vocabulário</h2>
+          <Link to="/practice/vocabulario" className="text-sm text-primary hover:underline">Ver tudo</Link>
+        </div>
+        {vocab.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border p-6 text-sm text-muted-foreground">
+            Palavras novas que Fred usa nas conversas aparecem aqui.
+          </div>
+        ) : (
+          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card/40">
+            {vocab.map((v: typeof vocab[number]) => (
+              <li key={v.id} className="p-4">
+                <p className="font-medium">{v.original}</p>
+                {v.explanation_pt && <p className="text-xs text-muted-foreground">{v.explanation_pt}</p>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Secondary actions */}
+      <section className="mt-8 grid gap-3 md:grid-cols-2">
+        <Link to="/practice/historico" className="rounded-2xl border border-border bg-card/60 p-4 hover:border-primary/60">
+          <div className="flex items-center gap-2 text-primary"><History className="size-5" /><span className="font-medium">Histórico de treinos</span></div>
+          <p className="mt-1 text-xs text-muted-foreground">Veja seus treinos anteriores.</p>
+        </Link>
+        <Link to="/revisoes" className="rounded-2xl border border-border bg-card/60 p-4 hover:border-primary/60">
+          <div className="flex items-center gap-2 text-primary"><ClipboardCheck className="size-5" /><span className="font-medium">Minhas revisões</span></div>
+          <p className="mt-1 text-xs text-muted-foreground">Revise pontos específicos das conversas.</p>
+        </Link>
+      </section>
     </div>
   );
 }
@@ -104,39 +174,3 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-function ActivityCard({ to, title, desc, icon, ready }: { to: string; title: string; desc: string; icon: React.ReactNode; ready?: boolean }) {
-  const inner = (
-    <div className={`group rounded-2xl border border-border bg-card/60 p-5 text-left transition ${ready ? "hover:border-primary/60 hover:bg-card cursor-pointer" : "opacity-60"}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-primary">{icon}<p className="font-display text-base font-semibold text-foreground">{title}</p></div>
-        {!ready && <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] uppercase text-muted-foreground">em breve</span>}
-      </div>
-      <p className="mt-2 text-sm text-muted-foreground">{desc}</p>
-      {ready && (
-        <span className="mt-3 inline-flex items-center text-xs text-primary">
-          Começar <ArrowRight className="ml-1 size-3" />
-        </span>
-      )}
-    </div>
-  );
-  if (!ready) return inner;
-  return (
-    <Link to={to} className="block">
-      {inner}
-    </Link>
-  );
-}
-
-function Panel({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-border bg-card/40 p-5">
-      <h3 className="font-display text-base font-semibold">{title}</h3>
-      <p className="text-xs text-muted-foreground">{subtitle}</p>
-      <div className="mt-3">{children}</div>
-    </div>
-  );
-}
-
-function Empty({ text }: { text: string }) {
-  return <p className="text-sm text-muted-foreground">{text}</p>;
-}

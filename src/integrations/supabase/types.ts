@@ -411,6 +411,137 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_training_items: {
+        Row: {
+          acceptable_answers: Json | null
+          attempts: number
+          completed: boolean
+          completed_at: string | null
+          correct_answer: string | null
+          created_at: string
+          display_order: number
+          exercise_type: string
+          explanation_pt: string | null
+          hint: string | null
+          id: string
+          instructions: string | null
+          options: Json | null
+          prompt: string
+          score: number | null
+          session_id: string
+          source_id: string | null
+          source_type: string
+          translation_pt: string | null
+          user_answer: string | null
+          user_id: string
+        }
+        Insert: {
+          acceptable_answers?: Json | null
+          attempts?: number
+          completed?: boolean
+          completed_at?: string | null
+          correct_answer?: string | null
+          created_at?: string
+          display_order?: number
+          exercise_type: string
+          explanation_pt?: string | null
+          hint?: string | null
+          id?: string
+          instructions?: string | null
+          options?: Json | null
+          prompt: string
+          score?: number | null
+          session_id: string
+          source_id?: string | null
+          source_type: string
+          translation_pt?: string | null
+          user_answer?: string | null
+          user_id: string
+        }
+        Update: {
+          acceptable_answers?: Json | null
+          attempts?: number
+          completed?: boolean
+          completed_at?: string | null
+          correct_answer?: string | null
+          created_at?: string
+          display_order?: number
+          exercise_type?: string
+          explanation_pt?: string | null
+          hint?: string | null
+          id?: string
+          instructions?: string | null
+          options?: Json | null
+          prompt?: string
+          score?: number | null
+          session_id?: string
+          source_id?: string | null
+          source_type?: string
+          translation_pt?: string | null
+          user_answer?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_training_items_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "daily_training_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_training_sessions: {
+        Row: {
+          completed_at: string | null
+          completed_items: number
+          correct_items: number
+          created_at: string
+          estimated_minutes: number
+          id: string
+          is_extra: boolean
+          started_at: string | null
+          status: string
+          total_items: number
+          training_date: string
+          updated_at: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_items?: number
+          correct_items?: number
+          created_at?: string
+          estimated_minutes?: number
+          id?: string
+          is_extra?: boolean
+          started_at?: string | null
+          status?: string
+          total_items?: number
+          training_date: string
+          updated_at?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          completed_at?: string | null
+          completed_items?: number
+          correct_items?: number
+          created_at?: string
+          estimated_minutes?: number
+          id?: string
+          is_extra?: boolean
+          started_at?: string | null
+          status?: string
+          total_items?: number
+          training_date?: string
+          updated_at?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
       finance_settings: {
         Row: {
           alert_cost_per_user_brl: number
@@ -509,44 +640,65 @@ export type Database = {
       }
       learning_items: {
         Row: {
+          active: boolean
           conversation_id: string | null
+          correct_streak: number
           correction: string | null
           created_at: string
           explanation_pt: string | null
           id: string
+          incorrect_count: number
           kind: Database["public"]["Enums"]["learning_item_kind"]
+          last_practiced_at: string | null
           mastered_at: string | null
+          mastery_level: number
+          next_review_at: string | null
           original: string
           source_message_id: string | null
           times_practiced: number
+          total_attempts: number
           updated_at: string
           user_id: string
         }
         Insert: {
+          active?: boolean
           conversation_id?: string | null
+          correct_streak?: number
           correction?: string | null
           created_at?: string
           explanation_pt?: string | null
           id?: string
+          incorrect_count?: number
           kind: Database["public"]["Enums"]["learning_item_kind"]
+          last_practiced_at?: string | null
           mastered_at?: string | null
+          mastery_level?: number
+          next_review_at?: string | null
           original: string
           source_message_id?: string | null
           times_practiced?: number
+          total_attempts?: number
           updated_at?: string
           user_id: string
         }
         Update: {
+          active?: boolean
           conversation_id?: string | null
+          correct_streak?: number
           correction?: string | null
           created_at?: string
           explanation_pt?: string | null
           id?: string
+          incorrect_count?: number
           kind?: Database["public"]["Enums"]["learning_item_kind"]
+          last_practiced_at?: string | null
           mastered_at?: string | null
+          mastery_level?: number
+          next_review_at?: string | null
           original?: string
           source_message_id?: string | null
           times_practiced?: number
+          total_attempts?: number
           updated_at?: string
           user_id?: string
         }
