@@ -26,6 +26,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useExerciseFeedback } from "@/hooks/use-exercise-feedback";
+import { SoundToggle } from "@/components/exercise/SoundToggle";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/revisoes/$reviewId")({
@@ -485,6 +487,7 @@ function ExerciseCard({
   const [result, setResult] = useState<{ verdict: Verdict; feedback: string | null; attempts: number } | null>(null);
   const [showAnswer, setShowAnswer] = useState(false);
   const [hint, setHint] = useState(false);
+  const { play } = useExerciseFeedback();
 
   const canSubmit = isChoice ? !!selected : answer.trim().length > 0;
 
@@ -496,6 +499,7 @@ function ExerciseCard({
       const value = isChoice ? (selected as string) : answer.trim();
       const res = await submit({ data: { itemId, stage: stageKey, userAnswer: value } });
       setResult({ verdict: res.verdict as Verdict, feedback: res.feedback_pt, attempts: res.attempts });
+      play(res.verdict === "correct" ? "correct" : res.verdict === "close" ? "close" : "incorrect", `${itemId}:${res.attempts}`);
       if (res.verdict !== "correct" && res.attempts >= 2) setShowAnswer(true);
     } catch (e) {
       toast.error((e as Error).message || "Falha ao verificar resposta.", { duration: 6000 });
@@ -513,9 +517,12 @@ function ExerciseCard({
 
   return (
     <article className="rounded-3xl border border-border bg-card/50 p-5 md:p-6">
-      <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-        <Sparkles className="size-3.5" /> {stageKey === "practice" ? "Praticar" : "Aplicar"}
-        {category && <span className="text-primary/60">· {category}</span>}
+      <div className="flex items-center justify-between gap-2">
+        <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+          <Sparkles className="size-3.5" /> {stageKey === "practice" ? "Praticar" : "Aplicar"}
+          {category && <span className="text-primary/60">· {category}</span>}
+        </div>
+        <SoundToggle />
       </div>
 
       {instructions && <p className="mt-3 text-sm text-muted-foreground">{instructions}</p>}
