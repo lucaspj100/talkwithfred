@@ -791,14 +791,14 @@ export const advanceItemStage = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!item) throw new Error("Item não encontrado");
 
-    const patch: Record<string, unknown> = { stage: data.toStage };
+    const patch: ItemUpdate = { stage: data.toStage };
     if (data.toStage === "done") {
       patch.completed = true;
       patch.completed_at = new Date().toISOString();
-      // Score: correct on first try = 1, second try = 0.6, otherwise 0.3
       const attempts = ((item.attempts_first ?? 0) + (item.attempts_second ?? 0)) as number;
       patch.score = attempts <= 2 ? 1 : attempts <= 4 ? 0.6 : 0.3;
     }
+
     await context.supabase
       .from("conversation_review_items")
       .update(patch)
