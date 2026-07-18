@@ -758,16 +758,17 @@ export function useRealtimeVoice({
     }
     // Coalesce concurrent callers onto a single in-flight open.
     if (openingStreamPromiseRef.current) {
-      if (DEV) console.log("[voice-mic] awaiting in-flight getUserMedia", { attempt: sessionAttemptRef.current });
+      console.error("[MIC_DIAGNOSTIC] awaiting in-flight getUserMedia", { attempt: sessionAttemptRef.current });
       return openingStreamPromiseRef.current;
     }
     if (!navigator.mediaDevices?.getUserMedia) {
+      console.error("[MIC_DIAGNOSTIC] mediaDevices unavailable");
       return Promise.reject(new DOMException("mediaDevices unavailable", "NotSupportedError"));
     }
     const attempt = sessionAttemptRef.current;
     const p = (async () => {
       getUserMediaCountRef.current += 1;
-      if (DEV) console.log("[voice-mic] getUserMedia call", {
+      console.error("[MIC_GET_USER_MEDIA_CALL]", {
         attempt,
         totalCalls: getUserMediaCountRef.current,
       });
@@ -775,11 +776,10 @@ export function useRealtimeVoice({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
       streamRef.current = s;
-      if (DEV) {
-        for (const t of s.getAudioTracks()) {
-          console.log("[voice-mic] track opened", { attempt, id: t.id, readyState: t.readyState });
-        }
-      }
+      console.error("[MIC_GET_USER_MEDIA_SUCCESS]", {
+        attempt,
+        tracks: s.getAudioTracks().map((t) => ({ id: t.id, readyState: t.readyState })),
+      });
       return s;
     })();
     openingStreamPromiseRef.current = p;
