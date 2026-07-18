@@ -79,6 +79,8 @@ export function useRealtimeVoice({
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const connectingRef = useRef(false);
+  const isStartingRef = useRef(false);
+  const getUserMediaCountRef = useRef(0);
   const stateRef = useRef<VoiceState>("idle");
   const currentAssistantIdRef = useRef<string | null>(null);
   const partialAssistantRef = useRef<string>("");
