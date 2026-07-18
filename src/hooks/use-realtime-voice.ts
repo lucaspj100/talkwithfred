@@ -114,6 +114,8 @@ export function useRealtimeVoice({
   useEffect(() => { onUserFinalRef.current = onUserFinalTurn; }, [onUserFinalTurn]);
   useEffect(() => { onAssistantFinalRef.current = onAssistantFinalTurn; }, [onAssistantFinalTurn]);
 
+
+
   const supported =
     typeof window !== "undefined" &&
     typeof RTCPeerConnection !== "undefined" &&
@@ -148,6 +150,29 @@ export function useRealtimeVoice({
     stateRef.current = protectedNext;
     setState(protectedNext);
   }, []);
+
+  // When the app resumes (returning from Android Settings after granting mic
+  // permission, or from the app switcher), clear stale permission errors so
+  // the user can retry without needing to reload. The next tap on "Começar"
+  // will attempt getUserMedia again as the source of truth.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (stateRef.current !== "error") return;
+      if (!pcRef.current && !connectingRef.current) {
+        setErrorMsg(null);
+        setPrioritizedState("idle");
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [setPrioritizedState]);
+
 
   const stopMouthFallback = useCallback(() => {
     if (fallbackMouthRef.current !== null) {
@@ -716,6 +741,9 @@ export function useRealtimeVoice({
 
       let stream: MediaStream;
       try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new DOMException("mediaDevices unavailable", "NotSupportedError");
+        }
         stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
@@ -727,12 +755,25 @@ export function useRealtimeVoice({
           const track = stream.getAudioTracks()[0];
           console.log("[voice-mic-settings]", track?.getSettings());
         }
-      } catch {
-        setErrorMsg("Precisamos de acesso ao microfone para iniciar. Você também pode continuar digitando.");
-          setPrioritizedState("error");
+      } catch (err) {
+        const name = (err as { name?: string } | null)?.name ?? "";
+        let msg = "Não conseguimos iniciar o microfone. Tente novamente.";
+        if (name === "NotAllowedError" || name === "PermissionDeniedError" || name === "SecurityError") {
+          msg = "O acesso ao microfone foi negado. Autorize nas configurações do aplicativo e toque em Começar novamente.";
+        } else if (name === "NotFoundError" || name === "OverconstrainedError" || name === "DevicesNotFoundError") {
+          msg = "Não encontramos um microfone disponível neste aparelho.";
+        } else if (name === "NotReadableError" || name === "TrackStartError") {
+          msg = "O microfone está sendo usado por outro aplicativo. Feche-o e tente novamente.";
+        } else if (name === "NotSupportedError") {
+          msg = "Este dispositivo não permite gravar áudio pelo navegador.";
+        }
+        if (DEV) console.log("[voice-mic-error]", name, err);
+        setErrorMsg(msg);
+        setPrioritizedState("error");
         connectingRef.current = false;
         return;
       }
+
       streamRef.current = stream;
 
       const pc = new RTCPeerConnection();
