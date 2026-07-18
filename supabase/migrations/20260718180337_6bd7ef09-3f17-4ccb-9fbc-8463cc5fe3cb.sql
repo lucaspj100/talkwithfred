@@ -1,0 +1,2 @@
+CREATE POLICY "Admins can view all reviews" ON public.conversation_reviews FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
+CREATE POLICY "Admins can view all review items" ON public.conversation_review_items FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
