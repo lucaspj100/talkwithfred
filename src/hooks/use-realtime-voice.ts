@@ -925,13 +925,15 @@ export function useRealtimeVoice({
         }
       };
       connectingRef.current = false;
+      isStartingRef.current = false;
     } catch (e) {
       console.error("[voice] start failed", e);
       setErrorMsg((e as Error).message || "Não foi possível iniciar a conversa por voz.");
       setPrioritizedState("error");
       cleanup();
+      isStartingRef.current = false;
     }
-  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, markFredAudioPlaying, finishFredAudioPlayback, isAudioActuallyPlaying, setPrioritizedState]);
+  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, markFredAudioPlaying, finishFredAudioPlayback, isAudioActuallyPlaying, setPrioritizedState, requestMicStream, stopMicrophoneStream]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
