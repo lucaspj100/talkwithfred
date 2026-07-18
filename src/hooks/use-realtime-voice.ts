@@ -737,29 +737,57 @@ export function useRealtimeVoice({
     }
   }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion, setPrioritizedState, markFredAudioPlaying, schedulePlaybackEndCheck, finishFredAudioPlayback, isAudioActuallyPlaying, onUsage]);
 
-  const requestMicStream = useCallback(async (): Promise<MediaStream> => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      throw new DOMException("mediaDevices unavailable", "NotSupportedError");
-    }
-    // Never keep two live streams. If a previous one is lingering, stop it
-    // fully so the Android WebView releases the mic hardware.
-    if (streamRef.current) {
-      if (DEV) console.log("[voice-mic] previous stream still present, stopping before new request");
-      stopMicrophoneStream();
-      await new Promise((r) => setTimeout(r, 250));
-    }
-    getUserMediaCountRef.current += 1;
-    if (DEV) console.log("[voice-mic] getUserMedia call #", getUserMediaCountRef.current);
-    const s = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    });
-    if (DEV) {
-      for (const t of s.getAudioTracks()) {
-        console.log("[voice-mic] track opened", { id: t.id, readyState: t.readyState });
+  const getOrCreateMicrophoneStream = useCallback((): Promise<MediaStream> => {
+    // Reuse a live stream when possible so we never open the hardware twice.
+    const existing = streamRef.current;
+    if (existing) {
+      const tracks = existing.getAudioTracks();
+      const alive = tracks.some((t) => t.readyState === "live");
+      if (alive) {
+        if (DEV) console.log("[voice-mic] reusing live stream", {
+          attempt: sessionAttemptRef.current,
+          trackIds: tracks.map((t) => t.id),
+        });
+        return Promise.resolve(existing);
       }
+      // Stale stream — release fully before opening a new one.
+      if (DEV) console.log("[voice-mic] existing stream stale, stopping first");
+      for (const t of tracks) { try { t.stop(); } catch { /* ignore */ } }
+      streamRef.current = null;
     }
-    return s;
-  }, [stopMicrophoneStream]);
+    // Coalesce concurrent callers onto a single in-flight open.
+    if (openingStreamPromiseRef.current) {
+      if (DEV) console.log("[voice-mic] awaiting in-flight getUserMedia", { attempt: sessionAttemptRef.current });
+      return openingStreamPromiseRef.current;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      return Promise.reject(new DOMException("mediaDevices unavailable", "NotSupportedError"));
+    }
+    const attempt = sessionAttemptRef.current;
+    const p = (async () => {
+      getUserMediaCountRef.current += 1;
+      if (DEV) console.log("[voice-mic] getUserMedia call", {
+        attempt,
+        totalCalls: getUserMediaCountRef.current,
+      });
+      const s = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+      streamRef.current = s;
+      if (DEV) {
+        for (const t of s.getAudioTracks()) {
+          console.log("[voice-mic] track opened", { attempt, id: t.id, readyState: t.readyState });
+        }
+      }
+      return s;
+    })();
+    openingStreamPromiseRef.current = p;
+    return p.finally(() => {
+      // Clear the in-flight ref only if it's still ours (a later cleanup may
+      // have already nulled it).
+      if (openingStreamPromiseRef.current === p) openingStreamPromiseRef.current = null;
+    });
+  }, []);
 
   const start = useCallback(async () => {
     if (!supported) {
