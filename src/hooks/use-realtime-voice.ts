@@ -432,7 +432,7 @@ export function useRealtimeVoice({
     lastAudioPlayingAtRef.current = null;
     emittedItemIdsRef.current = new Set();
     partialUserItemIdRef.current = null;
-  }, [clearWatchdog, clearPlaybackCheck, clearPlaybackEndCheck, stopMouthMotion]);
+  }, [clearWatchdog, clearPlaybackCheck, clearPlaybackEndCheck, stopMouthMotion, stopMicrophoneStream]);
 
   const stop = useCallback(() => {
     cleanup();
