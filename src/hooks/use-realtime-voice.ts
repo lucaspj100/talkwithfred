@@ -393,12 +393,13 @@ export function useRealtimeVoice({
 
   const stopMicrophoneStream = useCallback(() => {
     const s = streamRef.current;
+    streamRef.current = null;
+    openingStreamPromiseRef.current = null;
     if (!s) return;
     for (const t of s.getTracks()) {
-      if (DEV) console.log("[voice-mic] stopping track", { id: t.id, kind: t.kind, readyState: t.readyState });
+      if (DEV) console.log("[voice-mic] stopping track", { attempt: sessionAttemptRef.current, id: t.id, kind: t.kind, readyState: t.readyState });
       try { t.stop(); } catch { /* ignore */ }
     }
-    streamRef.current = null;
   }, []);
 
   const cleanup = useCallback(() => {
