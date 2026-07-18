@@ -78,6 +78,8 @@ export function useRealtimeVoice({
   const dcRef = useRef<RTCDataChannel | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const openingStreamPromiseRef = useRef<Promise<MediaStream> | null>(null);
+  const sessionAttemptRef = useRef(0);
   const connectingRef = useRef(false);
   const isStartingRef = useRef(false);
   const getUserMediaCountRef = useRef(0);
