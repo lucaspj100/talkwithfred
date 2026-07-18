@@ -151,6 +151,38 @@ export function useRealtimeVoice({
     setState(protectedNext);
   }, []);
 
+  // When the app resumes (returning from Android Settings after granting mic
+  // permission, or from the app switcher), clear stale permission errors so
+  // the user can retry without needing to reload. The next tap on "Começar"
+  // will attempt getUserMedia again as the source of truth.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const onVisible = () => {
+      if (document.visibilityState !== "visible") return;
+      if (stateRef.current !== "error") return;
+      if (!pcRef.current && !connectingRef.current) {
+        setErrorMsg(null);
+        setPrioritizedState("idle");
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, [setPrioritizedState]);
+
+  const stopMouthFallback = useCallback(() => {
+
+    const protectedNext =
+      isFredAudioPlayingRef.current && next !== "ended" && next !== "error"
+        ? "fred-speaking"
+        : next;
+    stateRef.current = protectedNext;
+    setState(protectedNext);
+  }, []);
+
   const stopMouthFallback = useCallback(() => {
     if (fallbackMouthRef.current !== null) {
       window.clearTimeout(fallbackMouthRef.current);
