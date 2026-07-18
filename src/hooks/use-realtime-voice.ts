@@ -734,13 +734,45 @@ export function useRealtimeVoice({
     }
   }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion, setPrioritizedState, markFredAudioPlaying, schedulePlaybackEndCheck, finishFredAudioPlayback, isAudioActuallyPlaying, onUsage]);
 
+  const requestMicStream = useCallback(async (): Promise<MediaStream> => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      throw new DOMException("mediaDevices unavailable", "NotSupportedError");
+    }
+    // Never keep two live streams. If a previous one is lingering, stop it
+    // fully so the Android WebView releases the mic hardware.
+    if (streamRef.current) {
+      if (DEV) console.log("[voice-mic] previous stream still present, stopping before new request");
+      stopMicrophoneStream();
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    getUserMediaCountRef.current += 1;
+    if (DEV) console.log("[voice-mic] getUserMedia call #", getUserMediaCountRef.current);
+    const s = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
+    if (DEV) {
+      for (const t of s.getAudioTracks()) {
+        console.log("[voice-mic] track opened", { id: t.id, readyState: t.readyState });
+      }
+    }
+    return s;
+  }, [stopMicrophoneStream]);
+
   const start = useCallback(async () => {
     if (!supported) {
       setErrorMsg("Seu navegador não suporta conversas por voz em tempo real. Tente Chrome, Edge ou Safari atualizados.");
           setPrioritizedState("error");
       return;
     }
-    if (connectingRef.current || pcRef.current) return;
+    if (isStartingRef.current || connectingRef.current || pcRef.current) {
+      if (DEV) console.log("[voice-mic] duplicate start() blocked", {
+        isStarting: isStartingRef.current,
+        connecting: connectingRef.current,
+        hasPc: !!pcRef.current,
+      });
+      return;
+    }
+    isStartingRef.current = true;
     connectingRef.current = true;
     setErrorMsg(null);
     setResponseError(null);
@@ -752,19 +784,20 @@ export function useRealtimeVoice({
 
       let stream: MediaStream;
       try {
-        if (!navigator.mediaDevices?.getUserMedia) {
-          throw new DOMException("mediaDevices unavailable", "NotSupportedError");
-        }
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-        });
-        if (DEV) {
-          const track = stream.getAudioTracks()[0];
-          console.log("[voice-mic-settings]", track?.getSettings());
+        try {
+          stream = await requestMicStream();
+        } catch (err) {
+          const name = (err as { name?: string } | null)?.name ?? "";
+          if (name === "NotReadableError" || name === "TrackStartError") {
+            // The mic may still be held by a previous session that just tore
+            // down. Fully release and retry exactly once.
+            if (DEV) console.log("[voice-mic] NotReadableError, retrying once after cleanup");
+            stopMicrophoneStream();
+            await new Promise((r) => setTimeout(r, 450));
+            stream = await requestMicStream();
+          } else {
+            throw err;
+          }
         }
       } catch (err) {
         const name = (err as { name?: string } | null)?.name ?? "";
@@ -782,6 +815,7 @@ export function useRealtimeVoice({
         setErrorMsg(msg);
         setPrioritizedState("error");
         connectingRef.current = false;
+        isStartingRef.current = false;
         return;
       }
 
@@ -789,6 +823,7 @@ export function useRealtimeVoice({
 
       const pc = new RTCPeerConnection();
       pcRef.current = pc;
+
 
       let audioEl = audioElRef.current;
       if (!audioEl) {
