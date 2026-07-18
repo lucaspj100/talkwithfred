@@ -414,8 +414,7 @@ export function useRealtimeVoice({
     try { pcRef.current?.getSenders().forEach((s) => s.track?.stop()); } catch { /* ignore */ }
     try { pcRef.current?.close(); } catch { /* ignore */ }
     pcRef.current = null;
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
+    stopMicrophoneStream();
     if (audioElRef.current) {
       try { audioElRef.current.srcObject = null; } catch { /* ignore */ }
       try { audioElRef.current.remove(); } catch { /* ignore */ }
