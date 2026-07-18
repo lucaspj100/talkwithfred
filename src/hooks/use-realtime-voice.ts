@@ -758,7 +758,10 @@ export function useRealtimeVoice({
     }
     // Coalesce concurrent callers onto a single in-flight open.
     if (openingStreamPromiseRef.current) {
-      console.error("[MIC_DIAGNOSTIC] awaiting in-flight getUserMedia", { attempt: sessionAttemptRef.current });
+      console.error("[MIC_DIAGNOSTIC] awaiting in-flight getUserMedia", {
+        attempt: sessionAttemptRef.current,
+        stack: new Error("coalesced getUserMedia caller").stack,
+      });
       return openingStreamPromiseRef.current;
     }
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -766,12 +769,19 @@ export function useRealtimeVoice({
       return Promise.reject(new DOMException("mediaDevices unavailable", "NotSupportedError"));
     }
     const attempt = sessionAttemptRef.current;
+    // Log intent BEFORE assigning the in-flight ref so we can see whether a
+    // second caller is racing us on the same tick.
+    console.error("[MIC_GET_USER_MEDIA_CALL]", {
+      attempt,
+      totalCalls: getUserMediaCountRef.current + 1,
+      stack: new Error("getUserMedia call origin").stack,
+      openingPromiseExists: Boolean(openingStreamPromiseRef.current),
+      streamExists: Boolean(streamRef.current),
+      connecting: connectingRef.current,
+      isStarting: isStartingRef.current,
+    });
     const p = (async () => {
       getUserMediaCountRef.current += 1;
-      console.error("[MIC_GET_USER_MEDIA_CALL]", {
-        attempt,
-        totalCalls: getUserMediaCountRef.current,
-      });
       const s = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
@@ -782,6 +792,7 @@ export function useRealtimeVoice({
       });
       return s;
     })();
+    // CRITICAL: assign synchronously before any other caller can await.
     openingStreamPromiseRef.current = p;
     return p.finally(() => {
       // Clear the in-flight ref only if it's still ours (a later cleanup may
