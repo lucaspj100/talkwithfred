@@ -966,7 +966,7 @@ export function useRealtimeVoice({
       cleanup();
       isStartingRef.current = false;
     }
-  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, markFredAudioPlaying, finishFredAudioPlayback, isAudioActuallyPlaying, setPrioritizedState, requestMicStream, stopMicrophoneStream]);
+  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, markFredAudioPlaying, finishFredAudioPlayback, isAudioActuallyPlaying, setPrioritizedState, getOrCreateMicrophoneStream, stopMicrophoneStream]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
