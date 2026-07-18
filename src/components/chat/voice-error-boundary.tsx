@@ -25,12 +25,13 @@ export class VoiceErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // Never expose the raw React error / URL to the user. Capture the details
-    // for Lovable's error reporting only.
+    // Diagnostic mode: emit the full stack + component stack so Chrome DevTools
+    // (with source maps enabled) can resolve the exact component causing #300.
     console.error("[VOICE_SCREEN_RENDER_ERROR]", {
       name: error?.name,
       message: error?.message,
-      componentStack: info?.componentStack?.slice(0, 2000),
+      stack: error?.stack,
+      componentStack: info?.componentStack,
     });
     reportLovableError(error, {
       code: "VOICE_SCREEN_RENDER_ERROR",

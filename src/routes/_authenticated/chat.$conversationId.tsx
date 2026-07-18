@@ -32,8 +32,20 @@ export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
     const data = await getConversation({ data: { id: params.conversationId } });
     return data;
   },
-  component: ChatPage,
+  component: ChatPageWithBoundary,
 });
+
+function ChatPageWithBoundary() {
+  // Diagnostic: catches React #300 above the entire chat route, not just
+  // around the voice component, so we can see the exact failing component
+  // stack in the WebView console.
+  console.error("[VOICE_DIAG] ChatPageWithBoundary render");
+  return (
+    <VoiceErrorBoundary>
+      <ChatPage />
+    </VoiceErrorBoundary>
+  );
+}
 
 type DBMessage = { id: string; role: "user" | "assistant"; content: string; input_type: string; created_at: string };
 
@@ -50,6 +62,7 @@ function extractText(m: UIMessage): string {
 }
 
 function ChatPage() {
+  console.error("[VOICE_DIAG] ChatPage render");
   const { conversation, messages: initialMsgs } = Route.useLoaderData();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -192,6 +205,16 @@ function ChatPage() {
   }, [usage.ended]);
 
   const usageReady = usageInit === "ready" && !usage.ended;
+
+  // [VOICE_DIAG] snapshot per render — helps pinpoint which state is
+  // divergent between renders when React #300 fires.
+  console.error("[VOICE_DIAG_STATE]", {
+    chatMode,
+    authReady,
+    usageInit,
+    usageReady,
+    conversationId: conversation.id,
+  });
 
 
 

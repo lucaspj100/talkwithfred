@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // Temporary diagnostic build: source maps in the client bundle so
+    // React #300 stack traces are decodable via Chrome DevTools when
+    // inspecting the Android WebView. Safe to remove after root cause found.
+    build: { sourcemap: true },
+  },
 });
