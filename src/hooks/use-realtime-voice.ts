@@ -62,6 +62,7 @@ export function useRealtimeVoice({
   onAssistantFinalTurn,
   onUsage,
 }: UseVoiceOpts) {
+  console.error("[VOICE_DIAG] useRealtimeVoice entered");
   const [state, setState] = useState<VoiceState>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [responseError, setResponseError] = useState<string | null>(null);
