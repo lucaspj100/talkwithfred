@@ -68,17 +68,13 @@ E dentro da `<application>` habilite mixed content de mídia se necessário (já
 
 Mesmo com `RECORD_AUDIO` concedido no sistema, a WebView do Android **não** libera automaticamente `RESOURCE_AUDIO_CAPTURE` — por isso `getUserMedia` retorna `NotAllowedError` mesmo com a permissão nativa marcada como autorizada. É preciso interceptar `onPermissionRequest` da WebChromeClient.
 
-Fornecemos um template pronto em `android-templates/MainActivity.kt`. Após rodar `bunx cap add android`:
+Fornecemos um template pronto em `android-templates/MainActivity.java`. Após rodar `bunx cap add android`:
 
-1. Localize a `MainActivity` real gerada pelo Capacitor. Caminho esperado:
+1. Abra a `MainActivity.java` gerada pelo Capacitor em:
    `android/app/src/main/java/live/talkwithfred/app/MainActivity.java`
-   (ou `.kt`, dependendo do template do Capacitor 8).
-2. **Delete** a `MainActivity.java` gerada.
-3. **Copie** `android-templates/MainActivity.kt` para o mesmo diretório
-   (`android/app/src/main/java/live/talkwithfred/app/MainActivity.kt`).
-4. Confirme que a primeira linha `package live.talkwithfred.app` bate com o `appId` do `capacitor.config.ts` — se você mudou o `appId`, ajuste o package do arquivo Kotlin.
-5. Habilite Kotlin no `android/app/build.gradle` se ainda não estiver (Capacitor 8 já vem com Kotlin habilitado por padrão).
-6. Rode `bunx cap sync android`.
+2. **Substitua todo o conteúdo** pelo conteúdo de `android-templates/MainActivity.java` (drop-in: mesmo package, ainda estende `BridgeActivity`).
+3. Confirme que a primeira linha `package live.talkwithfred.app;` bate com o `appId` do `capacitor.config.ts`.
+4. Rode `bunx cap sync android`.
 
 O que a `MainActivity` customizada faz:
 
