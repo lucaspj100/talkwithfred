@@ -813,19 +813,21 @@ export function useRealtimeVoice({
       const { client_secret, model } = await getSession();
       if (!client_secret || !model) throw new Error("Sessão de voz inválida.");
 
+      sessionAttemptRef.current += 1;
       let stream: MediaStream;
       try {
         try {
-          stream = await requestMicStream();
+          stream = await getOrCreateMicrophoneStream();
         } catch (err) {
           const name = (err as { name?: string } | null)?.name ?? "";
           if (name === "NotReadableError" || name === "TrackStartError") {
-            // The mic may still be held by a previous session that just tore
-            // down. Fully release and retry exactly once.
-            if (DEV) console.log("[voice-mic] NotReadableError, retrying once after cleanup");
+            // The mic may still be held by a previous session tearing down.
+            // Fully release and retry exactly once (WebView on Redmi 9 needs
+            // ~800ms to hand the hardware back).
+            if (DEV) console.log("[voice-mic] NotReadableError, retrying once", { attempt: sessionAttemptRef.current });
             stopMicrophoneStream();
-            await new Promise((r) => setTimeout(r, 450));
-            stream = await requestMicStream();
+            await new Promise((r) => setTimeout(r, 800));
+            stream = await getOrCreateMicrophoneStream();
           } else {
             throw err;
           }
