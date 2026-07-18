@@ -3,7 +3,24 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Keyboard, Mic, MicOff, Phone, PhoneOff, Loader2 } from "lucide-react";
 import { FredAvatar as FredBrandAvatar } from "@/components/FredBrand";
-import { TalkingAvatar, type TalkingAvatarState } from "@/components/fred/TalkingAvatar";
+// [VOICE_DIAG] Avatar isolation test: TalkingAvatar temporarily replaced with a
+// static div to determine whether FredAvatar/useAppSettings cause React #300.
+// import { TalkingAvatar, type TalkingAvatarState } from "@/components/fred/TalkingAvatar";
+type TalkingAvatarState = "idle" | "listening" | "thinking" | "speaking";
+const TalkingAvatar = ({ state, size, className }: { state?: TalkingAvatarState; mouthLevel?: number; size?: "small" | "medium" | "large"; className?: string }) => (
+  <div
+    data-testid="avatar-diagnostic"
+    data-state={state ?? "idle"}
+    data-size={size ?? "medium"}
+    className={cn(
+      "inline-flex items-center justify-center rounded-full bg-primary/20 font-bold text-primary",
+      size === "large" ? "h-40 w-40 md:h-52 md:w-52" : size === "small" ? "h-20 w-20" : "h-32 w-32",
+      className,
+    )}
+  >
+    Fred
+  </div>
+);
 import { supabase } from "@/integrations/supabase/client";
 import {
   useRealtimeVoice,
