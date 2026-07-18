@@ -78,6 +78,8 @@ export function useRealtimeVoice({
   const dcRef = useRef<RTCDataChannel | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const openingStreamPromiseRef = useRef<Promise<MediaStream> | null>(null);
+  const sessionAttemptRef = useRef(0);
   const connectingRef = useRef(false);
   const isStartingRef = useRef(false);
   const getUserMediaCountRef = useRef(0);
@@ -391,12 +393,13 @@ export function useRealtimeVoice({
 
   const stopMicrophoneStream = useCallback(() => {
     const s = streamRef.current;
+    streamRef.current = null;
+    openingStreamPromiseRef.current = null;
     if (!s) return;
     for (const t of s.getTracks()) {
-      if (DEV) console.log("[voice-mic] stopping track", { id: t.id, kind: t.kind, readyState: t.readyState });
+      if (DEV) console.log("[voice-mic] stopping track", { attempt: sessionAttemptRef.current, id: t.id, kind: t.kind, readyState: t.readyState });
       try { t.stop(); } catch { /* ignore */ }
     }
-    streamRef.current = null;
   }, []);
 
   const cleanup = useCallback(() => {
@@ -734,29 +737,57 @@ export function useRealtimeVoice({
     }
   }, [assistantFlushKey, flushAssistantFinal, requestResponse, clearWatchdog, clearPlaybackCheck, markAudioPlayable, schedulePlaybackCheck, beginMouthMotion, stopMouthMotion, setPrioritizedState, markFredAudioPlaying, schedulePlaybackEndCheck, finishFredAudioPlayback, isAudioActuallyPlaying, onUsage]);
 
-  const requestMicStream = useCallback(async (): Promise<MediaStream> => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      throw new DOMException("mediaDevices unavailable", "NotSupportedError");
-    }
-    // Never keep two live streams. If a previous one is lingering, stop it
-    // fully so the Android WebView releases the mic hardware.
-    if (streamRef.current) {
-      if (DEV) console.log("[voice-mic] previous stream still present, stopping before new request");
-      stopMicrophoneStream();
-      await new Promise((r) => setTimeout(r, 250));
-    }
-    getUserMediaCountRef.current += 1;
-    if (DEV) console.log("[voice-mic] getUserMedia call #", getUserMediaCountRef.current);
-    const s = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    });
-    if (DEV) {
-      for (const t of s.getAudioTracks()) {
-        console.log("[voice-mic] track opened", { id: t.id, readyState: t.readyState });
+  const getOrCreateMicrophoneStream = useCallback((): Promise<MediaStream> => {
+    // Reuse a live stream when possible so we never open the hardware twice.
+    const existing = streamRef.current;
+    if (existing) {
+      const tracks = existing.getAudioTracks();
+      const alive = tracks.some((t) => t.readyState === "live");
+      if (alive) {
+        if (DEV) console.log("[voice-mic] reusing live stream", {
+          attempt: sessionAttemptRef.current,
+          trackIds: tracks.map((t) => t.id),
+        });
+        return Promise.resolve(existing);
       }
+      // Stale stream — release fully before opening a new one.
+      if (DEV) console.log("[voice-mic] existing stream stale, stopping first");
+      for (const t of tracks) { try { t.stop(); } catch { /* ignore */ } }
+      streamRef.current = null;
     }
-    return s;
-  }, [stopMicrophoneStream]);
+    // Coalesce concurrent callers onto a single in-flight open.
+    if (openingStreamPromiseRef.current) {
+      if (DEV) console.log("[voice-mic] awaiting in-flight getUserMedia", { attempt: sessionAttemptRef.current });
+      return openingStreamPromiseRef.current;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      return Promise.reject(new DOMException("mediaDevices unavailable", "NotSupportedError"));
+    }
+    const attempt = sessionAttemptRef.current;
+    const p = (async () => {
+      getUserMediaCountRef.current += 1;
+      if (DEV) console.log("[voice-mic] getUserMedia call", {
+        attempt,
+        totalCalls: getUserMediaCountRef.current,
+      });
+      const s = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+      streamRef.current = s;
+      if (DEV) {
+        for (const t of s.getAudioTracks()) {
+          console.log("[voice-mic] track opened", { attempt, id: t.id, readyState: t.readyState });
+        }
+      }
+      return s;
+    })();
+    openingStreamPromiseRef.current = p;
+    return p.finally(() => {
+      // Clear the in-flight ref only if it's still ours (a later cleanup may
+      // have already nulled it).
+      if (openingStreamPromiseRef.current === p) openingStreamPromiseRef.current = null;
+    });
+  }, []);
 
   const start = useCallback(async () => {
     if (!supported) {
@@ -782,19 +813,21 @@ export function useRealtimeVoice({
       const { client_secret, model } = await getSession();
       if (!client_secret || !model) throw new Error("Sessão de voz inválida.");
 
+      sessionAttemptRef.current += 1;
       let stream: MediaStream;
       try {
         try {
-          stream = await requestMicStream();
+          stream = await getOrCreateMicrophoneStream();
         } catch (err) {
           const name = (err as { name?: string } | null)?.name ?? "";
           if (name === "NotReadableError" || name === "TrackStartError") {
-            // The mic may still be held by a previous session that just tore
-            // down. Fully release and retry exactly once.
-            if (DEV) console.log("[voice-mic] NotReadableError, retrying once after cleanup");
+            // The mic may still be held by a previous session tearing down.
+            // Fully release and retry exactly once (WebView on Redmi 9 needs
+            // ~800ms to hand the hardware back).
+            if (DEV) console.log("[voice-mic] NotReadableError, retrying once", { attempt: sessionAttemptRef.current });
             stopMicrophoneStream();
-            await new Promise((r) => setTimeout(r, 450));
-            stream = await requestMicStream();
+            await new Promise((r) => setTimeout(r, 800));
+            stream = await getOrCreateMicrophoneStream();
           } else {
             throw err;
           }
@@ -933,7 +966,7 @@ export function useRealtimeVoice({
       cleanup();
       isStartingRef.current = false;
     }
-  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, markFredAudioPlaying, finishFredAudioPlayback, isAudioActuallyPlaying, setPrioritizedState, requestMicStream, stopMicrophoneStream]);
+  }, [getSession, supported, handleEvent, sendEvent, cleanup, markAudioPlayable, startMouthAnalyser, markFredAudioPlaying, finishFredAudioPlayback, isAudioActuallyPlaying, setPrioritizedState, getOrCreateMicrophoneStream, stopMicrophoneStream]);
 
   const toggleMute = useCallback(() => {
     setMuted((m) => {
