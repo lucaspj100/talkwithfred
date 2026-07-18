@@ -173,15 +173,6 @@ export function useRealtimeVoice({
     };
   }, [setPrioritizedState]);
 
-  const stopMouthFallback = useCallback(() => {
-
-    const protectedNext =
-      isFredAudioPlayingRef.current && next !== "ended" && next !== "error"
-        ? "fred-speaking"
-        : next;
-    stateRef.current = protectedNext;
-    setState(protectedNext);
-  }, []);
 
   const stopMouthFallback = useCallback(() => {
     if (fallbackMouthRef.current !== null) {
