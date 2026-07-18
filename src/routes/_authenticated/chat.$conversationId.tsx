@@ -73,6 +73,19 @@ function ChatPage() {
   const [token, setToken] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [inputType, setInputType] = useState<"text" | "voice">("text");
+function ChatPage() {
+  console.error("[VOICE_DIAG] ChatPage render");
+  const { conversation, messages: initialMsgs } = Route.useLoaderData();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const persist = useServerFn(persistTurn);
+  const persistUser = useServerFn(persistUserOnly);
+  const extract = useServerFn(extractLearningItems);
+  const startReview = useServerFn(startConversationReview);
+  const initialUI = useMemo(() => toUIMessages(initialMsgs as DBMessage[]), [initialMsgs]);
+  const [token, setToken] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [inputType, setInputType] = useState<"text" | "voice">("text");
   const [chatMode, setChatMode] = useState<"voice" | "text">("voice");
   const pendingUserRef = useRef<string>("");
   const pendingPersistsRef = useRef<Promise<unknown>[]>([]);
