@@ -206,6 +206,16 @@ function ChatPage() {
 
   const usageReady = usageInit === "ready" && !usage.ended;
 
+  // [VOICE_DIAG] snapshot per render — helps pinpoint which state is
+  // divergent between renders when React #300 fires.
+  console.error("[VOICE_DIAG_STATE]", {
+    chatMode,
+    authReady,
+    usageInit,
+    usageReady,
+    conversationId: conversation.id,
+  });
+
 
 
   const transport = useMemo(
