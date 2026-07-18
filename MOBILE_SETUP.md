@@ -64,6 +64,46 @@ Adicione dentro de `<manifest>`:
 
 E dentro da `<application>` habilite mixed content de mídia se necessário (já configurado via `allowMixedContent: false` — não altere).
 
+### Android — `MainActivity` (CRÍTICO para o microfone funcionar na WebView)
+
+Mesmo com `RECORD_AUDIO` concedido no sistema, a WebView do Android **não** libera automaticamente `RESOURCE_AUDIO_CAPTURE` — por isso `getUserMedia` retorna `NotAllowedError` mesmo com a permissão nativa marcada como autorizada. É preciso interceptar `onPermissionRequest` da WebChromeClient.
+
+Fornecemos um template pronto em `android-templates/MainActivity.kt`. Após rodar `bunx cap add android`:
+
+1. Localize a `MainActivity` real gerada pelo Capacitor. Caminho esperado:
+   `android/app/src/main/java/live/talkwithfred/app/MainActivity.java`
+   (ou `.kt`, dependendo do template do Capacitor 8).
+2. **Delete** a `MainActivity.java` gerada.
+3. **Copie** `android-templates/MainActivity.kt` para o mesmo diretório
+   (`android/app/src/main/java/live/talkwithfred/app/MainActivity.kt`).
+4. Confirme que a primeira linha `package live.talkwithfred.app` bate com o `appId` do `capacitor.config.ts` — se você mudou o `appId`, ajuste o package do arquivo Kotlin.
+5. Habilite Kotlin no `android/app/build.gradle` se ainda não estiver (Capacitor 8 já vem com Kotlin habilitado por padrão).
+6. Rode `bunx cap sync android`.
+
+O que a `MainActivity` customizada faz:
+
+- Estende `BridgeActivity` (não substitui o Bridge do Capacitor).
+- Instala um `WebChromeClient` que só sobrescreve `onPermissionRequest` e `onPermissionRequestCanceled` — todos os demais callbacks (file chooser, prompts JS, geolocation, console, janelas) continuam com o comportamento padrão do Android.
+- Valida a origem contra uma lista fixa (`https://talkwithfred.live`, `https://www.talkwithfred.live`, `https://speakwithlucas.com`, `https://www.speakwithlucas.com`). Origens externas recebem `deny()`.
+- Concede **apenas** `PermissionRequest.RESOURCE_AUDIO_CAPTURE`. Nunca usa `request.grant(request.getResources())`, então recursos futuros (câmera, MIDI, etc.) não vazam permissão por acidente.
+- Verifica `RECORD_AUDIO` com `ContextCompat.checkSelfPermission`. Se já estiver concedido, libera imediatamente. Se não, pede em runtime com `requestPermissions` e guarda o `PermissionRequest` pendente para responder em `onRequestPermissionsResult` (grant ou deny na UI thread).
+- Trata `onPermissionRequestCanceled` e `onDestroy` para não vazar referências.
+- Loga com a tag `TalkWithFredMic` (sem tokens, e-mail, áudio ou conteúdo pessoal). Filtre com:
+  ```bash
+  adb logcat -s TalkWithFredMic
+  ```
+
+**Reinstalação obrigatória.** Como a mudança é nativa (Java/Kotlin compilado), `bunx cap sync` não basta — desinstale o app do aparelho e instale novamente via `bunx cap run android` ou build assinado.
+
+### Testes manuais (rodar no dispositivo)
+
+- **A) Permissão já concedida** → toque em "Começar conversa por voz" → conversa inicia sem prompt.
+- **B) Instalação limpa** → toque em começar → aceite o prompt Android → conversa inicia (a WebView recebe `AUDIO_CAPTURE` no mesmo clique).
+- **C) Permissão negada** → aparece a mensagem "O acesso ao microfone foi negado…" sem crash.
+- **D) Negar → autorizar em Configurações → voltar** → o listener `visibilitychange` limpa o erro; toque novamente e funciona.
+- **E) Origem externa** (ex.: link para site fora da whitelist) → `request.deny()` é chamado; log mostra `Origin not allowed`.
+
+
 ### iOS — `ios/App/App/Info.plist`
 
 Adicione:
