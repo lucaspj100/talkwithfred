@@ -758,7 +758,10 @@ export function useRealtimeVoice({
     }
     // Coalesce concurrent callers onto a single in-flight open.
     if (openingStreamPromiseRef.current) {
-      console.error("[MIC_DIAGNOSTIC] awaiting in-flight getUserMedia", { attempt: sessionAttemptRef.current });
+      console.error("[MIC_DIAGNOSTIC] awaiting in-flight getUserMedia", {
+        attempt: sessionAttemptRef.current,
+        stack: new Error("coalesced getUserMedia caller").stack,
+      });
       return openingStreamPromiseRef.current;
     }
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -766,12 +769,19 @@ export function useRealtimeVoice({
       return Promise.reject(new DOMException("mediaDevices unavailable", "NotSupportedError"));
     }
     const attempt = sessionAttemptRef.current;
+    // Log intent BEFORE assigning the in-flight ref so we can see whether a
+    // second caller is racing us on the same tick.
+    console.error("[MIC_GET_USER_MEDIA_CALL]", {
+      attempt,
+      totalCalls: getUserMediaCountRef.current + 1,
+      stack: new Error("getUserMedia call origin").stack,
+      openingPromiseExists: Boolean(openingStreamPromiseRef.current),
+      streamExists: Boolean(streamRef.current),
+      connecting: connectingRef.current,
+      isStarting: isStartingRef.current,
+    });
     const p = (async () => {
       getUserMediaCountRef.current += 1;
-      console.error("[MIC_GET_USER_MEDIA_CALL]", {
-        attempt,
-        totalCalls: getUserMediaCountRef.current,
-      });
       const s = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
@@ -782,6 +792,7 @@ export function useRealtimeVoice({
       });
       return s;
     })();
+    // CRITICAL: assign synchronously before any other caller can await.
     openingStreamPromiseRef.current = p;
     return p.finally(() => {
       // Clear the in-flight ref only if it's still ours (a later cleanup may
@@ -791,21 +802,33 @@ export function useRealtimeVoice({
   }, []);
 
   const start = useCallback(async () => {
-    if (!supported) {
-      setErrorMsg("Seu navegador não suporta conversas por voz em tempo real. Tente Chrome, Edge ou Safari atualizados.");
-          setPrioritizedState("error");
-      return;
-    }
+    console.error("[VOICE_START_CALLED]", {
+      attemptBeforeIncrement: sessionAttemptRef.current,
+      isStarting: isStartingRef.current,
+      connecting: connectingRef.current,
+      hasPc: !!pcRef.current,
+      state: stateRef.current,
+      stack: new Error("start origin").stack,
+    });
     if (isStartingRef.current || connectingRef.current || pcRef.current) {
-      if (DEV) console.log("[voice-mic] duplicate start() blocked", {
+      console.error("[VOICE_START_BLOCKED_DUPLICATE]", {
         isStarting: isStartingRef.current,
         connecting: connectingRef.current,
         hasPc: !!pcRef.current,
       });
       return;
     }
+    // Set trava BEFORE any await so a second synchronous caller is blocked.
     isStartingRef.current = true;
     connectingRef.current = true;
+
+    if (!supported) {
+      setErrorMsg("Seu navegador não suporta conversas por voz em tempo real. Tente Chrome, Edge ou Safari atualizados.");
+      setPrioritizedState("error");
+      isStartingRef.current = false;
+      connectingRef.current = false;
+      return;
+    }
     setErrorMsg(null);
     setResponseError(null);
     setPrioritizedState("connecting");
@@ -817,22 +840,9 @@ export function useRealtimeVoice({
       sessionAttemptRef.current += 1;
       let stream: MediaStream;
       try {
-        try {
-          stream = await getOrCreateMicrophoneStream();
-        } catch (err) {
-          const name = (err as { name?: string } | null)?.name ?? "";
-          if (name === "NotReadableError" || name === "TrackStartError") {
-            // The mic may still be held by a previous session tearing down.
-            // Fully release and retry exactly once (WebView on Redmi 9 needs
-            // ~800ms to hand the hardware back).
-            if (DEV) console.log("[voice-mic] NotReadableError, retrying once", { attempt: sessionAttemptRef.current });
-            stopMicrophoneStream();
-            await new Promise((r) => setTimeout(r, 800));
-            stream = await getOrCreateMicrophoneStream();
-          } else {
-            throw err;
-          }
-        }
+        // DIAGNOSTIC MODE: no automatic NotReadableError retry. We must first
+        // confirm attempt 1 produces exactly one physical getUserMedia call.
+        stream = await getOrCreateMicrophoneStream();
       } catch (err) {
         const name = (err as { name?: string } | null)?.name ?? "";
         let msg = "Não conseguimos iniciar o microfone. Tente novamente.";
@@ -845,7 +855,7 @@ export function useRealtimeVoice({
         } else if (name === "NotSupportedError") {
           msg = "Este dispositivo não permite gravar áudio pelo navegador.";
         }
-        if (DEV) console.log("[voice-mic-error]", name, err);
+        console.error("[VOICE_MIC_ERROR]", { name, message: (err as Error)?.message });
         setErrorMsg(msg);
         setPrioritizedState("error");
         connectingRef.current = false;
