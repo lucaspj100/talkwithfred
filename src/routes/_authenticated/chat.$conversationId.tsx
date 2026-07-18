@@ -32,8 +32,20 @@ export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
     const data = await getConversation({ data: { id: params.conversationId } });
     return data;
   },
-  component: ChatPage,
+  component: ChatPageWithBoundary,
 });
+
+function ChatPageWithBoundary() {
+  // Diagnostic: catches React #300 above the entire chat route, not just
+  // around the voice component, so we can see the exact failing component
+  // stack in the WebView console.
+  console.error("[VOICE_DIAG] ChatPageWithBoundary render");
+  return (
+    <VoiceErrorBoundary>
+      <ChatPage />
+    </VoiceErrorBoundary>
+  );
+}
 
 type DBMessage = { id: string; role: "user" | "assistant"; content: string; input_type: string; created_at: string };
 
