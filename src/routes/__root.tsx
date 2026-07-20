@@ -53,7 +53,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#0b0f19" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Talk With Fred" },
       { title: "Talk With Fred — Aprenda inglês conversando" },
       { name: "description", content: "Pratique inglês por texto ou voz com Fred, uma IA que conversa com você, corrige seus erros e ajuda você a falar com mais confiança." },
       { property: "og:title", content: "Talk With Fred — Aprenda inglês conversando" },
