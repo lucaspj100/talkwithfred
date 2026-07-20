@@ -7,25 +7,31 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.webkit.PermissionRequest;
-import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * MainActivity para Talk With Fred.
+ * MainActivity para Talk With Fred — Capacitor 8.
  *
- * Motivo: em WebView Android, mesmo com android.permission.RECORD_AUDIO concedida
- * no sistema, getUserMedia({audio:true}) retorna NotAllowedError até que o
- * WebChromeClient responda a onPermissionRequest concedendo
- * PermissionRequest.RESOURCE_AUDIO_CAPTURE. Esta MainActivity intercepta apenas
- * esse callback e mantém o restante do WebChromeClient padrão do Capacitor.
+ * IMPORTANTE:
+ * A implementação anterior instalava `new WebChromeClient() { ... }` cru na
+ * WebView. Isso substituía o `BridgeWebChromeClient` interno do Capacitor,
+ * quebrando file chooser, prompts, console, geolocation, janelas e — o mais
+ * relevante para nós — o pipeline de mídia/WebRTC configurado pelo Bridge.
+ * O sintoma era `PermissionRequest` sendo concedido, mas o Android falhando
+ * ao iniciar a fonte de áudio (`NotReadableError: Could not start audio source`).
+ *
+ * Correção: ESTENDER `BridgeWebChromeClient` e sobrescrever apenas
+ * `onPermissionRequest` / `onPermissionRequestCanceled`. Todo o resto do
+ * comportamento do Capacitor é preservado por herança.
  */
 public class MainActivity extends BridgeActivity {
 
@@ -51,7 +57,8 @@ public class MainActivity extends BridgeActivity {
             return;
         }
 
-        webView.setWebChromeClient(new WebChromeClient() {
+        // Estende o cliente REAL do Capacitor (não WebChromeClient cru).
+        webView.setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
             @Override
             public void onPermissionRequest(final PermissionRequest request) {
                 runOnUiThread(() -> handlePermissionRequest(request));
@@ -63,6 +70,7 @@ public class MainActivity extends BridgeActivity {
                     pendingRequest = null;
                 }
                 Log.d(TAG, "Permission request canceled");
+                super.onPermissionRequestCanceled(request);
             }
         });
     }
@@ -70,16 +78,9 @@ public class MainActivity extends BridgeActivity {
     private void handlePermissionRequest(PermissionRequest request) {
         Uri origin = request.getOrigin();
         String originStr = origin != null ? origin.toString() : "";
-        // WebView entrega origem com "/" no final; normalizamos.
         String normalized = originStr.endsWith("/")
                 ? originStr.substring(0, originStr.length() - 1)
                 : originStr;
-
-        if (!ALLOWED_ORIGINS.contains(normalized)) {
-            Log.w(TAG, "Origin not allowed: " + normalized);
-            request.deny();
-            return;
-        }
 
         boolean wantsAudio = false;
         for (String r : request.getResources()) {
@@ -88,8 +89,18 @@ public class MainActivity extends BridgeActivity {
                 break;
             }
         }
+
+        // Só tratamos AUDIO_CAPTURE de origens conhecidas.
+        // Qualquer outro cenário é negado explicitamente — mas o resto do
+        // WebChromeClient (file chooser, console, prompts, geolocation, janelas)
+        // continua sendo servido pelo BridgeWebChromeClient pai.
         if (!wantsAudio) {
             Log.d(TAG, "No audio in request, denying");
+            request.deny();
+            return;
+        }
+        if (!ALLOWED_ORIGINS.contains(normalized)) {
+            Log.w(TAG, "Origin not allowed for audio: " + normalized);
             request.deny();
             return;
         }
@@ -101,7 +112,6 @@ public class MainActivity extends BridgeActivity {
             return;
         }
 
-        // Precisa pedir em runtime
         pendingRequest = request;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_RECORD_AUDIO);
