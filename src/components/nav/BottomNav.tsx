@@ -12,14 +12,17 @@ const HIDDEN_PREFIXES = ["/chat/", "/simulacao", "/onboarding"];
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
+  const hidden = HIDDEN_PREFIXES.some((p) => pathname.startsWith(p));
 
   const getSub = useServerFn(getMySubscription);
   const { data: sub } = useQuery({
     queryKey: ["my-subscription"],
     queryFn: () => getSub(),
+    enabled: !hidden,
     staleTime: 30_000,
   });
+
+  if (hidden) return null;
 
   const alert = subscriptionAlertLevel(sub);
 
