@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, MessageCircle, CreditCard, User, Dumbbell } from "lucide-react";
+import { Home, CreditCard, User, Dumbbell } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getMySubscription } from "@/lib/subscription.functions";
@@ -12,14 +12,17 @@ const HIDDEN_PREFIXES = ["/chat/", "/simulacao", "/onboarding"];
 
 export function BottomNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  if (HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
+  const hidden = HIDDEN_PREFIXES.some((p) => pathname.startsWith(p));
 
   const getSub = useServerFn(getMySubscription);
   const { data: sub } = useQuery({
     queryKey: ["my-subscription"],
     queryFn: () => getSub(),
+    enabled: !hidden,
     staleTime: 30_000,
   });
+
+  if (hidden) return null;
 
   const alert = subscriptionAlertLevel(sub);
 
@@ -39,9 +42,7 @@ export function BottomNav() {
       <ul className="mx-auto grid max-w-md grid-cols-4">
         {items.map((it) => {
           const Icon = it.icon;
-          const active = it.exact
-            ? pathname === it.to
-            : pathname.startsWith(it.to);
+          const active = it.exact ? pathname === it.to : pathname.startsWith(it.to);
           return (
             <li key={it.to}>
               <Link
@@ -71,7 +72,7 @@ export function BottomNav() {
   );
 }
 
-export function subscriptionAlertLevel(
+function subscriptionAlertLevel(
   sub: { status?: string | null; minutes_available?: number | string | null } | null | undefined,
 ): "danger" | "warn" | null {
   if (!sub) return "warn";
