@@ -158,7 +158,7 @@ export const persistUserOnly = createServerFn({ method: "POST" })
       content: clean,
       input_type: data.inputType,
     });
-    if (conv.title === "New conversation") {
+    if (conv.title === "New conversation" || conv.title === "Nova conversa") {
       await context.supabase.from("conversations").update({ title: clean.slice(0, 60), updated_at: new Date().toISOString() }).eq("id", data.conversationId);
     } else {
       await context.supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", data.conversationId);
