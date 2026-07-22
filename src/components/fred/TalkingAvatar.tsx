@@ -1,8 +1,7 @@
 import { cn } from "@/lib/utils";
 import { FredAvatar as FredBrandImage } from "@/components/FredBrand";
 
-// [VOICE_DIAG] module-load marker
-if (typeof window !== "undefined") console.error("[VOICE_DIAG] TalkingAvatar module loaded");
+
 
 export type TalkingAvatarState = "idle" | "listening" | "thinking" | "speaking";
 export type TalkingAvatarSize = "small" | "medium" | "large";
