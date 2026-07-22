@@ -67,8 +67,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Talk With Fred — Aprenda inglês conversando" },
       { name: "twitter:description", content: "Pratique inglês por texto ou voz com Fred, uma IA que conversa com você, corrige seus erros e ajuda você a falar com mais confiança." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/533f4def-c6e5-41a9-940a-e31263858de4/id-preview-f876feab--e91f9674-2789-4d35-9e75-b95e4d22f386.lovable.app-1781989235605.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/533f4def-c6e5-41a9-940a-e31263858de4/id-preview-f876feab--e91f9674-2789-4d35-9e75-b95e4d22f386.lovable.app-1781989235605.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
