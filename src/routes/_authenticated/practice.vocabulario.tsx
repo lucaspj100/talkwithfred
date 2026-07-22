@@ -56,26 +56,30 @@ function VocabPage() {
           Ainda não há palavras aqui. Converse com Fred e vamos capturar vocabulário novo.
         </div>
       ) : (
-        <ul className="mt-4 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card/40">
+        <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {rows.map((v) => (
-            <li key={v.id} className="flex items-start justify-between gap-3 p-4">
-              <div className="min-w-0">
-                <p className="font-medium">{v.original}</p>
-                {v.explanation_pt && <p className="text-xs text-muted-foreground">{v.explanation_pt}</p>}
+            <li key={v.id} className="rounded-2xl border border-border bg-card/40 p-3">
+              <details className="group">
+                <summary className="flex cursor-pointer items-center justify-between gap-2 list-none marker:hidden">
+                  <span className="min-w-0 truncate text-sm font-medium lowercase">{v.original.toLowerCase()}</span>
+                  <div className="flex shrink-0 items-center gap-1">
+                    {!v.mastered_at && (
+                      <Button size="sm" variant="outline" onClick={(e) => { e.preventDefault(); onMaster(v.id); }} title="Já sei essa">
+                        <Check className="size-4" />
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={(e) => { e.preventDefault(); onToggle(v.id, !(v.active ?? true)); }} title={v.active === false ? "Reativar" : "Ocultar"}>
+                      <EyeOff className="size-4" />
+                    </Button>
+                  </div>
+                </summary>
+                {v.explanation_pt && (
+                  <p className="mt-2 text-xs text-muted-foreground">{v.explanation_pt}</p>
+                )}
                 <p className="mt-1 text-[11px] uppercase text-muted-foreground">
                   Nível {v.mastery_level ?? 0}{v.mastered_at ? " · dominada" : ""}{v.active === false ? " · oculta" : ""}
                 </p>
-              </div>
-              <div className="flex shrink-0 gap-1">
-                {!v.mastered_at && (
-                  <Button size="sm" variant="outline" onClick={() => onMaster(v.id)} title="Já sei essa">
-                    <Check className="size-4" />
-                  </Button>
-                )}
-                <Button size="sm" variant="ghost" onClick={() => onToggle(v.id, !(v.active ?? true))} title={v.active === false ? "Reativar" : "Ocultar"}>
-                  <EyeOff className="size-4" />
-                </Button>
-              </div>
+              </details>
             </li>
           ))}
         </ul>
