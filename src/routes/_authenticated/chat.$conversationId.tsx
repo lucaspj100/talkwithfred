@@ -225,10 +225,14 @@ function ChatPage() {
   // ============= TTS playback =============
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [preparingId, setPreparingId] = useState<string | null>(null);
-  const [autoplayEnabled, setAutoplayEnabled] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    return window.localStorage.getItem("fred:autoplay") !== "0";
-  });
+  // Keep the initializer pure (no `window`/`localStorage`) so the initial render
+  // matches between SSR and hydration; sync the real value in the effect below.
+  // A mismatched initializer was causing intermittent React #300 on mount.
+  const [autoplayEnabled, setAutoplayEnabled] = useState<boolean>(true);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setAutoplayEnabled(window.localStorage.getItem("fred:autoplay") !== "0");
+  }, []);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentUrlRef = useRef<string | null>(null);
   const ttsAbortRef = useRef<AbortController | null>(null);
