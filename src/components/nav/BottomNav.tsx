@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, MessageCircle, CreditCard, User, Dumbbell } from "lucide-react";
+import { Home, CreditCard, User, Dumbbell } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getMySubscription } from "@/lib/subscription.functions";
@@ -42,9 +42,7 @@ export function BottomNav() {
       <ul className="mx-auto grid max-w-md grid-cols-4">
         {items.map((it) => {
           const Icon = it.icon;
-          const active = it.exact
-            ? pathname === it.to
-            : pathname.startsWith(it.to);
+          const active = it.exact ? pathname === it.to : pathname.startsWith(it.to);
           return (
             <li key={it.to}>
               <Link
