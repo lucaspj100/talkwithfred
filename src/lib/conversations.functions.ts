@@ -105,7 +105,7 @@ export const persistTurn = createServerFn({ method: "POST" })
     ]);
 
     // Update title from first user message if still default
-    if (conv.title === "New conversation") {
+    if (conv.title === "New conversation" || conv.title === "Nova conversa") {
       const title = data.userMessage.slice(0, 60);
       await context.supabase.from("conversations").update({ title, updated_at: new Date().toISOString() }).eq("id", data.conversationId);
     } else {
