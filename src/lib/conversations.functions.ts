@@ -47,7 +47,7 @@ export const createConversation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const isCustom = data.mode === "custom";
     const customTopic = isCustom ? data.customTopic!.trim() : null;
-    const title = isCustom && customTopic ? titleFromTopic(customTopic) : "New conversation";
+    const title = isCustom && customTopic ? titleFromTopic(customTopic) : "Nova conversa";
     const { data: row, error } = await context.supabase
       .from("conversations")
       .insert({
