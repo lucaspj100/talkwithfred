@@ -47,7 +47,6 @@ export function TalkingAvatar({
   showStatus = false,
   className,
 }: TalkingAvatarProps) {
-  console.error("[VOICE_DIAG] TalkingAvatar render", { state, size });
   const box = SIZE_BOX[size];
   const ring = STATE_TO_RING[state];
 
