@@ -36,10 +36,6 @@ export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
 });
 
 function ChatPageWithBoundary() {
-  // Diagnostic: catches React #300 above the entire chat route, not just
-  // around the voice component, so we can see the exact failing component
-  // stack in the WebView console.
-  console.error("[VOICE_DIAG] ChatPageWithBoundary render");
   return (
     <VoiceErrorBoundary>
       <ChatPage />
