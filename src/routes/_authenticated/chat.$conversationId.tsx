@@ -946,7 +946,6 @@ function ChatPage() {
           )}
         </VoiceErrorBoundary>
 
-        </VoiceErrorBoundary>
         {outOfMinutesDialog}
         {otherTabDialog}
         {exitConfirmDialog}
