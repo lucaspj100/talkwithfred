@@ -50,7 +50,7 @@ export function RealtimeConversation({
   hideEndButton?: boolean;
   registerEnd?: (fn: (() => void) | null) => void;
 }) {
-  console.error("[VOICE_DIAG] RealtimeConversation render", { conversationId, disabled: !!disabled });
+
   const getSession = useCallback(async () => {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
