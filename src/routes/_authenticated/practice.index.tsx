@@ -153,11 +153,17 @@ function TrainingHome() {
             Palavras novas que Fred usa nas conversas aparecem aqui.
           </div>
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card/40">
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {vocab.map((v: typeof vocab[number]) => (
-              <li key={v.id} className="p-4">
-                <p className="font-medium">{v.original}</p>
-                {v.explanation_pt && <p className="text-xs text-muted-foreground">{v.explanation_pt}</p>}
+              <li key={v.id}>
+                <details className="group rounded-xl border border-border bg-card/40 p-2.5 open:bg-card">
+                  <summary className="cursor-pointer list-none text-sm font-medium lowercase marker:hidden">
+                    {v.original.toLowerCase()}
+                  </summary>
+                  {v.explanation_pt && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">{v.explanation_pt}</p>
+                  )}
+                </details>
               </li>
             ))}
           </ul>
