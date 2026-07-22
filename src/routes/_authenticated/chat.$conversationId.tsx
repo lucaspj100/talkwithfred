@@ -1152,3 +1152,12 @@ function ChatPage() {
     </div>
   );
 }
+
+function VoicePreparingPanel({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center rounded-3xl border border-border bg-card/60 p-8 text-center">
+      <Loader2 className="mb-4 size-8 animate-spin text-muted-foreground" />
+      <p className="max-w-md text-sm text-muted-foreground">{message}</p>
+    </div>
+  );
+}
