@@ -114,16 +114,30 @@ function TrainingHome() {
             Conforme você conversar com Fred, os pontos que precisam de reforço aparecem aqui.
           </div>
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card/40">
-            {focus.map((f: typeof focus[number]) => (
-              <li key={f.id} className="p-4">
-                <p className="line-through text-muted-foreground text-sm">{f.original}</p>
-                {f.correction && <p className="font-medium">{f.correction}</p>}
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {(f.incorrect_count ?? 0)} erros · {(f.total_attempts ?? 0)} tentativas · nível {f.mastery_level ?? 0}
-                </p>
-              </li>
-            ))}
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {focus.map((f: typeof focus[number]) => {
+              const errors = f.incorrect_count ?? 0;
+              const level = Math.max(0, Math.min(5, f.mastery_level ?? 0));
+              return (
+                <li key={f.id} className="rounded-2xl border border-border bg-card/40 p-3">
+                  <p className="line-through text-muted-foreground text-xs">{f.original}</p>
+                  {f.correction && <p className="text-sm font-medium">{f.correction}</p>}
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1" aria-label={`Domínio nível ${level} de 5`}>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <span
+                          key={i}
+                          className={`size-1.5 rounded-full ${i < level ? "bg-primary" : "bg-muted"}`}
+                        />
+                      ))}
+                    </div>
+                    <span className="text-[11px] text-muted-foreground">
+                      {errors} {errors === 1 ? "erro" : "erros"}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
@@ -139,11 +153,17 @@ function TrainingHome() {
             Palavras novas que Fred usa nas conversas aparecem aqui.
           </div>
         ) : (
-          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card/40">
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             {vocab.map((v: typeof vocab[number]) => (
-              <li key={v.id} className="p-4">
-                <p className="font-medium">{v.original}</p>
-                {v.explanation_pt && <p className="text-xs text-muted-foreground">{v.explanation_pt}</p>}
+              <li key={v.id}>
+                <details className="group rounded-xl border border-border bg-card/40 p-2.5 open:bg-card">
+                  <summary className="cursor-pointer list-none text-sm font-medium lowercase marker:hidden">
+                    {v.original.toLowerCase()}
+                  </summary>
+                  {v.explanation_pt && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">{v.explanation_pt}</p>
+                  )}
+                </details>
               </li>
             ))}
           </ul>

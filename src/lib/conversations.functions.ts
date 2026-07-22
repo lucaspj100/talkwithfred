@@ -47,7 +47,7 @@ export const createConversation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const isCustom = data.mode === "custom";
     const customTopic = isCustom ? data.customTopic!.trim() : null;
-    const title = isCustom && customTopic ? titleFromTopic(customTopic) : "New conversation";
+    const title = isCustom && customTopic ? titleFromTopic(customTopic) : "Nova conversa";
     const { data: row, error } = await context.supabase
       .from("conversations")
       .insert({
@@ -105,7 +105,7 @@ export const persistTurn = createServerFn({ method: "POST" })
     ]);
 
     // Update title from first user message if still default
-    if (conv.title === "New conversation") {
+    if (conv.title === "New conversation" || conv.title === "Nova conversa") {
       const title = data.userMessage.slice(0, 60);
       await context.supabase.from("conversations").update({ title, updated_at: new Date().toISOString() }).eq("id", data.conversationId);
     } else {
@@ -158,7 +158,7 @@ export const persistUserOnly = createServerFn({ method: "POST" })
       content: clean,
       input_type: data.inputType,
     });
-    if (conv.title === "New conversation") {
+    if (conv.title === "New conversation" || conv.title === "Nova conversa") {
       await context.supabase.from("conversations").update({ title: clean.slice(0, 60), updated_at: new Date().toISOString() }).eq("id", data.conversationId);
     } else {
       await context.supabase.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", data.conversationId);
