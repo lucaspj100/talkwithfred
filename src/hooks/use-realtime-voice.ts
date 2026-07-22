@@ -62,8 +62,8 @@ export function useRealtimeVoice({
   onAssistantFinalTurn,
   onUsage,
 }: UseVoiceOpts) {
-  console.error("[VOICE_DIAG] useRealtimeVoice entered");
   const [state, setState] = useState<VoiceState>("idle");
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [responseError, setResponseError] = useState<string | null>(null);
   const [audioBlocked, setAudioBlocked] = useState(false);
@@ -758,66 +758,31 @@ export function useRealtimeVoice({
     }
     // Coalesce concurrent callers onto a single in-flight open.
     if (openingStreamPromiseRef.current) {
-      console.error("[MIC_DIAGNOSTIC] awaiting in-flight getUserMedia", {
-        attempt: sessionAttemptRef.current,
-        stack: new Error("coalesced getUserMedia caller").stack,
-      });
       return openingStreamPromiseRef.current;
     }
     if (!navigator.mediaDevices?.getUserMedia) {
-      console.error("[MIC_DIAGNOSTIC] mediaDevices unavailable");
       return Promise.reject(new DOMException("mediaDevices unavailable", "NotSupportedError"));
     }
-    const attempt = sessionAttemptRef.current;
-    // Log intent BEFORE assigning the in-flight ref so we can see whether a
-    // second caller is racing us on the same tick.
-    console.error("[MIC_GET_USER_MEDIA_CALL]", {
-      attempt,
-      totalCalls: getUserMediaCountRef.current + 1,
-      stack: new Error("getUserMedia call origin").stack,
-      openingPromiseExists: Boolean(openingStreamPromiseRef.current),
-      streamExists: Boolean(streamRef.current),
-      connecting: connectingRef.current,
-      isStarting: isStartingRef.current,
-    });
     const p = (async () => {
       getUserMediaCountRef.current += 1;
       const s = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
       streamRef.current = s;
-      console.error("[MIC_GET_USER_MEDIA_SUCCESS]", {
-        attempt,
-        tracks: s.getAudioTracks().map((t) => ({ id: t.id, readyState: t.readyState })),
-      });
       return s;
     })();
     // CRITICAL: assign synchronously before any other caller can await.
     openingStreamPromiseRef.current = p;
     return p.finally(() => {
-      // Clear the in-flight ref only if it's still ours (a later cleanup may
-      // have already nulled it).
       if (openingStreamPromiseRef.current === p) openingStreamPromiseRef.current = null;
     });
   }, []);
 
   const start = useCallback(async () => {
-    console.error("[VOICE_START_CALLED]", {
-      attemptBeforeIncrement: sessionAttemptRef.current,
-      isStarting: isStartingRef.current,
-      connecting: connectingRef.current,
-      hasPc: !!pcRef.current,
-      state: stateRef.current,
-      stack: new Error("start origin").stack,
-    });
     if (isStartingRef.current || connectingRef.current || pcRef.current) {
-      console.error("[VOICE_START_BLOCKED_DUPLICATE]", {
-        isStarting: isStartingRef.current,
-        connecting: connectingRef.current,
-        hasPc: !!pcRef.current,
-      });
       return;
     }
+
     // Set trava BEFORE any await so a second synchronous caller is blocked.
     isStartingRef.current = true;
     connectingRef.current = true;
@@ -855,7 +820,7 @@ export function useRealtimeVoice({
         } else if (name === "NotSupportedError") {
           msg = "Este dispositivo não permite gravar áudio pelo navegador.";
         }
-        console.error("[VOICE_MIC_ERROR]", { name, message: (err as Error)?.message });
+        console.error("[voice] mic error", { name, message: (err as Error)?.message });
         setErrorMsg(msg);
         setPrioritizedState("error");
         connectingRef.current = false;
