@@ -58,7 +58,7 @@ function extractText(m: UIMessage): string {
 }
 
 function ChatPage() {
-  console.error("[VOICE_DIAG] ChatPage render");
+
   const { conversation, messages: initialMsgs } = Route.useLoaderData();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -202,15 +202,7 @@ function ChatPage() {
 
   const usageReady = usageInit === "ready" && !usage.ended;
 
-  // [VOICE_DIAG] snapshot per render — helps pinpoint which state is
-  // divergent between renders when React #300 fires.
-  console.error("[VOICE_DIAG_STATE]", {
-    chatMode,
-    authReady,
-    usageInit,
-    usageReady,
-    conversationId: conversation.id,
-  });
+
 
 
 
@@ -902,52 +894,58 @@ function ChatPage() {
           </div>
         </header>
         <VoiceErrorBoundary onGoBack={() => navigate({ to: "/dashboard" })}>
-          <RealtimeConversation
-            conversationId={conversation.id}
-            userName="Você"
-            history={voiceHistory}
-            onUserFinalTurn={handleVoiceUserFinal}
-            onAssistantFinalTurn={handleVoiceAssistantFinal}
-            onSwitchToText={() => setChatMode("text")}
-            onVoiceActiveChange={(active) => usage.setActive(active && usageReady)}
-            hideEndButton
-            registerEnd={(fn) => { endHandleRef.current = fn; }}
-            onUsage={async (u) => {
-              try {
-                const { data } = await supabase.auth.getSession();
-                const token = data.session?.access_token;
-                if (!token) return;
-                await fetch("/api/ai-usage/record", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({
-                    usage_session_id: usage.sessionId,
-                    conversation_id: conversation.id,
-                    response_id: u.responseId,
-                    event_id: u.eventId,
-                    model: u.model,
-                    event_type: "response.done",
-                    usage: u.usage,
-                  }),
-                });
-              } catch (e) {
-                console.warn("[ai-usage] record failed", e);
+          {usageReady ? (
+            <RealtimeConversation
+              conversationId={conversation.id}
+              userName="Você"
+              history={voiceHistory}
+              onUserFinalTurn={handleVoiceUserFinal}
+              onAssistantFinalTurn={handleVoiceAssistantFinal}
+              onSwitchToText={() => setChatMode("text")}
+              onVoiceActiveChange={(active) => usage.setActive(active && usageReady)}
+              hideEndButton
+              registerEnd={(fn) => { endHandleRef.current = fn; }}
+              onUsage={async (u) => {
+                try {
+                  const { data } = await supabase.auth.getSession();
+                  const token = data.session?.access_token;
+                  if (!token) return;
+                  await fetch("/api/ai-usage/record", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                      usage_session_id: usage.sessionId,
+                      conversation_id: conversation.id,
+                      response_id: u.responseId,
+                      event_id: u.eventId,
+                      model: u.model,
+                      event_type: "response.done",
+                      usage: u.usage,
+                    }),
+                  });
+                } catch (e) {
+                  console.warn("[ai-usage] record failed", e);
+                }
+              }}
+            />
+          ) : (
+            <VoicePreparingPanel
+              message={
+                busyOtherTab
+                  ? "Já existe uma conversa ativa em outra aba."
+                  : outOfMinutesOpen()
+                    ? "Você utilizou os 90 minutos deste ciclo."
+                    : !authReady
+                      ? "Preparando sua sessão…"
+                      : "Verificando sua assinatura…"
               }
-            }}
-            disabled={!usageReady}
-            disabledReason={
-              busyOtherTab
-                ? "Já existe uma conversa ativa em outra aba."
-                : outOfMinutesOpen()
-                  ? "Você utilizou os 90 minutos deste ciclo."
-                  : usageInit === "pending"
-                    ? "Verificando sua assinatura…"
-                    : null
-            }
-          />
+            />
+          )}
+        </VoiceErrorBoundary>
+
         </VoiceErrorBoundary>
         {outOfMinutesDialog}
         {otherTabDialog}
