@@ -236,27 +236,35 @@ function Dashboard() {
 
 
       <h2 className="mt-10 font-display text-xl font-bold">Suas últimas conversas</h2>
-      <div className="mt-4 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card/40">
-        {convs.length === 0 && (
-          <p className="p-5 text-sm text-muted-foreground">Nenhuma conversa ainda. Inicie uma conversa acima.</p>
-        )}
-        {convs.slice(0, 6).map((c: typeof convs[number]) => (
-          <Link
-            key={c.id}
-            to="/chat/$conversationId"
-            params={{ conversationId: c.id }}
-            className="flex items-center justify-between px-5 py-3 hover:bg-accent/30"
-          >
-            <div>
-              <p className="font-medium">{c.title}</p>
-              <p className="text-xs text-muted-foreground">
-                {MODES.find((m) => m.id === c.mode)?.label ?? c.mode} · {new Date(c.updated_at).toLocaleString("pt-BR")}
-              </p>
-            </div>
-            <MessageCircle className="size-4 text-muted-foreground" />
-          </Link>
-        ))}
-      </div>
+      {convs.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-border bg-card/40 p-5 text-sm text-muted-foreground">
+          Nenhuma conversa ainda. Inicie uma conversa acima.
+        </div>
+      ) : (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {convs.slice(0, 6).map((c: typeof convs[number]) => {
+            const modeLabel = MODES.find((m) => m.id === c.mode)?.label ?? c.mode;
+            const isDefault = !c.title || c.title === "New conversation" || c.title === "Nova conversa";
+            const displayTitle = isDefault ? `Conversa sobre ${modeLabel.toLowerCase()}` : c.title;
+            return (
+              <Link
+                key={c.id}
+                to="/chat/$conversationId"
+                params={{ conversationId: c.id }}
+                className="group flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/40 px-4 py-3 transition hover:border-primary/50 hover:bg-card"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{displayTitle}</p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {modeLabel} · {new Date(c.updated_at).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+                <MessageCircle className="size-4 shrink-0 text-muted-foreground transition group-hover:text-primary" />
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
