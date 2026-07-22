@@ -72,7 +72,7 @@ export function BottomNav() {
   );
 }
 
-export function subscriptionAlertLevel(
+function subscriptionAlertLevel(
   sub: { status?: string | null; minutes_available?: number | string | null } | null | undefined,
 ): "danger" | "warn" | null {
   if (!sub) return "warn";
