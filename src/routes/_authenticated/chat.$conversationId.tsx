@@ -7,7 +7,7 @@ import { extractLearningItems } from "@/lib/learning.functions";
 import { startConversationReview } from "@/lib/reviews.functions";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,11 +36,59 @@ export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
 });
 
 function ChatPageWithBoundary() {
+  const navigate = useNavigate();
   return (
-    <VoiceErrorBoundary>
+    <ChatRouteErrorBoundary onGoBack={() => navigate({ to: "/dashboard" })}>
       <ChatPage />
-    </VoiceErrorBoundary>
+    </ChatRouteErrorBoundary>
   );
+}
+
+type ChatRouteBoundaryProps = {
+  children: ReactNode;
+  onGoBack?: () => void;
+};
+
+type ChatRouteBoundaryState = { hasError: boolean };
+
+class ChatRouteErrorBoundary extends Component<ChatRouteBoundaryProps, ChatRouteBoundaryState> {
+  state: ChatRouteBoundaryState = { hasError: false };
+
+  static getDerivedStateFromError(): ChatRouteBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error("[CHAT_RENDER_FATAL]", {
+      name: error?.name,
+      message: error?.message,
+      stack: error?.stack,
+      componentStack: info?.componentStack,
+    });
+  }
+
+  private reset = () => {
+    this.setState({ hasError: false });
+  };
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <div className="mx-auto flex min-h-[100dvh] max-w-3xl flex-col items-center justify-center px-4 py-6 text-center">
+        <div className="rounded-3xl border border-border bg-card/60 p-8">
+          <h1 className="font-display text-xl font-bold">Não foi possível preparar a conversa. Tente novamente.</h1>
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <Button onClick={this.reset}>Tentar novamente</Button>
+            {this.props.onGoBack && (
+              <Button variant="outline" onClick={this.props.onGoBack}>
+                Voltar ao dashboard
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 }
 
 type DBMessage = { id: string; role: "user" | "assistant"; content: string; input_type: string; created_at: string };

@@ -48,10 +48,7 @@ export class VoiceErrorBoundary extends Component<Props, State> {
     if (!this.state.hasError) return this.props.children;
     return (
       <div className="mx-auto flex max-w-md flex-col items-center rounded-3xl border border-border bg-card/60 p-8 text-center">
-        <h2 className="font-display text-xl font-bold">Não foi possível abrir a conversa</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Tivemos um problema para preparar a tela de voz. Tente novamente.
-        </p>
+        <h2 className="font-display text-xl font-bold">Não foi possível preparar a conversa. Tente novamente.</h2>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <Button onClick={this.reset}>Tentar novamente</Button>
           {this.props.onGoBack && (
