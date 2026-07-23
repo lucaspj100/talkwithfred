@@ -109,24 +109,25 @@ export const Route = createFileRoute("/api/realtime-session")({
             supa.from("profiles").select("name").eq("id", userId).maybeSingle(),
           ]);
 
-          const basePrompt = buildFredSystemPrompt(
+          const instructions = buildFredSystemPrompt(
             (userProfile ?? null) as Tables<"user_profiles"> | null,
             conv.mode as Mode,
             profile?.name ?? null,
-            { customTopic: (conv as { custom_topic?: string | null }).custom_topic ?? null },
-          );
+            {
+              customTopic: (conv as { custom_topic?: string | null }).custom_topic ?? null,
+              voice: true,
+            },
+          ).slice(0, 8000);
 
-          const voiceExtras = [
-            "",
-            "# Voice-mode guidelines",
-            "- You are speaking in a natural live voice call, not writing.",
-            "- Never read symbols, markdown, code blocks or formatting out loud.",
-            "- Follow the Learner Level Adaptation and Pacing sections above for speed, sentence length and vocabulary.",
-            "- Ask at most one question per turn, then wait for the user.",
-            "- Do not repeat the same question twice in a row.",
-            "- If the user interrupts you, briefly acknowledge and continue naturally.",
-          ].join("\n");
-          const instructions = (basePrompt + "\n" + voiceExtras).slice(0, 8000);
+          const useMini = isMiniTestUser(userId);
+          const model = useMini ? REALTIME_MODEL_MINI : REALTIME_MODEL_DEFAULT;
+          const variant = useMini ? "mini" : "flagship";
+          console.info("[realtime-session-auth] model_variant", {
+            userId,
+            variant,
+            model,
+            conversationId: parsed.data.conversationId,
+          });
 
           const safetyId = createHash("sha256").update(userId).digest("hex").slice(0, 32);
 
@@ -140,7 +141,7 @@ export const Route = createFileRoute("/api/realtime-session")({
             body: JSON.stringify({
               session: {
                 type: "realtime",
-                model: REALTIME_MODEL,
+                model,
                 instructions,
                 audio: {
                   input: {
