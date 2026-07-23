@@ -148,25 +148,37 @@ function Dashboard() {
         </div>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-[1fr,auto] md:items-center">
-        <div>
-          <h1 className="font-display text-3xl font-bold md:text-4xl">
-            Olá, {me.profile?.name || "amigo"}.
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Escolha como quer praticar inglês hoje.
-          </p>
-        </div>
-        <div className="justify-self-end">
-          <TalkingAvatar state="idle" size="small" />
-        </div>
+      <div className="mt-2 flex flex-col items-center text-center">
+        <TalkingAvatar state="idle" size="large" />
+        <h1 className="mt-6 font-display text-3xl font-extrabold tracking-tight md:text-4xl">
+          Olá, {me.profile?.name || "amigo"}.
+        </h1>
+        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+          Alguns minutos de prática já constroem o seu hábito. Escolha por onde começar.
+        </p>
       </div>
 
-      {/* Stats row */}
+      {/* Stats row — reward colors reserved for progress */}
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <Stat icon={<Zap className="size-4" />} label="XP" value={stats.xp} />
-        <Stat icon={<Flame className="size-4" />} label="Streak" value={`${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"}`} />
-        <Stat icon={<Target className="size-4" />} label="Nível" value={LABEL[me.userProfile!.english_level] ?? me.userProfile!.english_level} />
+        <Stat
+          icon={<Zap className="size-4" />}
+          label="XP"
+          value={stats.xp}
+          tone="gold"
+        />
+        <Stat
+          icon={<Flame className="size-4" />}
+          label="Streak"
+          value={`${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"}`}
+          tone="streak"
+          muted={stats.streak_days === 0}
+        />
+        <Stat
+          icon={<Target className="size-4" />}
+          label="Nível"
+          value={LABEL[me.userProfile!.english_level] ?? me.userProfile!.english_level}
+          tone="neutral"
+        />
       </div>
 
       {/* Focus card */}
