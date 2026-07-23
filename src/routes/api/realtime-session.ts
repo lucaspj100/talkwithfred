@@ -14,9 +14,17 @@ const BodySchema = z.object({
   conversationId: z.string().uuid(),
 });
 
-const REALTIME_MODEL = "gpt-realtime-2.1";
+const REALTIME_MODEL_DEFAULT = "gpt-realtime-2.1";
+const REALTIME_MODEL_MINI = "gpt-realtime-2.1-mini";
 const VOICE = "cedar";
 const TRANSCRIPTION_MODEL = "whisper-1";
+
+function isMiniTestUser(userId: string): boolean {
+  const raw = process.env.REALTIME_MINI_TEST_USER_IDS ?? "";
+  if (!raw.trim()) return false;
+  const ids = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  return ids.includes(userId);
+}
 
 type UpstreamOk = {
   value?: string;
