@@ -183,7 +183,8 @@ export const Route = createFileRoute("/api/realtime-session")({
             client_secret: ephemeralKey,
             expires_at: data.expires_at ?? data.client_secret?.expires_at ?? null,
             session_id: data.session?.id ?? data.id ?? null,
-            model: REALTIME_MODEL,
+            model,
+            variant,
           });
         } catch (err) {
           console.error("[realtime-session-auth]", err);
