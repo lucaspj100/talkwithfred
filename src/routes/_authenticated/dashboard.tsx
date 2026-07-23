@@ -148,25 +148,37 @@ function Dashboard() {
         </div>
       </header>
 
-      <div className="grid gap-6 md:grid-cols-[1fr,auto] md:items-center">
-        <div>
-          <h1 className="font-display text-3xl font-bold md:text-4xl">
-            Olá, {me.profile?.name || "amigo"}.
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Escolha como quer praticar inglês hoje.
-          </p>
-        </div>
-        <div className="justify-self-end">
-          <TalkingAvatar state="idle" size="small" />
-        </div>
+      <div className="mt-2 flex flex-col items-center text-center">
+        <TalkingAvatar state="idle" size="large" />
+        <h1 className="mt-6 font-display text-3xl font-extrabold tracking-tight md:text-4xl">
+          Olá, {me.profile?.name || "amigo"}.
+        </h1>
+        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+          Alguns minutos de prática já constroem o seu hábito. Escolha por onde começar.
+        </p>
       </div>
 
-      {/* Stats row */}
+      {/* Stats row — reward colors reserved for progress */}
       <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <Stat icon={<Zap className="size-4" />} label="XP" value={stats.xp} />
-        <Stat icon={<Flame className="size-4" />} label="Streak" value={`${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"}`} />
-        <Stat icon={<Target className="size-4" />} label="Nível" value={LABEL[me.userProfile!.english_level] ?? me.userProfile!.english_level} />
+        <Stat
+          icon={<Zap className="size-4" />}
+          label="XP"
+          value={stats.xp}
+          tone="gold"
+        />
+        <Stat
+          icon={<Flame className="size-4" />}
+          label="Streak"
+          value={`${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"}`}
+          tone="streak"
+          muted={stats.streak_days === 0}
+        />
+        <Stat
+          icon={<Target className="size-4" />}
+          label="Nível"
+          value={LABEL[me.userProfile!.english_level] ?? me.userProfile!.english_level}
+          tone="neutral"
+        />
       </div>
 
       {/* Focus card */}
@@ -210,21 +222,34 @@ function Dashboard() {
 
 
       {/* Daily mission */}
-      <div className="mt-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase text-primary">Missão de hoje</p>
-            <p className="mt-1 font-display text-lg font-semibold">
-              {stats.last_practice_date === new Date().toISOString().slice(0, 10)
-                ? `Streak ativo! ${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"} 🔥`
-                : "Complete um treino ou converse com Fred para manter seu streak."}
-            </p>
+      {(() => {
+        const today = new Date().toISOString().slice(0, 10);
+        const activeToday = stats.last_practice_date === today;
+        const streakBroken = !activeToday && stats.streak_days === 0 && !!stats.last_practice_date;
+        const title = activeToday
+          ? `Streak ativo — ${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"} seguido${stats.streak_days === 1 ? "" : "s"}.`
+          : streakBroken
+            ? "Seu streak zerou — comece um novo hoje."
+            : "Pratique alguns minutos hoje para manter seu ritmo.";
+        return (
+          <div className="mt-6 rounded-2xl border accent-cta bg-gradient-to-br from-[color:var(--cta)]/10 via-[color:var(--gold)]/5 to-transparent p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--cta)]">Missão de hoje</p>
+                <p className="mt-1 font-display text-lg font-semibold">{title}</p>
+              </div>
+              <Link to="/practice">
+                <Button
+                  size="sm"
+                  className="rounded-full bg-gradient-to-r from-[color:var(--cta)] to-[color:var(--gold)] font-semibold text-[color:var(--cta-foreground)] shadow-lg shadow-[color:var(--cta)]/20 hover:brightness-105"
+                >
+                  Ver missão <ArrowRight className="ml-1 size-3" />
+                </Button>
+              </Link>
+            </div>
           </div>
-          <Link to="/practice">
-            <Button size="sm" variant="secondary">Ver missão <ArrowRight className="ml-1 size-3" /></Button>
-          </Link>
-        </div>
-      </div>
+        );
+      })()}
 
       <SubscriptionSummaryCard />
 
@@ -237,8 +262,11 @@ function Dashboard() {
 
       <h2 className="mt-10 font-display text-xl font-bold">Suas últimas conversas</h2>
       {convs.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-border bg-card/40 p-5 text-sm text-muted-foreground">
-          Nenhuma conversa ainda. Inicie uma conversa acima.
+        <div className="mt-4 rounded-2xl border border-border bg-card/40 p-6 text-center">
+          <p className="text-sm font-medium">Nenhuma conversa por aqui ainda.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Fred está esperando — escolha um tema e comece pela primeira.
+          </p>
         </div>
       ) : (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -269,11 +297,29 @@ function Dashboard() {
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
+function Stat({ icon, label, value, tone = "neutral", muted = false }: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  tone?: "gold" | "streak" | "neutral";
+  muted?: boolean;
+}) {
+  const accent =
+    muted ? "text-muted-foreground" :
+    tone === "gold" ? "text-[color:var(--gold)]" :
+    tone === "streak" ? "text-[color:var(--streak)]" :
+    "text-foreground";
+  const borderAccent =
+    muted ? "border-border" :
+    tone === "gold" ? "accent-gold" :
+    tone === "streak" ? "accent-streak" :
+    "border-border";
   return (
-    <div className="rounded-2xl border border-border bg-card/60 p-4">
-      <div className="flex items-center gap-2 text-xs uppercase text-muted-foreground">{icon}{label}</div>
-      <p className="mt-1 font-display text-xl font-bold">{value}</p>
+    <div className={`rounded-2xl border bg-card/70 p-4 ${borderAccent}`}>
+      <div className={`flex items-center gap-2 text-xs uppercase tracking-wide ${accent}`}>
+        {icon}<span>{label}</span>
+      </div>
+      <p className={`mt-1 font-display text-2xl font-extrabold tabular-nums ${accent}`}>{value}</p>
     </div>
   );
 }
