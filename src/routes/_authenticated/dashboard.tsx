@@ -281,11 +281,29 @@ function Dashboard() {
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
+function Stat({ icon, label, value, tone = "neutral", muted = false }: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  tone?: "gold" | "streak" | "neutral";
+  muted?: boolean;
+}) {
+  const accent =
+    muted ? "text-muted-foreground" :
+    tone === "gold" ? "text-[color:var(--gold)]" :
+    tone === "streak" ? "text-[color:var(--streak)]" :
+    "text-foreground";
+  const borderAccent =
+    muted ? "border-border" :
+    tone === "gold" ? "accent-gold" :
+    tone === "streak" ? "accent-streak" :
+    "border-border";
   return (
-    <div className="rounded-2xl border border-border bg-card/60 p-4">
-      <div className="flex items-center gap-2 text-xs uppercase text-muted-foreground">{icon}{label}</div>
-      <p className="mt-1 font-display text-xl font-bold">{value}</p>
+    <div className={`rounded-2xl border bg-card/70 p-4 ${borderAccent}`}>
+      <div className={`flex items-center gap-2 text-xs uppercase tracking-wide ${accent}`}>
+        {icon}<span>{label}</span>
+      </div>
+      <p className={`mt-1 font-display text-2xl font-extrabold tabular-nums ${accent}`}>{value}</p>
     </div>
   );
 }
