@@ -222,21 +222,34 @@ function Dashboard() {
 
 
       {/* Daily mission */}
-      <div className="mt-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/10 to-transparent p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase text-primary">Missão de hoje</p>
-            <p className="mt-1 font-display text-lg font-semibold">
-              {stats.last_practice_date === new Date().toISOString().slice(0, 10)
-                ? `Streak ativo! ${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"} 🔥`
-                : "Complete um treino ou converse com Fred para manter seu streak."}
-            </p>
+      {(() => {
+        const today = new Date().toISOString().slice(0, 10);
+        const activeToday = stats.last_practice_date === today;
+        const streakBroken = !activeToday && stats.streak_days === 0 && !!stats.last_practice_date;
+        const title = activeToday
+          ? `Streak ativo — ${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"} seguido${stats.streak_days === 1 ? "" : "s"}.`
+          : streakBroken
+            ? "Seu streak zerou — comece um novo hoje."
+            : "Pratique alguns minutos hoje para manter seu ritmo.";
+        return (
+          <div className="mt-6 rounded-2xl border accent-cta bg-gradient-to-br from-[color:var(--cta)]/10 via-[color:var(--gold)]/5 to-transparent p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--cta)]">Missão de hoje</p>
+                <p className="mt-1 font-display text-lg font-semibold">{title}</p>
+              </div>
+              <Link to="/practice">
+                <Button
+                  size="sm"
+                  className="rounded-full bg-gradient-to-r from-[color:var(--cta)] to-[color:var(--gold)] font-semibold text-[color:var(--cta-foreground)] shadow-lg shadow-[color:var(--cta)]/20 hover:brightness-105"
+                >
+                  Ver missão <ArrowRight className="ml-1 size-3" />
+                </Button>
+              </Link>
+            </div>
           </div>
-          <Link to="/practice">
-            <Button size="sm" variant="secondary">Ver missão <ArrowRight className="ml-1 size-3" /></Button>
-          </Link>
-        </div>
-      </div>
+        );
+      })()}
 
       <SubscriptionSummaryCard />
 
@@ -249,8 +262,11 @@ function Dashboard() {
 
       <h2 className="mt-10 font-display text-xl font-bold">Suas últimas conversas</h2>
       {convs.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-border bg-card/40 p-5 text-sm text-muted-foreground">
-          Nenhuma conversa ainda. Inicie uma conversa acima.
+        <div className="mt-4 rounded-2xl border border-border bg-card/40 p-6 text-center">
+          <p className="text-sm font-medium">Nenhuma conversa por aqui ainda.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Fred está esperando — escolha um tema e comece pela primeira.
+          </p>
         </div>
       ) : (
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
