@@ -74,13 +74,21 @@ function Dashboard() {
     setCustomTopic("");
   }
 
+  function navigateToConversation(id: string) {
+    if (pickerTarget === "voice-message") {
+      navigate({ to: "/voice-message/$conversationId", params: { conversationId: id } });
+    } else {
+      navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
+    }
+  }
+
   async function startChat(mode: Mode) {
     if (creating) return;
     setCreating(true);
     try {
       const { id } = await create({ data: { mode } });
       closePicker();
-      navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
+      navigateToConversation(id);
     } catch (e) {
       toast.error((e as Error).message);
       setCreating(false);
@@ -94,11 +102,16 @@ function Dashboard() {
     try {
       const { id } = await create({ data: { mode: "custom", customTopic: topic } });
       closePicker();
-      navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
+      navigateToConversation(id);
     } catch (e) {
       toast.error((e as Error).message);
       setCreating(false);
     }
+  }
+
+  function openPicker(target: "call" | "voice-message") {
+    setPickerTarget(target);
+    setPicking(true);
   }
 
   function handleModeClick(mode: Mode) {
