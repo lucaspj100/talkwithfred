@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { verifyTtsToken } from "@/lib/api-auth.server";
+import { FRED_TTS_VOICE, FRED_TTS_INSTRUCTIONS } from "@/lib/tts-style";
 
 const TTS_MODEL = "openai/gpt-4o-mini-tts";
 
