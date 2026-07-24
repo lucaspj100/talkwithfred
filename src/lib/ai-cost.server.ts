@@ -277,7 +277,18 @@ export async function recordCascadeUsageSafe(args: {
 }): Promise<void> {
   try {
     if (!args.usageSessionId) return; // no session to attach to; skip.
+
+    // Ownership check: only bill the session if it belongs to this user.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: sess } = await (supabaseAdmin as any)
+      .from("usage_sessions")
+      .select("id, user_id")
+      .eq("id", args.usageSessionId)
+      .maybeSingle();
+    if (!sess || sess.user_id !== args.userId) return;
+
     const tokens = parseRealtimeUsage(args.usage);
+
     const now = new Date();
     const pricing = await fetchPricing(args.model, now);
     const costUsd = pricing ? computeCostUsd(tokens, pricing) : 0;
