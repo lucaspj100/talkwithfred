@@ -259,3 +259,56 @@ async function rollupUsageSession(sessionId: string) {
     })
     .eq("id", sessionId);
 }
+
+/**
+ * Fire-and-forget helper for the cascade "text-speech" flow.
+ * Silently records an event; never throws to the caller so a billing miss
+ * cannot break the user-facing API response.
+ */
+export async function recordCascadeUsageSafe(args: {
+  userId: string;
+  usageSessionId: string | null;
+  conversationId: string | null;
+  model: string;              // provider-prefixed, e.g. "openai/gpt-4o-mini-tts"
+  provider?: string;          // defaults to "openai"
+  eventType: string;          // e.g. "stt.done" | "chat.done" | "tts.done"
+  usage: RealtimeUsagePayload;
+  providerResponseId?: string | null;
+}): Promise<void> {
+  try {
+    if (!args.usageSessionId) return; // no session to attach to; skip.
+    const tokens = parseRealtimeUsage(args.usage);
+    const now = new Date();
+    const pricing = await fetchPricing(args.model, now);
+    const costUsd = pricing ? computeCostUsd(tokens, pricing) : 0;
+    const rate = await fetchExchangeRate();
+    const costBrl = costUsd * rate;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabaseAdmin as any).from("ai_usage_events").insert({
+      user_id: args.userId,
+      usage_session_id: args.usageSessionId,
+      conversation_id: args.conversationId ?? null,
+      provider: args.provider ?? "openai",
+      model: args.model,
+      provider_response_id: args.providerResponseId ?? null,
+      event_type: args.eventType,
+      ...tokens,
+      estimated_cost_usd: costUsd,
+      exchange_rate_brl: rate,
+      estimated_cost_brl: costBrl,
+      occurred_at: now.toISOString(),
+      raw_usage: sanitizeRawUsage(args.usage),
+    });
+    if (error && (error as { code?: string }).code !== "23505") {
+      console.warn("[ai-cost] cascade insert failed", error);
+      return;
+    }
+    await rollupUsageSession(args.usageSessionId).catch((e) =>
+      console.warn("[ai-cost] cascade rollup failed", e),
+    );
+  } catch (e) {
+    console.warn("[ai-cost] recordCascadeUsageSafe", e);
+  }
+}
+
