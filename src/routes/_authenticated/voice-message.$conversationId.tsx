@@ -613,15 +613,67 @@ function VoiceMessagePage() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, phase]);
 
-  const phaseLabel: Record<Phase, string> = {
-    idle: composer === "voice" ? "Toque no microfone para gravar" : "Digite sua mensagem",
-    recording: "Gravando...",
-    transcribing: "Transcrevendo sua mensagem...",
-    thinking: "Fred está pensando...",
-    responding: "Fred está respondendo...",
+  // ============= Push-to-talk (hold to record, release to send, drag-out to cancel) =============
+  const holdBtnRef = useRef<HTMLButtonElement | null>(null);
+  const holdCancelRef = useRef(false);
+  const [holdCancel, setHoldCancel] = useState(false);
+  const startingHoldRef = useRef(false);
+
+  useEffect(() => {
+    if (phase !== "recording") return;
+    const onMove = (ev: PointerEvent) => {
+      const btn = holdBtnRef.current;
+      if (!btn) return;
+      const r = btn.getBoundingClientRect();
+      const pad = 24; // small tolerance so a jittery finger doesn't flip states
+      const inside =
+        ev.clientX >= r.left - pad &&
+        ev.clientX <= r.right + pad &&
+        ev.clientY >= r.top - pad &&
+        ev.clientY <= r.bottom + pad;
+      const shouldCancel = !inside;
+      if (shouldCancel !== holdCancelRef.current) {
+        holdCancelRef.current = shouldCancel;
+        setHoldCancel(shouldCancel);
+      }
+    };
+    const onUp = () => {
+      if (holdCancelRef.current) cancelRec();
+      else stopRecording();
+      holdCancelRef.current = false;
+      setHoldCancel(false);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  const onHoldPointerDown = async (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (phase !== "idle" || !usageReady || startingHoldRef.current) return;
+    e.preventDefault();
+    startingHoldRef.current = true;
+    holdCancelRef.current = false;
+    setHoldCancel(false);
+    try {
+      await startRecording();
+    } finally {
+      startingHoldRef.current = false;
+    }
   };
 
-  const isBusy = phase !== "idle" && phase !== "recording";
+  const recordingLabel = phase === "recording"
+    ? (holdCancel ? "Solte para cancelar" : "Solte para enviar")
+    : composer === "voice"
+      ? "Segure para gravar"
+      : "Digite sua mensagem";
+
+  const isBusy = phase === "processing";
 
   return (
     <div className="mx-auto flex h-[100dvh] max-w-3xl flex-col bg-background">
