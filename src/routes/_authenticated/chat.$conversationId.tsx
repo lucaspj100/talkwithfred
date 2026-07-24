@@ -200,10 +200,10 @@ function ChatPage() {
   const [busyOtherTab, setBusyOtherTab] = useState(false);
 
   const initUsage = useCallback(
-    async (force = false) => {
+    async (force = false, modeOverride?: "voice" | "text") => {
       const res = await usage.start({
         conversationId: conversation.id,
-        mode: "voice",
+        mode: modeOverride ?? chatMode,
         force,
       });
       if ("ok" in res && res.ok) {
@@ -231,7 +231,7 @@ function ChatPage() {
       }
       return false;
     },
-    [conversation.id, navigate, usage],
+    [conversation.id, navigate, usage, chatMode],
   );
 
   useEffect(() => {
@@ -240,6 +240,29 @@ function ChatPage() {
     void initUsage(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady]);
+
+  // When the user toggles between "voice" (WebRTC realtime) and "text"
+  // (cascade: STT → chat → TTS), stop the current usage session and start
+  // a new one so ai_usage_events roll up under the correct mode.
+  const lastStartedModeRef = useRef<"voice" | "text" | null>(null);
+  useEffect(() => {
+    if (usageInit !== "ready") return;
+    if (lastStartedModeRef.current === null) {
+      lastStartedModeRef.current = chatMode;
+      return;
+    }
+    if (lastStartedModeRef.current === chatMode) return;
+    const nextMode = chatMode;
+    lastStartedModeRef.current = nextMode;
+    (async () => {
+      try { await usage.stop("mode_switch"); } catch { /* ignore */ }
+      setUsageInit("pending");
+      const ok = await initUsage(false, nextMode);
+      if (!ok) console.warn("[usage] restart after mode switch failed");
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatMode]);
+
 
   // React to running-out-of-minutes signal from heartbeat.
   useEffect(() => {
@@ -254,6 +277,12 @@ function ChatPage() {
 
 
 
+  // Keep the current usage session id in a ref so async request builders
+  // (transport fetch, STT upload, TTS URL) always see the latest value
+  // without having to recreate closures on every session restart.
+  const usageSessionIdRef = useRef<string | null>(null);
+  useEffect(() => { usageSessionIdRef.current = usage.sessionId; }, [usage.sessionId]);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -264,11 +293,15 @@ function ChatPage() {
           const t = data.session?.access_token;
           const headers = new Headers(init?.headers);
           if (t) headers.set("Authorization", `Bearer ${t}`);
+          const sid = usageSessionIdRef.current;
+          if (sid) headers.set("x-usage-session-id", sid);
+          headers.set("x-conversation-id", conversation.id);
           return fetch(input, { ...init, headers });
         }) as typeof fetch,
       }),
     [conversation.id, conversation.mode],
   );
+
 
   // ============= TTS playback =============
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -494,9 +527,12 @@ function ChatPage() {
       const { token: ttsTicket } = await mintTtsToken();
       if (!ttsTicket) throw new Error("no_tts_token");
 
+      const sid = usageSessionIdRef.current;
       const streamUrl =
         `/api/tts-stream?text=${encodeURIComponent(speechText)}` +
-        `&t=${encodeURIComponent(ttsTicket)}`;
+        `&t=${encodeURIComponent(ttsTicket)}` +
+        (sid ? `&s=${encodeURIComponent(sid)}&c=${encodeURIComponent(conversation.id)}` : "");
+
 
       const audio = new Audio();
       audio.preload = "auto";
@@ -746,11 +782,19 @@ function ChatPage() {
         try {
           const fd = new FormData();
           fd.append("file", blob, `recording.${mime.includes("mp4") ? "mp4" : "webm"}`);
+          const sttHeaders: Record<string, string> = {};
+          if (token) sttHeaders.Authorization = `Bearer ${token}`;
+          const sid = usageSessionIdRef.current;
+          if (sid) {
+            sttHeaders["x-usage-session-id"] = sid;
+            sttHeaders["x-conversation-id"] = conversation.id;
+          }
           const res = await fetch("/api/stt", {
             method: "POST",
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            headers: sttHeaders,
             body: fd,
           });
+
           if (!res.ok) throw new Error(await res.text());
           const json = await res.json();
           const text: string = (json.text ?? "").trim();

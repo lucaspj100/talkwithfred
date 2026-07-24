@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { verifyTtsToken } from "@/lib/api-auth.server";
 
+const TTS_MODEL = "openai/gpt-4o-mini-tts";
+
 /**
  * Progressive streaming TTS endpoint used as the `src` of an HTMLAudioElement.
  *
  * Auth: because <audio src> cannot set custom headers, callers pass a
  * short-lived, single-purpose signed token (minted server-side via
- * `mintTtsToken`) as a query param. We never accept the raw Supabase
- * session access_token in the URL — leakage of that token would allow
- * session takeover.
+ * `mintTtsToken`) as a query param.
+ *
+ * Usage attribution: `s` = usage_session_id (optional), `c` = conversation_id
+ * (optional). Ownership is verified server-side inside recordCascadeUsageSafe.
  */
 export const Route = createFileRoute("/api/tts-stream")({
   server: {
@@ -17,6 +20,8 @@ export const Route = createFileRoute("/api/tts-stream")({
         const url = new URL(request.url);
         const text = url.searchParams.get("text");
         const ticket = url.searchParams.get("t");
+        const usageSessionId = url.searchParams.get("s");
+        const conversationId = url.searchParams.get("c");
 
         if (!text || text.length > 4000) {
           return new Response("Bad text", { status: 400 });
@@ -33,7 +38,7 @@ export const Route = createFileRoute("/api/tts-stream")({
           method: "POST",
           headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "openai/gpt-4o-mini-tts",
+            model: TTS_MODEL,
             voice: "ash",
             input: text,
             response_format: "mp3",
@@ -42,6 +47,25 @@ export const Route = createFileRoute("/api/tts-stream")({
         if (!upstream.ok || !upstream.body) {
           const t = await upstream.text().catch(() => "");
           return new Response(t || "TTS failed", { status: upstream.status || 502 });
+        }
+
+        // Fire-and-forget usage record (char-based estimate).
+        if (usageSessionId) {
+          const chars = text.length;
+          void (async () => {
+            const { recordCascadeUsageSafe } = await import("@/lib/ai-cost.server");
+            await recordCascadeUsageSafe({
+              userId: claims.userId,
+              usageSessionId,
+              conversationId: conversationId ?? null,
+              model: TTS_MODEL,
+              eventType: "tts.done",
+              usage: {
+                input_tokens: chars,
+                input_token_details: { text_tokens: chars },
+              },
+            });
+          })();
         }
 
         return new Response(upstream.body, {
