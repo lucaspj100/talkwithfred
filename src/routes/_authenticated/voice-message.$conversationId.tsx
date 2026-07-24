@@ -895,6 +895,29 @@ function formatSec(s: number): string {
   return `${String(m).padStart(1, "0")}:${String(rest).padStart(2, "0")}`;
 }
 
+/** Load an audio URL far enough to read its duration. Resolves to null on failure. */
+function probeAudioDuration(url: string): Promise<number | null> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve(null);
+      return;
+    }
+    const probe = new Audio();
+    probe.preload = "metadata";
+    const done = (val: number | null) => {
+      probe.onloadedmetadata = null;
+      probe.onerror = null;
+      resolve(val);
+    };
+    probe.onloadedmetadata = () => {
+      const d = probe.duration;
+      done(Number.isFinite(d) && d > 0 ? Math.max(1, Math.round(d)) : null);
+    };
+    probe.onerror = () => done(null);
+    probe.src = url;
+  });
+}
+
 /**
  * Reads an AI SDK v5 UI message stream and invokes `onDelta` for every text
  * fragment. Returns after the stream ends.
