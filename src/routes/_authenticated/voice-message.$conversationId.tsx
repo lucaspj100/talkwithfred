@@ -3,11 +3,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { getConversation, persistTurn } from "@/lib/conversations.functions";
 import { getSubscriptionAccess } from "@/lib/subscription.functions";
 import { extractLearningItems } from "@/lib/learning.functions";
+import { mintTtsToken } from "@/lib/tts-token.functions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { FredAvatar } from "@/components/FredBrand";
-import { ArrowLeft, Mic, Pause, Play, Square, Loader2 } from "lucide-react";
+import { ArrowLeft, Mic, Pause, Play, Square, Loader2, Keyboard, Send } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useUsageSession } from "@/hooks/use-usage-session";
@@ -33,17 +33,19 @@ type Msg = {
   text: string;
   audioUrl: string | null;
   durationSec: number | null;
+  /** true for user messages typed via keyboard (no audio, render as text bubble) */
+  textOnly?: boolean;
 };
 
 type Phase = "idle" | "recording" | "transcribing" | "thinking" | "responding";
-
-const CHAT_MODEL = "google/gemini-3.1-flash-lite";
+type Composer = "voice" | "text";
 
 function VoiceMessagePage() {
   const { conversation, messages: initialMsgs } = Route.useLoaderData();
   const navigate = useNavigate();
   const persist = useServerFn(persistTurn);
   const extract = useServerFn(extractLearningItems);
+  const mintToken = useServerFn(mintTtsToken);
   const modeLabel = useMemo(
     () => MODES.find((m) => m.id === (conversation.mode as Mode))?.label ?? conversation.mode,
     [conversation.mode],
@@ -59,6 +61,8 @@ function VoiceMessagePage() {
     })),
   );
   const [phase, setPhase] = useState<Phase>("idle");
+  const [composer, setComposer] = useState<Composer>("voice");
+  const [textDraft, setTextDraft] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
@@ -110,7 +114,6 @@ function VoiceMessagePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady]);
 
-  // Active tracking — count seconds only during active interaction.
   useEffect(() => {
     if (!usageReady) return;
     const active = phase !== "idle";
@@ -119,13 +122,93 @@ function VoiceMessagePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, usageReady]);
 
-  // Auto-stop on out-of-minutes.
   useEffect(() => {
     if (usage.ended) {
       toast.error("Seus minutos acabaram.");
       navigate({ to: "/assinatura" });
     }
   }, [usage.ended, navigate]);
+
+  // ============= Persistent audio element (unlocked on first user gesture) =============
+  // Mobile browsers only autoplay through an element that was created/played
+  // during a user gesture. We keep ONE element and swap `src` for every reply.
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const audioUnlockedRef = useRef(false);
+  const playQueueRef = useRef<string[]>([]);
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const playingUrlToMsgId = useRef<Map<string, string>>(new Map());
+
+  const ensureAudioEl = useCallback(() => {
+    if (typeof window === "undefined") return null;
+    if (!audioElRef.current) {
+      const el = new Audio();
+      el.preload = "auto";
+      el.addEventListener("ended", () => {
+        setPlayingId(null);
+        // play next in queue
+        const next = playQueueRef.current.shift();
+        if (next && audioElRef.current) {
+          audioElRef.current.src = next;
+          const mid = playingUrlToMsgId.current.get(next) ?? null;
+          setPlayingId(mid);
+          audioElRef.current.play().catch(() => setPlayingId(null));
+        }
+      });
+      audioElRef.current = el;
+    }
+    return audioElRef.current;
+  }, []);
+
+  const unlockAudio = useCallback(() => {
+    // Call from a user gesture (mic tap, send tap, keyboard toggle).
+    const el = ensureAudioEl();
+    if (!el || audioUnlockedRef.current) return;
+    audioUnlockedRef.current = true;
+    // Play a tiny silent buffer to "warm" the element for later autoplay.
+    try {
+      const silent =
+        "data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA";
+      el.src = silent;
+      el.muted = true;
+      el.play().catch(() => {}).finally(() => {
+        el.pause();
+        el.muted = false;
+      });
+    } catch { /* ignore */ }
+  }, [ensureAudioEl]);
+
+  const enqueueAudio = useCallback(
+    (msgId: string, url: string) => {
+      playingUrlToMsgId.current.set(url, msgId);
+      const el = ensureAudioEl();
+      if (!el) return;
+      if (!el.src || el.ended || el.paused) {
+        el.src = url;
+        setPlayingId(msgId);
+        el.play().catch(() => setPlayingId(null));
+      } else {
+        playQueueRef.current.push(url);
+      }
+    },
+    [ensureAudioEl],
+  );
+
+  const togglePlayFromBubble = useCallback(
+    (msgId: string, url: string) => {
+      const el = ensureAudioEl();
+      if (!el) return;
+      if (playingId === msgId && !el.paused) {
+        el.pause();
+        setPlayingId(null);
+        return;
+      }
+      playingUrlToMsgId.current.set(url, msgId);
+      el.src = url;
+      setPlayingId(msgId);
+      el.play().catch(() => setPlayingId(null));
+    },
+    [ensureAudioEl, playingId],
+  );
 
   // ============= Recording =============
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -160,6 +243,7 @@ function VoiceMessagePage() {
       toast.error("Sessão ainda não pronta.");
       return;
     }
+    unlockAudio();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -201,7 +285,6 @@ function VoiceMessagePage() {
   }
 
   async function handleRecordedAudio(blob: Blob, mime: string, durationSec: number) {
-    // 1) Transcribe
     setPhase("transcribing");
     let transcript = "";
     try {
@@ -239,10 +322,87 @@ function VoiceMessagePage() {
       durationSec,
     };
     setMessages((prev) => [...prev, userMsg]);
+    await runAssistantTurn(userMsg);
+  }
 
-    // 2) Chat (non-streaming — collect full text before TTS)
+  async function submitTypedText() {
+    const text = textDraft.trim();
+    if (!text || phase !== "idle" || !usageReady) return;
+    unlockAudio();
+    const userMsg: Msg = {
+      id: `u_${Date.now()}`,
+      role: "user",
+      text,
+      audioUrl: null,
+      durationSec: null,
+      textOnly: true,
+    };
+    setTextDraft("");
+    setMessages((prev) => [...prev, userMsg]);
+    await runAssistantTurn(userMsg);
+  }
+
+  /**
+   * Given a just-appended user message, stream Fred's reply from /api/chat and
+   * synthesize the audio sentence-by-sentence via /api/tts-stream so playback
+   * starts before the full text is ready.
+   */
+  async function runAssistantTurn(userMsg: Msg) {
     setPhase("thinking");
+
+    // Mint a short-lived TTS token up-front (used by <audio src>).
+    let ttsToken: string | null = null;
+    try {
+      const r = await mintToken();
+      ttsToken = r.token;
+    } catch (e) {
+      console.warn("[tts-token]", e);
+    }
+
+    const assistantId = `a_${Date.now()}`;
+    // Insert a placeholder so text streams live into the bubble.
+    setMessages((prev) => [
+      ...prev,
+      { id: assistantId, role: "assistant", text: "", audioUrl: null, durationSec: null },
+    ]);
+
     let assistantText = "";
+    let sentenceBuf = "";
+    let ttsStarted = false;
+    const enqueueSentence = (sentence: string) => {
+      const clean = sentence.trim();
+      if (!clean) return;
+      if (!ttsToken) return; // fallback handled after loop
+      const params = new URLSearchParams();
+      params.set("text", clean.slice(0, 4000));
+      params.set("t", ttsToken);
+      const sid = usageSessionIdRef.current;
+      if (sid) params.set("s", sid);
+      params.set("c", conversation.id);
+      const url = `/api/tts-stream?${params.toString()}`;
+      if (!ttsStarted) {
+        ttsStarted = true;
+        setPhase("responding");
+      }
+      enqueueAudio(assistantId, url);
+    };
+
+    const flushSentenceBuffer = (final = false) => {
+      // Split on sentence boundaries followed by whitespace/end.
+      const regex = /[^.!?]+[.!?]+(?=\s|$)/g;
+      let match: RegExpExecArray | null;
+      let lastEnd = 0;
+      while ((match = regex.exec(sentenceBuf)) !== null) {
+        enqueueSentence(match[0]);
+        lastEnd = match.index + match[0].length;
+      }
+      sentenceBuf = sentenceBuf.slice(lastEnd);
+      if (final && sentenceBuf.trim().length > 0) {
+        enqueueSentence(sentenceBuf);
+        sentenceBuf = "";
+      }
+    };
+
     try {
       const history = [...messages, userMsg].slice(-10).map((m) => ({
         id: m.id,
@@ -263,111 +423,92 @@ function VoiceMessagePage() {
         }),
       });
       if (!res.ok || !res.body) throw new Error(await res.text().catch(() => "chat failed"));
-      // Parse AI SDK UI message stream (SSE-like): "data: {json}\n\n"
-      assistantText = await readTextFromUIStream(res.body);
+
+      await readTextFromUIStream(res.body, (delta) => {
+        assistantText += delta;
+        sentenceBuf += delta;
+        // Update bubble incrementally.
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantId ? { ...m, text: assistantText } : m)),
+        );
+        flushSentenceBuffer(false);
+      });
+      flushSentenceBuffer(true);
     } catch (e) {
       console.error("[chat]", e);
       toast.error("Fred teve um problema para responder. Tente novamente.");
+      setMessages((prev) => prev.filter((m) => m.id !== assistantId));
       setPhase("idle");
       return;
     }
+
     assistantText = assistantText.trim();
     if (!assistantText) {
       toast.error("Fred não respondeu. Tente novamente.");
+      setMessages((prev) => prev.filter((m) => m.id !== assistantId));
       setPhase("idle");
       return;
     }
 
-    // 3) TTS
-    setPhase("responding");
-    let assistantAudioUrl: string | null = null;
-    let assistantDuration: number | null = null;
-    try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers.Authorization = `Bearer ${token}`;
-      const sid = usageSessionIdRef.current;
-      if (sid) {
-        headers["x-usage-session-id"] = sid;
-        headers["x-conversation-id"] = conversation.id;
+    // If TTS streaming didn't kick in (no token), fall back to /api/tts blob.
+    if (!ttsStarted) {
+      setPhase("responding");
+      try {
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        const sid = usageSessionIdRef.current;
+        if (sid) {
+          headers["x-usage-session-id"] = sid;
+          headers["x-conversation-id"] = conversation.id;
+        }
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ text: assistantText.slice(0, 4000) }),
+        });
+        if (res.ok) {
+          const audioBlob = await res.blob();
+          const url = URL.createObjectURL(audioBlob);
+          setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, audioUrl: url } : m)));
+          enqueueAudio(assistantId, url);
+        }
+      } catch (e) {
+        console.warn("[tts-fallback]", e);
       }
-      const res = await fetch("/api/tts", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ text: assistantText.slice(0, 4000) }),
-      });
-      if (res.ok) {
-        const audioBlob = await res.blob();
-        assistantAudioUrl = URL.createObjectURL(audioBlob);
-        assistantDuration = await probeDuration(assistantAudioUrl).catch(() => null);
-      }
-    } catch (e) {
-      console.warn("[tts]", e);
+    } else {
+      // Store first streamed URL on the message so the bubble Play button works.
+      // (Bubble replays the whole reply from /api/tts on demand.)
+      setMessages((prev) =>
+        prev.map((m) => (m.id === assistantId ? { ...m, audioUrl: m.audioUrl } : m)),
+      );
     }
 
-    const assistantMsg: Msg = {
-      id: `a_${Date.now()}`,
-      role: "assistant",
-      text: assistantText,
-      audioUrl: assistantAudioUrl,
-      durationSec: assistantDuration,
-    };
-    setMessages((prev) => [...prev, assistantMsg]);
     setPhase("idle");
-
-    // Auto-play Fred's reply
-    if (assistantAudioUrl) {
-      setTimeout(() => playAudioById(assistantMsg.id, assistantAudioUrl!), 100);
-    }
 
     // Persist + extract (best-effort).
     void persist({
       data: {
         conversationId: conversation.id,
-        userMessage: transcript,
+        userMessage: userMsg.text,
         assistantMessage: assistantText,
-        inputType: "voice",
+        inputType: userMsg.textOnly ? "text" : "voice",
       },
     }).catch((e) => console.error("[persist]", e));
     void extract({
       data: {
         conversationId: conversation.id,
-        userMessage: transcript,
+        userMessage: userMsg.text,
         assistantMessage: assistantText,
       },
     }).catch((e) => console.error("[extract]", e));
   }
 
-  // ============= Audio playback =============
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playingId, setPlayingId] = useState<string | null>(null);
-
-  function playAudioById(id: string, url: string) {
-    if (playingId === id) {
-      audioRef.current?.pause();
-      audioRef.current = null;
-      setPlayingId(null);
-      return;
-    }
-    audioRef.current?.pause();
-    const audio = new Audio(url);
-    audio.onended = () => {
-      if (audioRef.current === audio) {
-        audioRef.current = null;
-        setPlayingId(null);
-      }
-    };
-    audioRef.current = audio;
-    setPlayingId(id);
-    audio.play().catch(() => {
-      setPlayingId(null);
-    });
-  }
-
   // Cleanup on unmount.
   useEffect(() => {
     return () => {
-      audioRef.current?.pause();
-      messages.forEach((m) => m.audioUrl && URL.revokeObjectURL(m.audioUrl));
+      audioElRef.current?.pause();
+      audioElRef.current = null;
+      messages.forEach((m) => m.audioUrl && m.audioUrl.startsWith("blob:") && URL.revokeObjectURL(m.audioUrl));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -378,7 +519,7 @@ function VoiceMessagePage() {
   }, [messages, phase]);
 
   const phaseLabel: Record<Phase, string> = {
-    idle: "Toque no microfone para gravar",
+    idle: composer === "voice" ? "Toque no microfone para gravar" : "Digite sua mensagem",
     recording: "Gravando...",
     transcribing: "Transcrevendo sua mensagem...",
     thinking: "Fred está pensando...",
@@ -416,65 +557,123 @@ function VoiceMessagePage() {
       <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto px-4 py-6">
         {messages.length === 0 && (
           <div className="mx-auto max-w-md rounded-2xl border border-dashed border-border bg-card/40 p-6 text-center">
-            <p className="text-sm font-medium">Envie seu primeiro áudio 🎙️</p>
+            <p className="text-sm font-medium">Envie sua primeira mensagem 🎙️</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Segure ou toque no microfone abaixo, fale em inglês, e o Fred responde em áudio.
+              Toque no microfone para falar, ou no teclado para digitar. O Fred responde em áudio.
             </p>
           </div>
         )}
         {messages.map((m) => (
-          <VoiceBubble
+          <MessageBubble
             key={m.id}
             msg={m}
             playing={playingId === m.id}
-            onPlay={() => m.audioUrl && playAudioById(m.id, m.audioUrl)}
+            onPlay={() => m.audioUrl && togglePlayFromBubble(m.id, m.audioUrl)}
           />
         ))}
         {phase === "thinking" && <TypingBubble label="Fred está pensando..." />}
-        {phase === "responding" && <TypingBubble label="Fred está respondendo..." />}
         {phase === "transcribing" && <TypingBubble label="Transcrevendo..." align="end" />}
       </div>
 
       {/* Composer */}
       <div className="border-t border-border/60 bg-background/95 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-        <div className="flex items-center justify-center gap-4">
-          {phase === "recording" ? (
-            <>
-              <button
-                onClick={cancelRec}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={stopRecording}
-                className="relative grid size-20 place-items-center rounded-full bg-destructive text-destructive-foreground shadow-lg transition active:scale-95"
-                aria-label="Parar gravação"
-              >
-                <span className="absolute inset-0 animate-ping rounded-full bg-destructive/40" />
-                <Square className="relative size-8" />
-              </button>
-              <span className="tabular-nums text-sm text-muted-foreground">
-                {formatSec(recElapsed)}
-              </span>
-            </>
-          ) : (
+        {composer === "text" ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              submitTypedText();
+            }}
+            className="flex items-end gap-2"
+          >
             <button
-              onClick={startRecording}
-              disabled={isBusy || !usageReady}
-              className={cn(
-                "grid size-20 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg transition active:scale-95 disabled:opacity-50",
-              )}
-              aria-label="Gravar mensagem de voz"
+              type="button"
+              onClick={() => {
+                setComposer("voice");
+                setTextDraft("");
+              }}
+              className="grid size-11 shrink-0 place-items-center rounded-full text-muted-foreground transition hover:bg-accent"
+              aria-label="Voltar para gravação"
             >
-              {isBusy ? (
-                <Loader2 className="size-8 animate-spin" />
-              ) : (
-                <Mic className="size-8" />
-              )}
+              <Mic className="size-5" />
             </button>
-          )}
-        </div>
+            <textarea
+              value={textDraft}
+              onChange={(e) => setTextDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  submitTypedText();
+                }
+              }}
+              rows={1}
+              placeholder="Escreva em inglês..."
+              disabled={isBusy || !usageReady}
+              className="min-h-11 max-h-40 flex-1 resize-none rounded-2xl border border-border bg-card px-4 py-2.5 text-sm outline-none focus:border-primary/60 disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={isBusy || !usageReady || !textDraft.trim()}
+              className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg transition active:scale-95 disabled:opacity-50"
+              aria-label="Enviar mensagem"
+            >
+              {isBusy ? <Loader2 className="size-5 animate-spin" /> : <Send className="size-5" />}
+            </button>
+          </form>
+        ) : (
+          <div className="flex items-center justify-center gap-4">
+            {phase === "recording" ? (
+              <>
+                <button
+                  onClick={cancelRec}
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={stopRecording}
+                  className="relative grid size-20 place-items-center rounded-full bg-destructive text-destructive-foreground shadow-lg transition active:scale-95"
+                  aria-label="Parar gravação"
+                >
+                  <span className="absolute inset-0 animate-ping rounded-full bg-destructive/40" />
+                  <Square className="relative size-8" />
+                </button>
+                <span className="tabular-nums text-sm text-muted-foreground">
+                  {formatSec(recElapsed)}
+                </span>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    unlockAudio();
+                    setComposer("text");
+                  }}
+                  disabled={isBusy}
+                  className="grid size-12 place-items-center rounded-full border border-border text-muted-foreground transition hover:bg-accent disabled:opacity-50"
+                  aria-label="Digitar mensagem"
+                >
+                  <Keyboard className="size-5" />
+                </button>
+                <button
+                  onClick={startRecording}
+                  disabled={isBusy || !usageReady}
+                  className={cn(
+                    "grid size-20 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg transition active:scale-95 disabled:opacity-50",
+                  )}
+                  aria-label="Gravar mensagem de voz"
+                >
+                  {isBusy ? (
+                    <Loader2 className="size-8 animate-spin" />
+                  ) : (
+                    <Mic className="size-8" />
+                  )}
+                </button>
+                <span className="size-12" aria-hidden />
+              </>
+            )}
+          </div>
+        )}
         <p className="mt-3 text-center text-xs text-muted-foreground" aria-live="polite">
           {phaseLabel[phase]}
         </p>
@@ -483,7 +682,7 @@ function VoiceMessagePage() {
   );
 }
 
-function VoiceBubble({
+function MessageBubble({
   msg,
   playing,
   onPlay,
@@ -493,6 +692,30 @@ function VoiceBubble({
   onPlay: () => void;
 }) {
   const mine = msg.role === "user";
+
+  // User typed text → plain text bubble.
+  if (mine && msg.textOnly) {
+    return (
+      <div className="flex justify-end">
+        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm">
+          {msg.text}
+        </div>
+      </div>
+    );
+  }
+
+  // Assistant streaming text without audio yet → plain text bubble (updates
+  // live as tokens arrive); switches to voice bubble once audio is attached.
+  if (!mine && !msg.audioUrl) {
+    return (
+      <div className="flex justify-start">
+        <div className="max-w-[85%] rounded-2xl rounded-bl-md border border-border bg-card px-4 py-2.5 text-sm shadow-sm">
+          {msg.text || <span className="text-muted-foreground">…</span>}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("flex", mine ? "justify-end" : "justify-start")}>
       <div className={cn("flex max-w-[85%] flex-col gap-1", mine ? "items-end" : "items-start")}>
@@ -543,7 +766,6 @@ function VoiceBubble({
 }
 
 function Waveform({ mine, playing }: { mine: boolean; playing: boolean }) {
-  // Static-ish decorative waveform bars.
   const bars = useMemo(
     () => Array.from({ length: 22 }, (_, i) => 6 + Math.round(Math.sin(i * 1.3) * 6 + Math.cos(i * 0.7) * 4 + 10)),
     [],
@@ -582,29 +804,17 @@ function formatSec(s: number): string {
   return `${String(m).padStart(1, "0")}:${String(rest).padStart(2, "0")}`;
 }
 
-function probeDuration(url: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const a = new Audio();
-    a.preload = "metadata";
-    a.onloadedmetadata = () => {
-      const d = isFinite(a.duration) ? Math.round(a.duration) : 0;
-      resolve(d);
-    };
-    a.onerror = () => reject(new Error("meta failed"));
-    a.src = url;
-  });
-}
-
 /**
- * Reads an AI SDK v5 UI message stream and returns the accumulated assistant text.
- * The stream is SSE-style: lines of `data: {json}` separated by blank lines.
- * We collect every `text-delta` part.
+ * Reads an AI SDK v5 UI message stream and invokes `onDelta` for every text
+ * fragment. Returns after the stream ends.
  */
-async function readTextFromUIStream(body: ReadableStream<Uint8Array>): Promise<string> {
+async function readTextFromUIStream(
+  body: ReadableStream<Uint8Array>,
+  onDelta: (delta: string) => void,
+): Promise<void> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buf = "";
-  let out = "";
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
@@ -619,12 +829,10 @@ async function readTextFromUIStream(body: ReadableStream<Uint8Array>): Promise<s
       try {
         const evt = JSON.parse(payload) as { type?: string; delta?: string; textDelta?: string; text?: string };
         if (evt.type === "text-delta" || evt.type === "text") {
-          out += evt.delta ?? evt.textDelta ?? evt.text ?? "";
+          const d = evt.delta ?? evt.textDelta ?? evt.text ?? "";
+          if (d) onDelta(d);
         }
-      } catch { /* ignore malformed line */ }
+      } catch { /* ignore */ }
     }
   }
-  return out;
 }
-// suppress unused CHAT_MODEL warning (kept as documentation of expected model)
-void CHAT_MODEL;
