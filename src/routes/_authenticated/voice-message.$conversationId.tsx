@@ -267,6 +267,7 @@ function VoiceMessagePage() {
       recorderRef.current?.stop();
     } catch { /* ignore */ }
     cleanupRec();
+    recordingRef.current = false;
     setPhase("idle");
     setRecElapsed(0);
   }, [cleanupRec]);
