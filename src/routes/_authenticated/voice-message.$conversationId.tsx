@@ -766,61 +766,62 @@ function VoiceMessagePage() {
           </form>
         ) : (
           <div className="flex items-center justify-center gap-4">
-            {phase === "recording" ? (
-              <>
-                <button
-                  onClick={cancelRec}
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={stopRecording}
-                  className="relative grid size-20 place-items-center rounded-full bg-destructive text-destructive-foreground shadow-lg transition active:scale-95"
-                  aria-label="Parar gravação"
-                >
-                  <span className="absolute inset-0 animate-ping rounded-full bg-destructive/40" />
-                  <Square className="relative size-8" />
-                </button>
-                <span className="tabular-nums text-sm text-muted-foreground">
-                  {formatSec(recElapsed)}
-                </span>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => {
-                    unlockAudio();
-                    setComposer("text");
-                  }}
-                  disabled={isBusy}
-                  className="grid size-12 place-items-center rounded-full border border-border text-muted-foreground transition hover:bg-accent disabled:opacity-50"
-                  aria-label="Digitar mensagem"
-                >
-                  <Keyboard className="size-5" />
-                </button>
-                <button
-                  onClick={startRecording}
-                  disabled={isBusy || !usageReady}
-                  className={cn(
-                    "grid size-20 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg transition active:scale-95 disabled:opacity-50",
-                  )}
-                  aria-label="Gravar mensagem de voz"
-                >
-                  {isBusy ? (
-                    <Loader2 className="size-8 animate-spin" />
-                  ) : (
-                    <Mic className="size-8" />
-                  )}
-                </button>
-                <span className="size-12" aria-hidden />
-              </>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                unlockAudio();
+                setComposer("text");
+              }}
+              disabled={phase !== "idle"}
+              className="grid size-12 place-items-center rounded-full border border-border text-muted-foreground transition hover:bg-accent disabled:opacity-50"
+              aria-label="Digitar mensagem"
+            >
+              <Keyboard className="size-5" />
+            </button>
+            <button
+              ref={holdBtnRef}
+              type="button"
+              onPointerDown={onHoldPointerDown}
+              disabled={(phase !== "idle" && phase !== "recording") || !usageReady}
+              aria-label={
+                phase === "recording"
+                  ? holdCancel ? "Solte para cancelar" : "Solte para enviar"
+                  : "Segure para gravar"
+              }
+              style={{ touchAction: "none", WebkitUserSelect: "none", userSelect: "none" }}
+              className={cn(
+                "relative grid size-20 select-none place-items-center rounded-full text-primary-foreground shadow-lg transition active:scale-95 disabled:opacity-50",
+                phase === "recording"
+                  ? holdCancel
+                    ? "bg-muted-foreground"
+                    : "bg-destructive"
+                  : "bg-primary",
+              )}
+            >
+              {phase === "recording" && !holdCancel && (
+                <span className="absolute inset-0 animate-ping rounded-full bg-destructive/40" />
+              )}
+              {isBusy ? (
+                <Loader2 className="relative size-8 animate-spin" />
+              ) : phase === "recording" ? (
+                holdCancel ? <Trash2 className="relative size-8" /> : <Mic className="relative size-8" />
+              ) : (
+                <Mic className="size-8" />
+              )}
+            </button>
+            <span
+              aria-hidden={phase !== "recording"}
+              className={cn(
+                "w-12 shrink-0 text-left tabular-nums text-sm text-muted-foreground",
+                phase !== "recording" && "invisible",
+              )}
+            >
+              {formatSec(recElapsed)}
+            </span>
           </div>
         )}
         <p className="mt-3 text-center text-xs text-muted-foreground" aria-live="polite">
-          {phaseLabel[phase]}
+          {recordingLabel}
         </p>
       </div>
     </div>
