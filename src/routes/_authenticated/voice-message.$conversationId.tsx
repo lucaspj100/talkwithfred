@@ -35,9 +35,11 @@ type Msg = {
   durationSec: number | null;
   /** true for user messages typed via keyboard (no audio, render as text bubble) */
   textOnly?: boolean;
+  /** Delivery status shown on user bubbles (WhatsApp-style ticks). */
+  status?: "pending" | "done";
 };
 
-type Phase = "idle" | "recording" | "transcribing" | "thinking" | "responding";
+type Phase = "idle" | "recording" | "processing";
 type Composer = "voice" | "text";
 
 function VoiceMessagePage() {
