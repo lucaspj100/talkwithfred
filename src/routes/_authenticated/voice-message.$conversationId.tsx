@@ -718,8 +718,6 @@ function VoiceMessagePage() {
             onPlay={() => m.audioUrl && togglePlayFromBubble(m.id, m.audioUrl)}
           />
         ))}
-        {phase === "thinking" && <TypingBubble label="Fred está pensando..." />}
-        {phase === "transcribing" && <TypingBubble label="Transcrevendo..." align="end" />}
       </div>
 
       {/* Composer */}
