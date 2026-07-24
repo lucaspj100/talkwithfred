@@ -5,11 +5,12 @@ import { listConversations, createConversation } from "@/lib/conversations.funct
 import { getMyStats } from "@/lib/learning.functions";
 import { getPendingReviewsSummary } from "@/lib/reviews.functions";
 import { getTodayTrainingSummary } from "@/lib/training.functions";
+import { getSubscriptionAccess } from "@/lib/subscription.functions";
 import { MODES, type Mode } from "@/lib/fred-prompt";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X, CreditCard, User as UserIcon, Loader2, RefreshCw, Trophy, Volume2 } from "lucide-react";
+import { LogOut, MessageCircle, ShieldAlert, ArrowRight, Mic, ClipboardCheck, Flame, Zap, Target, Pencil, Sparkles, ChevronRight, X, CreditCard, User as UserIcon, Loader2, RefreshCw, Trophy, Volume2, MessageSquare } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { FredBrand } from "@/components/FredBrand";
@@ -30,13 +31,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   loader: async () => {
     const me = await getMyProfile();
     if (!me.userProfile) throw redirect({ to: "/onboarding" });
-    const [convs, stats, reviews, today] = await Promise.all([
+    const [convs, stats, reviews, today, access] = await Promise.all([
       listConversations(),
       getMyStats(),
       getPendingReviewsSummary().catch(() => ({ count: 0, latest: null })),
       getTodayTrainingSummary().catch(() => null),
+      getSubscriptionAccess().catch(() => ({ minutesAvailable: null as number | null })),
     ]);
-    return { me, convs, stats, reviews, today };
+    return { me, convs, stats, reviews, today, access };
   },
   component: Dashboard,
 });
@@ -46,14 +48,19 @@ const LABEL: Record<string, string> = {
 };
 
 function Dashboard() {
-  const { me, convs, stats, reviews, today } = Route.useLoaderData();
+  const { me, convs, stats, reviews, today, access } = Route.useLoaderData();
   const navigate = useNavigate();
   const create = useServerFn(createConversation);
   const [picking, setPicking] = useState(false);
+  const [pickerTarget, setPickerTarget] = useState<"call" | "voice-message">("call");
   const [customMode, setCustomMode] = useState(false);
   const [customTopic, setCustomTopic] = useState("");
   const [creating, setCreating] = useState(false);
   const customInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const minutesLabel =
+    typeof access?.minutesAvailable === "number"
+      ? `${access.minutesAvailable} min disponíveis`
+      : null;
 
   useEffect(() => {
     if (picking && customMode) {
@@ -67,13 +74,21 @@ function Dashboard() {
     setCustomTopic("");
   }
 
+  function navigateToConversation(id: string) {
+    if (pickerTarget === "voice-message") {
+      navigate({ to: "/voice-message/$conversationId", params: { conversationId: id } });
+    } else {
+      navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
+    }
+  }
+
   async function startChat(mode: Mode) {
     if (creating) return;
     setCreating(true);
     try {
       const { id } = await create({ data: { mode } });
       closePicker();
-      navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
+      navigateToConversation(id);
     } catch (e) {
       toast.error((e as Error).message);
       setCreating(false);
@@ -87,11 +102,16 @@ function Dashboard() {
     try {
       const { id } = await create({ data: { mode: "custom", customTopic: topic } });
       closePicker();
-      navigate({ to: "/chat/$conversationId", params: { conversationId: id } });
+      navigateToConversation(id);
     } catch (e) {
       toast.error((e as Error).message);
       setCreating(false);
     }
+  }
+
+  function openPicker(target: "call" | "voice-message") {
+    setPickerTarget(target);
+    setPicking(true);
   }
 
   function handleModeClick(mode: Mode) {
@@ -185,16 +205,51 @@ function Dashboard() {
       <FocusCard profile={me.userProfile!} />
       <SpeedPreference initial={(me.userProfile!.speaking_speed_preference as string | null) ?? "level_adapted"} />
 
-      {/* Two main modes */}
+      {/* Practice modes */}
       <h2 className="mt-10 font-display text-xl font-bold">Como você quer praticar?</h2>
+
+      {/* 1. Call — hero card */}
+      <button
+        onClick={() => openPicker("call")}
+        className="group mt-4 flex w-full flex-col overflow-hidden rounded-3xl border-2 border-primary/60 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent p-6 text-left shadow-lg shadow-primary/10 transition hover:scale-[1.005] hover:border-primary md:flex-row md:items-center md:gap-6"
+      >
+        <div className="relative shrink-0">
+          <TalkingAvatar state="idle" size="small" />
+          <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full border-2 border-background bg-emerald-500">
+            <span className="size-1.5 animate-ping rounded-full bg-emerald-200" />
+          </span>
+        </div>
+        <div className="mt-4 flex-1 md:mt-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-display text-2xl font-bold">Call com o Fred</h3>
+            <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-foreground">
+              Mais imersivo
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Conversa contínua e fluida, como uma ligação de verdade. Você pode interromper e ele reage na hora.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+            <span className="inline-flex items-center font-semibold text-primary">
+              Começar call <ArrowRight className="ml-1 size-4 transition group-hover:translate-x-0.5" />
+            </span>
+            {minutesLabel && (
+              <span className="text-xs text-muted-foreground">· {minutesLabel}</span>
+            )}
+          </div>
+        </div>
+      </button>
+
+      {/* 2. Voice message & 3. Practice without speaking */}
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <ModeCard
-          icon={<Mic className="size-6" />}
+          icon={<MessageSquare className="size-6" />}
           tone="primary"
-          title="Conversar com Fred"
-          description="Fale ou digite em inglês com seu parceiro de conversação."
-          cta="Escolher tema da conversa"
-          onClick={() => setPicking(true)}
+          title="Mensagem de voz"
+          description="Grave e envie, como no WhatsApp. O Fred responde em áudio. Ótimo pra praticar em qualquer lugar, no seu ritmo."
+          cta="Enviar mensagem de voz"
+          onClick={() => openPicker("voice-message")}
+          footer={minutesLabel ?? undefined}
         />
         <ModeCard
           icon={<ClipboardCheck className="size-6" />}
@@ -385,8 +440,8 @@ function SpeedPreference({ initial }: { initial: string }) {
   );
 }
 
-function ModeCard({ icon, title, description, cta, onClick, tone }: {
-  icon: React.ReactNode; title: string; description: string; cta: string; onClick: () => void; tone: "primary" | "accent";
+function ModeCard({ icon, title, description, cta, onClick, tone, footer }: {
+  icon: React.ReactNode; title: string; description: string; cta: string; onClick: () => void; tone: "primary" | "accent"; footer?: string;
 }) {
   const ring = tone === "primary" ? "from-primary/20 to-transparent border-primary/40" : "from-accent/30 to-transparent border-accent/50";
   return (
@@ -400,6 +455,7 @@ function ModeCard({ icon, title, description, cta, onClick, tone }: {
       <span className="mt-6 inline-flex items-center text-sm font-medium text-primary">
         {cta} <ArrowRight className="ml-1 size-4 transition group-hover:translate-x-0.5" />
       </span>
+      {footer && <span className="mt-2 text-xs text-muted-foreground">{footer}</span>}
     </button>
   );
 }
