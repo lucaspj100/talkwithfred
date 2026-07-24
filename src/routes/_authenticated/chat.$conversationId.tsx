@@ -527,9 +527,12 @@ function ChatPage() {
       const { token: ttsTicket } = await mintTtsToken();
       if (!ttsTicket) throw new Error("no_tts_token");
 
+      const sid = usageSessionIdRef.current;
       const streamUrl =
         `/api/tts-stream?text=${encodeURIComponent(speechText)}` +
-        `&t=${encodeURIComponent(ttsTicket)}`;
+        `&t=${encodeURIComponent(ttsTicket)}` +
+        (sid ? `&s=${encodeURIComponent(sid)}&c=${encodeURIComponent(conversation.id)}` : "");
+
 
       const audio = new Audio();
       audio.preload = "auto";
