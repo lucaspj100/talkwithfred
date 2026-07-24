@@ -96,9 +96,10 @@ function VoiceMessagePage() {
       if ("ok" in res && res.ok) {
         setUsageReady(true);
       } else {
-        toast.error(res.message);
-        if (res.code === "no_subscription") navigate({ to: "/planos" });
-        else if (res.code === "no_minutes" || res.code === "pending" || res.code === "blocked") {
+        const fail = res as Exclude<typeof res, { ok: true }>;
+        toast.error(fail.message);
+        if (fail.code === "no_subscription") navigate({ to: "/planos" });
+        else if (fail.code === "no_minutes" || fail.code === "pending" || fail.code === "blocked") {
           navigate({ to: "/assinatura" });
         }
       }

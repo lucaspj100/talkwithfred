@@ -40,6 +40,7 @@ import { Route as ApiUsageHeartbeatRouteImport } from './routes/api/usage/heartb
 import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public/simulation-chat'
 import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/public/realtime-session'
 import { Route as ApiAiUsageRecordRouteImport } from './routes/api/ai-usage/record'
+import { Route as AuthenticatedVoiceMessageConversationIdRouteImport } from './routes/_authenticated/voice-message.$conversationId'
 import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
 import { Route as AuthenticatedRevisoesReviewIdRouteImport } from './routes/_authenticated/revisoes.$reviewId'
 import { Route as AuthenticatedPracticeVocabularioRouteImport } from './routes/_authenticated/practice.vocabulario'
@@ -218,6 +219,12 @@ const ApiAiUsageRecordRoute = ApiAiUsageRecordRouteImport.update({
   path: '/api/ai-usage/record',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedVoiceMessageConversationIdRoute =
+  AuthenticatedVoiceMessageConversationIdRouteImport.update({
+    id: '/voice-message/$conversationId',
+    path: '/voice-message/$conversationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedSettingsOnboardingRoute =
   AuthenticatedSettingsOnboardingRouteImport.update({
     id: '/settings/onboarding',
@@ -368,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/practice/vocabulario': typeof AuthenticatedPracticeVocabularioRoute
   '/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/voice-message/$conversationId': typeof AuthenticatedVoiceMessageConversationIdRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
@@ -417,6 +425,7 @@ export interface FileRoutesByTo {
   '/practice/vocabulario': typeof AuthenticatedPracticeVocabularioRoute
   '/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/voice-message/$conversationId': typeof AuthenticatedVoiceMessageConversationIdRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
@@ -470,6 +479,7 @@ export interface FileRoutesById {
   '/_authenticated/practice/vocabulario': typeof AuthenticatedPracticeVocabularioRoute
   '/_authenticated/revisoes/$reviewId': typeof AuthenticatedRevisoesReviewIdRoute
   '/_authenticated/settings/onboarding': typeof AuthenticatedSettingsOnboardingRoute
+  '/_authenticated/voice-message/$conversationId': typeof AuthenticatedVoiceMessageConversationIdRoute
   '/api/ai-usage/record': typeof ApiAiUsageRecordRoute
   '/api/public/realtime-session': typeof ApiPublicRealtimeSessionRoute
   '/api/public/simulation-chat': typeof ApiPublicSimulationChatRoute
@@ -523,6 +533,7 @@ export interface FileRouteTypes {
     | '/practice/vocabulario'
     | '/revisoes/$reviewId'
     | '/settings/onboarding'
+    | '/voice-message/$conversationId'
     | '/api/ai-usage/record'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
@@ -572,6 +583,7 @@ export interface FileRouteTypes {
     | '/practice/vocabulario'
     | '/revisoes/$reviewId'
     | '/settings/onboarding'
+    | '/voice-message/$conversationId'
     | '/api/ai-usage/record'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
@@ -624,6 +636,7 @@ export interface FileRouteTypes {
     | '/_authenticated/practice/vocabulario'
     | '/_authenticated/revisoes/$reviewId'
     | '/_authenticated/settings/onboarding'
+    | '/_authenticated/voice-message/$conversationId'
     | '/api/ai-usage/record'
     | '/api/public/realtime-session'
     | '/api/public/simulation-chat'
@@ -882,6 +895,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAiUsageRecordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/voice-message/$conversationId': {
+      id: '/_authenticated/voice-message/$conversationId'
+      path: '/voice-message/$conversationId'
+      fullPath: '/voice-message/$conversationId'
+      preLoaderRoute: typeof AuthenticatedVoiceMessageConversationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/settings/onboarding': {
       id: '/_authenticated/settings/onboarding'
       path: '/settings/onboarding'
@@ -1133,6 +1153,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedChatConversationIdRoute: typeof AuthenticatedChatConversationIdRouteWithChildren
   AuthenticatedRevisoesReviewIdRoute: typeof AuthenticatedRevisoesReviewIdRoute
   AuthenticatedSettingsOnboardingRoute: typeof AuthenticatedSettingsOnboardingRoute
+  AuthenticatedVoiceMessageConversationIdRoute: typeof AuthenticatedVoiceMessageConversationIdRoute
   AuthenticatedRevisoesIndexRoute: typeof AuthenticatedRevisoesIndexRoute
 }
 
@@ -1148,6 +1169,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedChatConversationIdRouteWithChildren,
   AuthenticatedRevisoesReviewIdRoute: AuthenticatedRevisoesReviewIdRoute,
   AuthenticatedSettingsOnboardingRoute: AuthenticatedSettingsOnboardingRoute,
+  AuthenticatedVoiceMessageConversationIdRoute:
+    AuthenticatedVoiceMessageConversationIdRoute,
   AuthenticatedRevisoesIndexRoute: AuthenticatedRevisoesIndexRoute,
 }
 
