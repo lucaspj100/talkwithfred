@@ -298,6 +298,7 @@ function VoiceMessagePage() {
         const blob = new Blob(chunksRef.current, { type: mime });
         const duration = Math.max(1, Math.round((Date.now() - recStartRef.current) / 1000));
         cleanupRec();
+        recordingRef.current = false;
         setRecElapsed(0);
         if (blob.size < 1024) {
           toast.error("Áudio muito curto. Segure por mais tempo.");
