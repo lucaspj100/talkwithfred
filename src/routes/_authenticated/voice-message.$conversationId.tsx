@@ -332,7 +332,22 @@ function VoiceMessagePage() {
   }
 
   async function handleRecordedAudio(blob: Blob, mime: string, durationSec: number) {
-    setPhase("transcribing");
+    // Insert the user bubble IMMEDIATELY (WhatsApp-style delivered indicator)
+    // so the UI never shows explicit STT/chat/TTS status text. Transcript is
+    // filled in as soon as /api/stt returns.
+    const userMsgId = `u_${Date.now()}`;
+    const userAudioUrl = URL.createObjectURL(blob);
+    const initialMsg: Msg = {
+      id: userMsgId,
+      role: "user",
+      text: "",
+      audioUrl: userAudioUrl,
+      durationSec,
+      status: "pending",
+    };
+    setMessages((prev) => [...prev, initialMsg]);
+    setPhase("processing");
+
     let transcript = "";
     try {
       const fd = new FormData();
@@ -351,24 +366,21 @@ function VoiceMessagePage() {
     } catch (e) {
       console.error("[stt]", e);
       toast.error("Não consegui transcrever seu áudio. Tente de novo.");
+      setMessages((prev) => prev.filter((m) => m.id !== userMsgId));
       setPhase("idle");
       return;
     }
     if (!transcript) {
       toast.error("Não consegui entender o áudio.");
+      setMessages((prev) => prev.filter((m) => m.id !== userMsgId));
       setPhase("idle");
       return;
     }
 
-    const userAudioUrl = URL.createObjectURL(blob);
-    const userMsg: Msg = {
-      id: `u_${Date.now()}`,
-      role: "user",
-      text: transcript,
-      audioUrl: userAudioUrl,
-      durationSec,
-    };
-    setMessages((prev) => [...prev, userMsg]);
+    // Attach transcript to the existing user bubble (kept `pending` until the
+    // whole cascade — chat + TTS — finishes).
+    setMessages((prev) => prev.map((m) => (m.id === userMsgId ? { ...m, text: transcript } : m)));
+    const userMsg: Msg = { ...initialMsg, text: transcript };
     await runAssistantTurn(userMsg);
   }
 
@@ -383,20 +395,22 @@ function VoiceMessagePage() {
       audioUrl: null,
       durationSec: null,
       textOnly: true,
+      status: "pending",
     };
     setTextDraft("");
     setMessages((prev) => [...prev, userMsg]);
+    setPhase("processing");
     await runAssistantTurn(userMsg);
   }
 
   /**
-   * Given a just-appended user message, stream Fred's reply from /api/chat and
-   * synthesize the audio sentence-by-sentence via /api/tts-stream so playback
-   * starts before the full text is ready.
+   * Runs the cascade (chat → sentence-by-sentence TTS) silently. We do NOT
+   * reveal any assistant bubble or intermediate "Fred is thinking" status:
+   * once every piece is ready, the assistant bubble appears fully populated
+   * (text + first audio blob) and autoplay begins. The user bubble flips
+   * from a single "delivered" tick to a double "read" tick at that moment.
    */
   async function runAssistantTurn(userMsg: Msg) {
-    setPhase("thinking");
-
     // Mint a short-lived TTS token up-front (used by <audio src>).
     let ttsToken: string | null = null;
     try {
@@ -408,24 +422,16 @@ function VoiceMessagePage() {
 
     const assistantId = `a_${Date.now()}`;
     // Mark THIS message as the active autoplay target so its (and only its)
-    // sentence chunks may enter the queue.
+    // sentence chunks may enter the queue once we finally enqueue them.
     activeAutoplayMsgIdRef.current = assistantId;
-    // Insert a placeholder so text streams live into the bubble.
-    setMessages((prev) => [
-      ...prev,
-      { id: assistantId, role: "assistant", text: "", audioUrl: null, durationSec: null },
-    ]);
 
     let assistantText = "";
     let sentenceBuf = "";
-    let sentenceCount = 0; // total sentences we handed to the TTS pipeline
-    let firstSentenceStored = false;
+    const audioUrls: string[] = [];
     let ttsChain: Promise<void> = Promise.resolve();
     const enqueueSentence = (sentence: string) => {
       const clean = sentence.trim();
-      if (!clean) return;
-      if (!ttsToken) return; // fallback handled after loop
-      sentenceCount++;
+      if (!clean || !ttsToken) return;
       const params = new URLSearchParams();
       params.set("text", clean.slice(0, 4000));
       params.set("t", ttsToken);
@@ -433,6 +439,8 @@ function VoiceMessagePage() {
       if (sid) params.set("s", sid);
       params.set("c", conversation.id);
       const url = `/api/tts-stream?${params.toString()}`;
+      // Kick off the fetch NOW so all sentences download in parallel; the
+      // chain preserves in-order availability of the resulting blob URLs.
       const blobPromise = fetch(url)
         .then((r) => {
           if (!r.ok) throw new Error(`tts ${r.status}`);
@@ -442,33 +450,14 @@ function VoiceMessagePage() {
       ttsChain = ttsChain.then(async () => {
         try {
           const blobUrl = await blobPromise;
-          if (!firstSentenceStored) {
-            firstSentenceStored = true;
-            setPhase("responding");
-            // Expose first chunk on the bubble + probe its duration so the
-            // timestamp shows a real value instead of "--:--".
-            setMessages((prev) =>
-              prev.map((m) => (m.id === assistantId ? { ...m, audioUrl: blobUrl } : m)),
-            );
-            void probeAudioDuration(blobUrl).then((sec) => {
-              if (sec == null) return;
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantId && m.durationSec == null ? { ...m, durationSec: sec } : m,
-                ),
-              );
-            });
-          }
-          enqueueAudio(assistantId, blobUrl);
+          audioUrls.push(blobUrl);
         } catch (e) {
           console.warn("[tts-sentence]", e);
         }
       });
     };
 
-
     const flushSentenceBuffer = (final = false) => {
-      // Primary split: full sentence boundaries (. ! ?) followed by space/end.
       const regex = /[^.!?]+[.!?]+(?=\s|$)/g;
       let match: RegExpExecArray | null;
       let lastEnd = 0;
@@ -477,20 +466,6 @@ function VoiceMessagePage() {
         lastEnd = match.index + match[0].length;
       }
       sentenceBuf = sentenceBuf.slice(lastEnd);
-
-      // First-word latency optimization: if we haven't dispatched anything yet
-      // and the model is taking its time to reach a period, cut at the earliest
-      // natural clause boundary (comma / semicolon / colon / em-dash) once the
-      // buffer is long enough to sound like a real phrase. Only applied to the
-      // FIRST chunk — subsequent audio uses full sentences for best intonation.
-      if (!final && sentenceCount === 0 && sentenceBuf.length >= 40) {
-        const clauseMatch = /^[^,;:—]+[,;:—]/.exec(sentenceBuf);
-        if (clauseMatch) {
-          enqueueSentence(clauseMatch[0]);
-          sentenceBuf = sentenceBuf.slice(clauseMatch[0].length);
-        }
-      }
-
       if (final && sentenceBuf.trim().length > 0) {
         enqueueSentence(sentenceBuf);
         sentenceBuf = "";
@@ -518,20 +493,18 @@ function VoiceMessagePage() {
       });
       if (!res.ok || !res.body) throw new Error(await res.text().catch(() => "chat failed"));
 
+      // Accumulate silently — no live bubble update.
       await readTextFromUIStream(res.body, (delta) => {
         assistantText += delta;
         sentenceBuf += delta;
-        // Update bubble incrementally.
-        setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, text: assistantText } : m)),
-        );
         flushSentenceBuffer(false);
       });
       flushSentenceBuffer(true);
     } catch (e) {
       console.error("[chat]", e);
       toast.error("Fred teve um problema para responder. Tente novamente.");
-      setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+      setMessages((prev) => prev.map((m) => (m.id === userMsg.id ? { ...m, status: "done" } : m)));
+      activeAutoplayMsgIdRef.current = null;
       setPhase("idle");
       return;
     }
@@ -539,18 +512,17 @@ function VoiceMessagePage() {
     assistantText = assistantText.trim();
     if (!assistantText) {
       toast.error("Fred não respondeu. Tente novamente.");
-      setMessages((prev) => prev.filter((m) => m.id !== assistantId));
+      setMessages((prev) => prev.map((m) => (m.id === userMsg.id ? { ...m, status: "done" } : m)));
+      activeAutoplayMsgIdRef.current = null;
       setPhase("idle");
       return;
     }
 
-    // Wait for the sentence chain so we know for sure whether any TTS chunk
-    // succeeded before deciding to fall back. Prevents the fallback /api/tts
-    // from playing on top of successful streamed sentences.
+    // Wait for every streamed sentence blob to be ready.
     await ttsChain;
 
-    if (sentenceCount === 0 || !firstSentenceStored) {
-      setPhase("responding");
+    // Fallback: whole-response TTS if streaming produced nothing usable.
+    if (audioUrls.length === 0) {
       try {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -566,25 +538,41 @@ function VoiceMessagePage() {
         });
         if (res.ok) {
           const audioBlob = await res.blob();
-          const url = URL.createObjectURL(audioBlob);
-          setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, audioUrl: url } : m)));
-          void probeAudioDuration(url).then((sec) => {
-            if (sec == null) return;
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantId && m.durationSec == null ? { ...m, durationSec: sec } : m,
-              ),
-            );
-          });
-          enqueueAudio(assistantId, url);
+          audioUrls.push(URL.createObjectURL(audioBlob));
         }
       } catch (e) {
         console.warn("[tts-fallback]", e);
       }
     }
 
-    // Autoplay is done for this message — lock it out of future autoplay
-    // even if a late fetch resolves.
+    // Reveal everything at once: mark user bubble delivered (double tick) and
+    // append the fully-formed assistant bubble.
+    const firstUrl = audioUrls[0] ?? null;
+    setMessages((prev) => [
+      ...prev.map((m) => (m.id === userMsg.id ? { ...m, status: "done" as const } : m)),
+      {
+        id: assistantId,
+        role: "assistant",
+        text: assistantText,
+        audioUrl: firstUrl,
+        durationSec: null,
+      },
+    ]);
+    if (firstUrl) {
+      void probeAudioDuration(firstUrl).then((sec) => {
+        if (sec == null) return;
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId && m.durationSec == null ? { ...m, durationSec: sec } : m,
+          ),
+        );
+      });
+    }
+
+    // Autoplay: enqueue in order. First call plays immediately, rest queue.
+    for (const url of audioUrls) enqueueAudio(assistantId, url);
+
+    // Lock this message out of any future autoplay races.
     autoplayedMsgIdsRef.current.add(assistantId);
     if (activeAutoplayMsgIdRef.current === assistantId) {
       activeAutoplayMsgIdRef.current = null;
