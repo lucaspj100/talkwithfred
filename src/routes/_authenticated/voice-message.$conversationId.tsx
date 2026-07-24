@@ -369,6 +369,11 @@ function VoiceMessagePage() {
     let assistantText = "";
     let sentenceBuf = "";
     let ttsStarted = false;
+    // Sequential playback chain: each sentence is fully downloaded to a Blob
+    // BEFORE being handed to the audio element. Fetches run in parallel, but
+    // enqueue-to-player order is preserved via this promise chain so playback
+    // never starts on a half-arrived chunk (which caused mid-sentence stalls).
+    let ttsChain: Promise<void> = Promise.resolve();
     const enqueueSentence = (sentence: string) => {
       const clean = sentence.trim();
       if (!clean) return;
@@ -380,12 +385,27 @@ function VoiceMessagePage() {
       if (sid) params.set("s", sid);
       params.set("c", conversation.id);
       const url = `/api/tts-stream?${params.toString()}`;
-      if (!ttsStarted) {
-        ttsStarted = true;
-        setPhase("responding");
-      }
-      enqueueAudio(assistantId, url);
+      // Kick off fetch immediately so multiple sentences download in parallel.
+      const blobPromise = fetch(url)
+        .then((r) => {
+          if (!r.ok) throw new Error(`tts ${r.status}`);
+          return r.blob();
+        })
+        .then((b) => URL.createObjectURL(b));
+      ttsChain = ttsChain.then(async () => {
+        try {
+          const blobUrl = await blobPromise;
+          if (!ttsStarted) {
+            ttsStarted = true;
+            setPhase("responding");
+          }
+          enqueueAudio(assistantId, blobUrl);
+        } catch (e) {
+          console.warn("[tts-sentence]", e);
+        }
+      });
     };
+
 
     const flushSentenceBuffer = (final = false) => {
       // Split on sentence boundaries followed by whitespace/end.
