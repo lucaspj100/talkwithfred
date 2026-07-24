@@ -405,6 +405,9 @@ function VoiceMessagePage() {
     }
 
     const assistantId = `a_${Date.now()}`;
+    // Mark THIS message as the active autoplay target so its (and only its)
+    // sentence chunks may enter the queue.
+    activeAutoplayMsgIdRef.current = assistantId;
     // Insert a placeholder so text streams live into the bubble.
     setMessages((prev) => [
       ...prev,
@@ -413,16 +416,14 @@ function VoiceMessagePage() {
 
     let assistantText = "";
     let sentenceBuf = "";
-    let ttsStarted = false;
-    // Sequential playback chain: each sentence is fully downloaded to a Blob
-    // BEFORE being handed to the audio element. Fetches run in parallel, but
-    // enqueue-to-player order is preserved via this promise chain so playback
-    // never starts on a half-arrived chunk (which caused mid-sentence stalls).
+    let sentenceCount = 0; // total sentences we handed to the TTS pipeline
+    let firstSentenceStored = false;
     let ttsChain: Promise<void> = Promise.resolve();
     const enqueueSentence = (sentence: string) => {
       const clean = sentence.trim();
       if (!clean) return;
       if (!ttsToken) return; // fallback handled after loop
+      sentenceCount++;
       const params = new URLSearchParams();
       params.set("text", clean.slice(0, 4000));
       params.set("t", ttsToken);
@@ -430,7 +431,6 @@ function VoiceMessagePage() {
       if (sid) params.set("s", sid);
       params.set("c", conversation.id);
       const url = `/api/tts-stream?${params.toString()}`;
-      // Kick off fetch immediately so multiple sentences download in parallel.
       const blobPromise = fetch(url)
         .then((r) => {
           if (!r.ok) throw new Error(`tts ${r.status}`);
@@ -440,9 +440,22 @@ function VoiceMessagePage() {
       ttsChain = ttsChain.then(async () => {
         try {
           const blobUrl = await blobPromise;
-          if (!ttsStarted) {
-            ttsStarted = true;
+          if (!firstSentenceStored) {
+            firstSentenceStored = true;
             setPhase("responding");
+            // Expose first chunk on the bubble + probe its duration so the
+            // timestamp shows a real value instead of "--:--".
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantId ? { ...m, audioUrl: blobUrl } : m)),
+            );
+            void probeAudioDuration(blobUrl).then((sec) => {
+              if (sec == null) return;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId && m.durationSec == null ? { ...m, durationSec: sec } : m,
+                ),
+              );
+            });
           }
           enqueueAudio(assistantId, blobUrl);
         } catch (e) {
