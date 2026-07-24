@@ -7,7 +7,7 @@ import { mintTtsToken } from "@/lib/tts-token.functions";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { FredAvatar } from "@/components/FredBrand";
-import { ArrowLeft, Mic, Pause, Play, Square, Loader2, Keyboard, Send } from "lucide-react";
+import { ArrowLeft, Mic, Pause, Play, Loader2, Keyboard, Send, Check, CheckCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useUsageSession } from "@/hooks/use-usage-session";
