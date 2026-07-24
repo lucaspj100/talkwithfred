@@ -200,10 +200,10 @@ function ChatPage() {
   const [busyOtherTab, setBusyOtherTab] = useState(false);
 
   const initUsage = useCallback(
-    async (force = false) => {
+    async (force = false, modeOverride?: "voice" | "text") => {
       const res = await usage.start({
         conversationId: conversation.id,
-        mode: "voice",
+        mode: modeOverride ?? chatMode,
         force,
       });
       if ("ok" in res && res.ok) {
@@ -231,7 +231,7 @@ function ChatPage() {
       }
       return false;
     },
-    [conversation.id, navigate, usage],
+    [conversation.id, navigate, usage, chatMode],
   );
 
   useEffect(() => {
@@ -240,6 +240,29 @@ function ChatPage() {
     void initUsage(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authReady]);
+
+  // When the user toggles between "voice" (WebRTC realtime) and "text"
+  // (cascade: STT → chat → TTS), stop the current usage session and start
+  // a new one so ai_usage_events roll up under the correct mode.
+  const lastStartedModeRef = useRef<"voice" | "text" | null>(null);
+  useEffect(() => {
+    if (usageInit !== "ready") return;
+    if (lastStartedModeRef.current === null) {
+      lastStartedModeRef.current = chatMode;
+      return;
+    }
+    if (lastStartedModeRef.current === chatMode) return;
+    const nextMode = chatMode;
+    lastStartedModeRef.current = nextMode;
+    (async () => {
+      try { await usage.stop("mode_switch"); } catch { /* ignore */ }
+      setUsageInit("pending");
+      const ok = await initUsage(false, nextMode);
+      if (!ok) console.warn("[usage] restart after mode switch failed");
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatMode]);
+
 
   // React to running-out-of-minutes signal from heartbeat.
   useEffect(() => {
