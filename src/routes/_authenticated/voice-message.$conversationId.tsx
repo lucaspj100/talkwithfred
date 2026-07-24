@@ -277,6 +277,14 @@ function VoiceMessagePage() {
       toast.error("Sessão ainda não pronta.");
       return;
     }
+    // Kill any Fred audio (playing OR queued) BEFORE we open the mic so
+    // nothing can start playing on top of the recording.
+    recordingRef.current = true;
+    if (activeAutoplayMsgIdRef.current) {
+      autoplayedMsgIdsRef.current.add(activeAutoplayMsgIdRef.current);
+      activeAutoplayMsgIdRef.current = null;
+    }
+    stopPlayback();
     unlockAudio();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
