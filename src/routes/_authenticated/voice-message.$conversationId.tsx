@@ -960,16 +960,6 @@ function Waveform({ mine, playing }: { mine: boolean; playing: boolean }) {
   );
 }
 
-function TypingBubble({ label, align = "start" }: { label: string; align?: "start" | "end" }) {
-  return (
-    <div className={cn("flex", align === "end" ? "justify-end" : "justify-start")}>
-      <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
-        <Loader2 className="size-3.5 animate-spin" />
-        <span>{label}</span>
-      </div>
-    </div>
-  );
-}
 
 function formatSec(s: number): string {
   const m = Math.floor(s / 60);
