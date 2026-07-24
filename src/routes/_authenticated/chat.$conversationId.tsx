@@ -782,11 +782,19 @@ function ChatPage() {
         try {
           const fd = new FormData();
           fd.append("file", blob, `recording.${mime.includes("mp4") ? "mp4" : "webm"}`);
+          const sttHeaders: Record<string, string> = {};
+          if (token) sttHeaders.Authorization = `Bearer ${token}`;
+          const sid = usageSessionIdRef.current;
+          if (sid) {
+            sttHeaders["x-usage-session-id"] = sid;
+            sttHeaders["x-conversation-id"] = conversation.id;
+          }
           const res = await fetch("/api/stt", {
             method: "POST",
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+            headers: sttHeaders,
             body: fd,
           });
+
           if (!res.ok) throw new Error(await res.text());
           const json = await res.json();
           const text: string = (json.text ?? "").trim();
