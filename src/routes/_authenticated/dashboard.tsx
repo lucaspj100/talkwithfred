@@ -205,16 +205,51 @@ function Dashboard() {
       <FocusCard profile={me.userProfile!} />
       <SpeedPreference initial={(me.userProfile!.speaking_speed_preference as string | null) ?? "level_adapted"} />
 
-      {/* Two main modes */}
+      {/* Practice modes */}
       <h2 className="mt-10 font-display text-xl font-bold">Como você quer praticar?</h2>
+
+      {/* 1. Call — hero card */}
+      <button
+        onClick={() => openPicker("call")}
+        className="group mt-4 flex w-full flex-col overflow-hidden rounded-3xl border-2 border-primary/60 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent p-6 text-left shadow-lg shadow-primary/10 transition hover:scale-[1.005] hover:border-primary md:flex-row md:items-center md:gap-6"
+      >
+        <div className="relative shrink-0">
+          <TalkingAvatar state="idle" size="small" />
+          <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full border-2 border-background bg-emerald-500">
+            <span className="size-1.5 animate-ping rounded-full bg-emerald-200" />
+          </span>
+        </div>
+        <div className="mt-4 flex-1 md:mt-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-display text-2xl font-bold">Call com o Fred</h3>
+            <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-foreground">
+              Mais imersivo
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Conversa contínua e fluida, como uma ligação de verdade. Você pode interromper e ele reage na hora.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+            <span className="inline-flex items-center font-semibold text-primary">
+              Começar call <ArrowRight className="ml-1 size-4 transition group-hover:translate-x-0.5" />
+            </span>
+            {minutesLabel && (
+              <span className="text-xs text-muted-foreground">· {minutesLabel}</span>
+            )}
+          </div>
+        </div>
+      </button>
+
+      {/* 2. Voice message & 3. Practice without speaking */}
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <ModeCard
-          icon={<Mic className="size-6" />}
+          icon={<MessageSquare className="size-6" />}
           tone="primary"
-          title="Conversar com Fred"
-          description="Fale ou digite em inglês com seu parceiro de conversação."
-          cta="Escolher tema da conversa"
-          onClick={() => setPicking(true)}
+          title="Mensagem de voz"
+          description="Grave e envie, como no WhatsApp. O Fred responde em áudio. Ótimo pra praticar em qualquer lugar, no seu ritmo."
+          cta="Enviar mensagem de voz"
+          onClick={() => openPicker("voice-message")}
+          footer={minutesLabel ?? undefined}
         />
         <ModeCard
           icon={<ClipboardCheck className="size-6" />}
