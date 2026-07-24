@@ -440,8 +440,8 @@ function SpeedPreference({ initial }: { initial: string }) {
   );
 }
 
-function ModeCard({ icon, title, description, cta, onClick, tone }: {
-  icon: React.ReactNode; title: string; description: string; cta: string; onClick: () => void; tone: "primary" | "accent";
+function ModeCard({ icon, title, description, cta, onClick, tone, footer }: {
+  icon: React.ReactNode; title: string; description: string; cta: string; onClick: () => void; tone: "primary" | "accent"; footer?: string;
 }) {
   const ring = tone === "primary" ? "from-primary/20 to-transparent border-primary/40" : "from-accent/30 to-transparent border-accent/50";
   return (
@@ -455,6 +455,7 @@ function ModeCard({ icon, title, description, cta, onClick, tone }: {
       <span className="mt-6 inline-flex items-center text-sm font-medium text-primary">
         {cta} <ArrowRight className="ml-1 size-4 transition group-hover:translate-x-0.5" />
       </span>
+      {footer && <span className="mt-2 text-xs text-muted-foreground">{footer}</span>}
     </button>
   );
 }
