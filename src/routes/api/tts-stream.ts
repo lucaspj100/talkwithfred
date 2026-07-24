@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { verifyTtsToken } from "@/lib/api-auth.server";
+import { FRED_TTS_VOICE, FRED_TTS_INSTRUCTIONS } from "@/lib/tts-style";
 
 const TTS_MODEL = "openai/gpt-4o-mini-tts";
 
@@ -39,8 +40,9 @@ export const Route = createFileRoute("/api/tts-stream")({
           headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
           body: JSON.stringify({
             model: TTS_MODEL,
-            voice: "ash",
+            voice: FRED_TTS_VOICE,
             input: text,
+            instructions: FRED_TTS_INSTRUCTIONS,
             response_format: "mp3",
           }),
         });
