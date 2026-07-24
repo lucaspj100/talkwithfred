@@ -277,6 +277,12 @@ function ChatPage() {
 
 
 
+  // Keep the current usage session id in a ref so async request builders
+  // (transport fetch, STT upload, TTS URL) always see the latest value
+  // without having to recreate closures on every session restart.
+  const usageSessionIdRef = useRef<string | null>(null);
+  useEffect(() => { usageSessionIdRef.current = usage.sessionId; }, [usage.sessionId]);
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -287,11 +293,15 @@ function ChatPage() {
           const t = data.session?.access_token;
           const headers = new Headers(init?.headers);
           if (t) headers.set("Authorization", `Bearer ${t}`);
+          const sid = usageSessionIdRef.current;
+          if (sid) headers.set("x-usage-session-id", sid);
+          headers.set("x-conversation-id", conversation.id);
           return fetch(input, { ...init, headers });
         }) as typeof fetch,
       }),
     [conversation.id, conversation.mode],
   );
+
 
   // ============= TTS playback =============
   const [playingId, setPlayingId] = useState<string | null>(null);
