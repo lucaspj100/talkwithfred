@@ -137,6 +137,12 @@ function VoiceMessagePage() {
   const playQueueRef = useRef<string[]>([]);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const playingUrlToMsgId = useRef<Map<string, string>>(new Map());
+  // Messages already autoplayed once — never autoplay them again.
+  const autoplayedMsgIdsRef = useRef<Set<string>>(new Set());
+  // The one message id whose sentences we're currently autoplaying.
+  const activeAutoplayMsgIdRef = useRef<string | null>(null);
+  // Blocks any playback while the mic is recording.
+  const recordingRef = useRef(false);
 
   const ensureAudioEl = useCallback(() => {
     if (typeof window === "undefined") return null;
@@ -145,7 +151,10 @@ function VoiceMessagePage() {
       el.preload = "auto";
       el.addEventListener("ended", () => {
         setPlayingId(null);
-        // play next in queue
+        if (recordingRef.current) {
+          playQueueRef.current = [];
+          return;
+        }
         const next = playQueueRef.current.shift();
         if (next && audioElRef.current) {
           audioElRef.current.src = next;
@@ -159,12 +168,23 @@ function VoiceMessagePage() {
     return audioElRef.current;
   }, []);
 
+  const stopPlayback = useCallback(() => {
+    playQueueRef.current = [];
+    const el = audioElRef.current;
+    if (el) {
+      try {
+        el.pause();
+        el.removeAttribute("src");
+        el.load();
+      } catch { /* ignore */ }
+    }
+    setPlayingId(null);
+  }, []);
+
   const unlockAudio = useCallback(() => {
-    // Call from a user gesture (mic tap, send tap, keyboard toggle).
     const el = ensureAudioEl();
     if (!el || audioUnlockedRef.current) return;
     audioUnlockedRef.current = true;
-    // Play a tiny silent buffer to "warm" the element for later autoplay.
     try {
       const silent =
         "data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA";
@@ -177,8 +197,19 @@ function VoiceMessagePage() {
     } catch { /* ignore */ }
   }, [ensureAudioEl]);
 
+  /**
+   * Enqueue an assistant audio chunk for autoplay. Silently skips when:
+   *  - the user is recording (never play over the mic), OR
+   *  - this msgId is not the active autoplay target, OR
+   *  - this msgId has already been autoplayed once.
+   * The bubble's Play button (togglePlayFromBubble) is the only way to
+   * replay a message; it bypasses these guards.
+   */
   const enqueueAudio = useCallback(
     (msgId: string, url: string) => {
+      if (recordingRef.current) return;
+      if (activeAutoplayMsgIdRef.current !== msgId) return;
+      if (autoplayedMsgIdsRef.current.has(msgId)) return;
       playingUrlToMsgId.current.set(url, msgId);
       const el = ensureAudioEl();
       if (!el) return;
@@ -202,6 +233,9 @@ function VoiceMessagePage() {
         setPlayingId(null);
         return;
       }
+      // Manual replay bypasses the autoplay guards and clears any pending
+      // autoplay queue so it doesn't stack on top.
+      playQueueRef.current = [];
       playingUrlToMsgId.current.set(url, msgId);
       el.src = url;
       setPlayingId(msgId);
