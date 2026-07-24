@@ -7,6 +7,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 // Keep only the last N messages sent to the model to reduce latency / tokens.
 const HISTORY_WINDOW = 10;
+const CHAT_MODEL = "google/gemini-3.1-flash-lite";
 
 export const Route = createFileRoute("/api/chat")({
   server: {
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/api/chat")({
           const auth = request.headers.get("authorization");
           if (!auth?.startsWith("Bearer ")) return new Response("Unauthorized", { status: 401 });
           const token = auth.slice(7);
+          const usageSessionId = request.headers.get("x-usage-session-id");
 
           const body = (await request.json()) as {
             messages?: UIMessage[];
@@ -71,11 +73,49 @@ export const Route = createFileRoute("/api/chat")({
 
           const tAi = Date.now();
           const result = streamText({
-            // Lighter/faster model for low-latency conversation.
-            model: gateway("google/gemini-3.1-flash-lite"),
+            model: gateway(CHAT_MODEL),
             system,
             messages: await convertToModelMessages(trimmed),
-            onFinish: () => mark("stream finish (total)", t0),
+            onFinish: async (info) => {
+              mark("stream finish (total)", t0);
+              // Best-effort usage recording. `usage` shape per AI SDK v5:
+              // { inputTokens?, outputTokens?, totalTokens?, ... }.
+              try {
+                if (!usageSessionId) return;
+                const usage = (info as { usage?: {
+                  inputTokens?: number;
+                  outputTokens?: number;
+                  totalTokens?: number;
+                  cachedInputTokens?: number;
+                } }).usage ?? {};
+                const inTok = Number(usage.inputTokens ?? 0);
+                const outTok = Number(usage.outputTokens ?? 0);
+                const cached = Number(usage.cachedInputTokens ?? 0);
+                if (inTok === 0 && outTok === 0) return;
+                const { recordCascadeUsageSafe } = await import("@/lib/ai-cost.server");
+                await recordCascadeUsageSafe({
+                  userId,
+                  usageSessionId,
+                  conversationId: body.conversationId ?? null,
+                  provider: "google",
+                  model: CHAT_MODEL,
+                  eventType: "chat.done",
+                  usage: {
+                    input_tokens: inTok,
+                    output_tokens: outTok,
+                    total_tokens: inTok + outTok,
+                    input_token_details: {
+                      text_tokens: inTok,
+                      cached_tokens: cached,
+                      cached_tokens_details: { text_tokens: cached },
+                    },
+                    output_token_details: { text_tokens: outTok },
+                  },
+                });
+              } catch (e) {
+                console.warn("[/api/chat] usage record failed", e);
+              }
+            },
           });
           mark("ai stream start", tAi);
           mark("ttfb total", t0);
