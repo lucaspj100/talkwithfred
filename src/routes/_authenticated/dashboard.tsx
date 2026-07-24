@@ -48,14 +48,19 @@ const LABEL: Record<string, string> = {
 };
 
 function Dashboard() {
-  const { me, convs, stats, reviews, today } = Route.useLoaderData();
+  const { me, convs, stats, reviews, today, access } = Route.useLoaderData();
   const navigate = useNavigate();
   const create = useServerFn(createConversation);
   const [picking, setPicking] = useState(false);
+  const [pickerTarget, setPickerTarget] = useState<"call" | "voice-message">("call");
   const [customMode, setCustomMode] = useState(false);
   const [customTopic, setCustomTopic] = useState("");
   const [creating, setCreating] = useState(false);
   const customInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const minutesLabel =
+    typeof access?.minutesAvailable === "number"
+      ? `${access.minutesAvailable} min disponíveis`
+      : null;
 
   useEffect(() => {
     if (picking && customMode) {
