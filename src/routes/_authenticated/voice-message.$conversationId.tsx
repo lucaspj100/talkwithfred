@@ -137,6 +137,12 @@ function VoiceMessagePage() {
   const playQueueRef = useRef<string[]>([]);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const playingUrlToMsgId = useRef<Map<string, string>>(new Map());
+  // Messages already autoplayed once — never autoplay them again.
+  const autoplayedMsgIdsRef = useRef<Set<string>>(new Set());
+  // The one message id whose sentences we're currently autoplaying.
+  const activeAutoplayMsgIdRef = useRef<string | null>(null);
+  // Blocks any playback while the mic is recording.
+  const recordingRef = useRef(false);
 
   const ensureAudioEl = useCallback(() => {
     if (typeof window === "undefined") return null;
@@ -145,7 +151,10 @@ function VoiceMessagePage() {
       el.preload = "auto";
       el.addEventListener("ended", () => {
         setPlayingId(null);
-        // play next in queue
+        if (recordingRef.current) {
+          playQueueRef.current = [];
+          return;
+        }
         const next = playQueueRef.current.shift();
         if (next && audioElRef.current) {
           audioElRef.current.src = next;
@@ -159,12 +168,23 @@ function VoiceMessagePage() {
     return audioElRef.current;
   }, []);
 
+  const stopPlayback = useCallback(() => {
+    playQueueRef.current = [];
+    const el = audioElRef.current;
+    if (el) {
+      try {
+        el.pause();
+        el.removeAttribute("src");
+        el.load();
+      } catch { /* ignore */ }
+    }
+    setPlayingId(null);
+  }, []);
+
   const unlockAudio = useCallback(() => {
-    // Call from a user gesture (mic tap, send tap, keyboard toggle).
     const el = ensureAudioEl();
     if (!el || audioUnlockedRef.current) return;
     audioUnlockedRef.current = true;
-    // Play a tiny silent buffer to "warm" the element for later autoplay.
     try {
       const silent =
         "data:audio/mp3;base64,//uQxAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAACcQCA";
@@ -177,8 +197,19 @@ function VoiceMessagePage() {
     } catch { /* ignore */ }
   }, [ensureAudioEl]);
 
+  /**
+   * Enqueue an assistant audio chunk for autoplay. Silently skips when:
+   *  - the user is recording (never play over the mic), OR
+   *  - this msgId is not the active autoplay target, OR
+   *  - this msgId has already been autoplayed once.
+   * The bubble's Play button (togglePlayFromBubble) is the only way to
+   * replay a message; it bypasses these guards.
+   */
   const enqueueAudio = useCallback(
     (msgId: string, url: string) => {
+      if (recordingRef.current) return;
+      if (activeAutoplayMsgIdRef.current !== msgId) return;
+      if (autoplayedMsgIdsRef.current.has(msgId)) return;
       playingUrlToMsgId.current.set(url, msgId);
       const el = ensureAudioEl();
       if (!el) return;
@@ -202,6 +233,9 @@ function VoiceMessagePage() {
         setPlayingId(null);
         return;
       }
+      // Manual replay bypasses the autoplay guards and clears any pending
+      // autoplay queue so it doesn't stack on top.
+      playQueueRef.current = [];
       playingUrlToMsgId.current.set(url, msgId);
       el.src = url;
       setPlayingId(msgId);
@@ -233,6 +267,7 @@ function VoiceMessagePage() {
       recorderRef.current?.stop();
     } catch { /* ignore */ }
     cleanupRec();
+    recordingRef.current = false;
     setPhase("idle");
     setRecElapsed(0);
   }, [cleanupRec]);
@@ -243,6 +278,14 @@ function VoiceMessagePage() {
       toast.error("Sessão ainda não pronta.");
       return;
     }
+    // Kill any Fred audio (playing OR queued) BEFORE we open the mic so
+    // nothing can start playing on top of the recording.
+    recordingRef.current = true;
+    if (activeAutoplayMsgIdRef.current) {
+      autoplayedMsgIdsRef.current.add(activeAutoplayMsgIdRef.current);
+      activeAutoplayMsgIdRef.current = null;
+    }
+    stopPlayback();
     unlockAudio();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -255,6 +298,7 @@ function VoiceMessagePage() {
         const blob = new Blob(chunksRef.current, { type: mime });
         const duration = Math.max(1, Math.round((Date.now() - recStartRef.current) / 1000));
         cleanupRec();
+        recordingRef.current = false;
         setRecElapsed(0);
         if (blob.size < 1024) {
           toast.error("Áudio muito curto. Segure por mais tempo.");
@@ -273,6 +317,7 @@ function VoiceMessagePage() {
     } catch (e) {
       console.error("[mic]", e);
       toast.error("Não foi possível acessar o microfone.");
+      recordingRef.current = false;
       setPhase("idle");
     }
   }
@@ -360,6 +405,9 @@ function VoiceMessagePage() {
     }
 
     const assistantId = `a_${Date.now()}`;
+    // Mark THIS message as the active autoplay target so its (and only its)
+    // sentence chunks may enter the queue.
+    activeAutoplayMsgIdRef.current = assistantId;
     // Insert a placeholder so text streams live into the bubble.
     setMessages((prev) => [
       ...prev,
@@ -368,16 +416,14 @@ function VoiceMessagePage() {
 
     let assistantText = "";
     let sentenceBuf = "";
-    let ttsStarted = false;
-    // Sequential playback chain: each sentence is fully downloaded to a Blob
-    // BEFORE being handed to the audio element. Fetches run in parallel, but
-    // enqueue-to-player order is preserved via this promise chain so playback
-    // never starts on a half-arrived chunk (which caused mid-sentence stalls).
+    let sentenceCount = 0; // total sentences we handed to the TTS pipeline
+    let firstSentenceStored = false;
     let ttsChain: Promise<void> = Promise.resolve();
     const enqueueSentence = (sentence: string) => {
       const clean = sentence.trim();
       if (!clean) return;
       if (!ttsToken) return; // fallback handled after loop
+      sentenceCount++;
       const params = new URLSearchParams();
       params.set("text", clean.slice(0, 4000));
       params.set("t", ttsToken);
@@ -385,7 +431,6 @@ function VoiceMessagePage() {
       if (sid) params.set("s", sid);
       params.set("c", conversation.id);
       const url = `/api/tts-stream?${params.toString()}`;
-      // Kick off fetch immediately so multiple sentences download in parallel.
       const blobPromise = fetch(url)
         .then((r) => {
           if (!r.ok) throw new Error(`tts ${r.status}`);
@@ -395,9 +440,22 @@ function VoiceMessagePage() {
       ttsChain = ttsChain.then(async () => {
         try {
           const blobUrl = await blobPromise;
-          if (!ttsStarted) {
-            ttsStarted = true;
+          if (!firstSentenceStored) {
+            firstSentenceStored = true;
             setPhase("responding");
+            // Expose first chunk on the bubble + probe its duration so the
+            // timestamp shows a real value instead of "--:--".
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantId ? { ...m, audioUrl: blobUrl } : m)),
+            );
+            void probeAudioDuration(blobUrl).then((sec) => {
+              if (sec == null) return;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === assistantId && m.durationSec == null ? { ...m, durationSec: sec } : m,
+                ),
+              );
+            });
           }
           enqueueAudio(assistantId, blobUrl);
         } catch (e) {
@@ -470,8 +528,12 @@ function VoiceMessagePage() {
       return;
     }
 
-    // If TTS streaming didn't kick in (no token), fall back to /api/tts blob.
-    if (!ttsStarted) {
+    // Wait for the sentence chain so we know for sure whether any TTS chunk
+    // succeeded before deciding to fall back. Prevents the fallback /api/tts
+    // from playing on top of successful streamed sentences.
+    await ttsChain;
+
+    if (sentenceCount === 0 || !firstSentenceStored) {
       setPhase("responding");
       try {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -490,17 +552,26 @@ function VoiceMessagePage() {
           const audioBlob = await res.blob();
           const url = URL.createObjectURL(audioBlob);
           setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, audioUrl: url } : m)));
+          void probeAudioDuration(url).then((sec) => {
+            if (sec == null) return;
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId && m.durationSec == null ? { ...m, durationSec: sec } : m,
+              ),
+            );
+          });
           enqueueAudio(assistantId, url);
         }
       } catch (e) {
         console.warn("[tts-fallback]", e);
       }
-    } else {
-      // Store first streamed URL on the message so the bubble Play button works.
-      // (Bubble replays the whole reply from /api/tts on demand.)
-      setMessages((prev) =>
-        prev.map((m) => (m.id === assistantId ? { ...m, audioUrl: m.audioUrl } : m)),
-      );
+    }
+
+    // Autoplay is done for this message — lock it out of future autoplay
+    // even if a late fetch resolves.
+    autoplayedMsgIdsRef.current.add(assistantId);
+    if (activeAutoplayMsgIdRef.current === assistantId) {
+      activeAutoplayMsgIdRef.current = null;
     }
 
     setPhase("idle");
@@ -822,6 +893,29 @@ function formatSec(s: number): string {
   const m = Math.floor(s / 60);
   const rest = s % 60;
   return `${String(m).padStart(1, "0")}:${String(rest).padStart(2, "0")}`;
+}
+
+/** Load an audio URL far enough to read its duration. Resolves to null on failure. */
+function probeAudioDuration(url: string): Promise<number | null> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") {
+      resolve(null);
+      return;
+    }
+    const probe = new Audio();
+    probe.preload = "metadata";
+    const done = (val: number | null) => {
+      probe.onloadedmetadata = null;
+      probe.onerror = null;
+      resolve(val);
+    };
+    probe.onloadedmetadata = () => {
+      const d = probe.duration;
+      done(Number.isFinite(d) && d > 0 ? Math.max(1, Math.round(d)) : null);
+    };
+    probe.onerror = () => done(null);
+    probe.src = url;
+  });
 }
 
 /**
