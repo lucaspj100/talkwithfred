@@ -528,8 +528,12 @@ function VoiceMessagePage() {
       return;
     }
 
-    // If TTS streaming didn't kick in (no token), fall back to /api/tts blob.
-    if (!ttsStarted) {
+    // Wait for the sentence chain so we know for sure whether any TTS chunk
+    // succeeded before deciding to fall back. Prevents the fallback /api/tts
+    // from playing on top of successful streamed sentences.
+    await ttsChain;
+
+    if (sentenceCount === 0 || !firstSentenceStored) {
       setPhase("responding");
       try {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -548,17 +552,26 @@ function VoiceMessagePage() {
           const audioBlob = await res.blob();
           const url = URL.createObjectURL(audioBlob);
           setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, audioUrl: url } : m)));
+          void probeAudioDuration(url).then((sec) => {
+            if (sec == null) return;
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === assistantId && m.durationSec == null ? { ...m, durationSec: sec } : m,
+              ),
+            );
+          });
           enqueueAudio(assistantId, url);
         }
       } catch (e) {
         console.warn("[tts-fallback]", e);
       }
-    } else {
-      // Store first streamed URL on the message so the bubble Play button works.
-      // (Bubble replays the whole reply from /api/tts on demand.)
-      setMessages((prev) =>
-        prev.map((m) => (m.id === assistantId ? { ...m, audioUrl: m.audioUrl } : m)),
-      );
+    }
+
+    // Autoplay is done for this message — lock it out of future autoplay
+    // even if a late fetch resolves.
+    autoplayedMsgIdsRef.current.add(assistantId);
+    if (activeAutoplayMsgIdRef.current === assistantId) {
+      activeAutoplayMsgIdRef.current = null;
     }
 
     setPhase("idle");
