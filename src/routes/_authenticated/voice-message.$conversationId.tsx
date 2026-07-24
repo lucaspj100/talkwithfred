@@ -466,7 +466,7 @@ function VoiceMessagePage() {
 
 
     const flushSentenceBuffer = (final = false) => {
-      // Split on sentence boundaries followed by whitespace/end.
+      // Primary split: full sentence boundaries (. ! ?) followed by space/end.
       const regex = /[^.!?]+[.!?]+(?=\s|$)/g;
       let match: RegExpExecArray | null;
       let lastEnd = 0;
@@ -475,6 +475,20 @@ function VoiceMessagePage() {
         lastEnd = match.index + match[0].length;
       }
       sentenceBuf = sentenceBuf.slice(lastEnd);
+
+      // First-word latency optimization: if we haven't dispatched anything yet
+      // and the model is taking its time to reach a period, cut at the earliest
+      // natural clause boundary (comma / semicolon / colon / em-dash) once the
+      // buffer is long enough to sound like a real phrase. Only applied to the
+      // FIRST chunk — subsequent audio uses full sentences for best intonation.
+      if (!final && sentenceCount === 0 && sentenceBuf.length >= 40) {
+        const clauseMatch = /^[^,;:—]+[,;:—]/.exec(sentenceBuf);
+        if (clauseMatch) {
+          enqueueSentence(clauseMatch[0]);
+          sentenceBuf = sentenceBuf.slice(clauseMatch[0].length);
+        }
+      }
+
       if (final && sentenceBuf.trim().length > 0) {
         enqueueSentence(sentenceBuf);
         sentenceBuf = "";
