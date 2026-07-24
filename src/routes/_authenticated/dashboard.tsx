@@ -31,13 +31,14 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
   loader: async () => {
     const me = await getMyProfile();
     if (!me.userProfile) throw redirect({ to: "/onboarding" });
-    const [convs, stats, reviews, today] = await Promise.all([
+    const [convs, stats, reviews, today, access] = await Promise.all([
       listConversations(),
       getMyStats(),
       getPendingReviewsSummary().catch(() => ({ count: 0, latest: null })),
       getTodayTrainingSummary().catch(() => null),
+      getSubscriptionAccess().catch(() => ({ minutesAvailable: null as number | null })),
     ]);
-    return { me, convs, stats, reviews, today };
+    return { me, convs, stats, reviews, today, access };
   },
   component: Dashboard,
 });
