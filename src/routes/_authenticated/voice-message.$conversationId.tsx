@@ -838,20 +838,24 @@ function MessageBubble({
   onPlay: () => void;
 }) {
   const mine = msg.role === "user";
+  const showTicks = mine && msg.status;
 
   // User typed text → plain text bubble.
   if (mine && msg.textOnly) {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm">
-          {msg.text}
+        <div className="flex max-w-[85%] flex-col items-end gap-1">
+          <div className="rounded-2xl rounded-br-md bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm">
+            {msg.text}
+          </div>
+          {showTicks && <StatusTicks status={msg.status!} />}
         </div>
       </div>
     );
   }
 
-  // Assistant streaming text without audio yet → plain text bubble (updates
-  // live as tokens arrive); switches to voice bubble once audio is attached.
+  // Assistant with no audio yet (only used briefly if a bubble is ever
+  // rendered before audio is attached — in the current pipeline it isn't).
   if (!mine && !msg.audioUrl) {
     return (
       <div className="flex justify-start">
@@ -898,16 +902,39 @@ function MessageBubble({
             {msg.durationSec ? formatSec(msg.durationSec) : "--:--"}
           </span>
         </div>
-        <p
-          className={cn(
-            "max-w-full px-1 text-xs leading-snug",
-            mine ? "text-right text-muted-foreground" : "text-left text-muted-foreground",
-          )}
-        >
-          {msg.text}
-        </p>
+        {msg.text && (
+          <p
+            className={cn(
+              "max-w-full px-1 text-xs leading-snug",
+              mine ? "text-right text-muted-foreground" : "text-left text-muted-foreground",
+            )}
+          >
+            {msg.text}
+          </p>
+        )}
+        {showTicks && <StatusTicks status={msg.status!} />}
       </div>
     </div>
+  );
+}
+
+function StatusTicks({ status }: { status: "pending" | "done" }) {
+  // Single tick while the cascade (STT → chat → TTS) is still in flight;
+  // double tick once Fred's full reply has been rendered. Mirrors WhatsApp's
+  // sent/read affordance without exposing pipeline stages to the user.
+  if (status === "pending") {
+    return (
+      <span className="flex items-center gap-0.5 px-1 text-[10px] text-muted-foreground">
+        <Check className="size-3" aria-hidden />
+        <span className="sr-only">Enviada</span>
+      </span>
+    );
+  }
+  return (
+    <span className="flex items-center gap-0.5 px-1 text-[10px] text-primary">
+      <CheckCheck className="size-3.5" aria-hidden />
+      <span className="sr-only">Respondida</span>
+    </span>
   );
 }
 
