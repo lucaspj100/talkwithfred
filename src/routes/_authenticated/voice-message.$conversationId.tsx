@@ -317,6 +317,7 @@ function VoiceMessagePage() {
     } catch (e) {
       console.error("[mic]", e);
       toast.error("Não foi possível acessar o microfone.");
+      recordingRef.current = false;
       setPhase("idle");
     }
   }
