@@ -40,6 +40,8 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     ]);
     return { me, convs, stats, reviews, today, access };
   },
+  validateSearch: (s: Record<string, unknown>): { call?: boolean } =>
+    s.call === true || s.call === "1" || s.call === 1 ? { call: true } : {},
   component: Dashboard,
 });
 
@@ -61,6 +63,15 @@ function Dashboard() {
     typeof access?.minutesAvailable === "number"
       ? `${access.minutesAvailable} min disponíveis`
       : null;
+
+  const search = Route.useSearch();
+  useEffect(() => {
+    if (search.call) {
+      setPickerTarget("call");
+      setPicking(true);
+      navigate({ to: "/dashboard", search: {}, replace: true });
+    }
+  }, [search.call, navigate]);
 
   useEffect(() => {
     if (picking && customMode) {
@@ -128,7 +139,7 @@ function Dashboard() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-5xl px-4 pb-10 pt-[max(1.5rem,env(safe-area-inset-top))] md:py-10">
       <header className="mb-8 flex items-center justify-between gap-3">
         <FredBrand linkTo="/dashboard" />
         <div className="flex items-center gap-2">
@@ -183,7 +194,7 @@ function Dashboard() {
         <div className="flex flex-col items-center text-center md:flex-row md:items-center md:gap-8 md:text-left">
           <div className="relative shrink-0">
             <TalkingAvatar state="idle" size="large" />
-            <span className="absolute right-3 top-3 grid size-4 place-items-center rounded-full border-2 border-background bg-[color:var(--success)]" aria-hidden>
+            <span className="absolute right-3 top-3 grid size-4 place-items-center rounded-full border-2 border-background bg-success" aria-hidden>
               <span className="size-1.5 animate-ping rounded-full bg-background/70" />
             </span>
           </div>
