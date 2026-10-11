@@ -202,7 +202,7 @@ export function RealtimeConversation({
       </div>
 
       <div className="my-3 flex min-h-0 flex-1 flex-col items-center justify-center gap-2 md:my-6 md:flex-none [@media(max-height:500px)]:my-1">
-        <TalkingAvatar state={talkingState} mouthLevel={effectiveMouthLevel} size="large" className="shrink-0" avatarClassName="max-md:size-[clamp(3rem,20cqh,10rem)]" />
+        <TalkingAvatar state={talkingState} mouthLevel={effectiveMouthLevel} size="large" className="shrink-0" avatarClassName="max-md:size-[clamp(3rem,16cqh,10rem)]" />
 
       </div>
 
