@@ -17,12 +17,23 @@ import { toast } from "sonner";
 import { MODES, type Mode } from "@/lib/fred-prompt";
 import { RealtimeConversation, type HistoryMessage } from "@/components/chat/realtime-conversation";
 import { VoiceErrorBoundary } from "@/components/chat/voice-error-boundary";
+import { useCallViewport } from "@/hooks/use-call-viewport";
 import { useUsageSession } from "@/hooks/use-usage-session";
 import { mintTtsToken } from "@/lib/tts-token.functions";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 
 export const Route = createFileRoute("/_authenticated/chat/$conversationId")({
+  head: () => ({
+    meta: [
+      { title: "Conversa com Fred — Talk With Fred" },
+      { name: "description", content: "Pratique inglês por voz ou texto com Fred e acompanhe a transcrição da sua conversa." },
+      { property: "og:title", content: "Conversa com Fred — Talk With Fred" },
+      { property: "og:description", content: "Pratique inglês por voz ou texto com Fred e acompanhe a transcrição da sua conversa." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   loader: async ({ params }) => {
     const access = await getSubscriptionAccess();
     if (!access.hasAccess) {
@@ -119,6 +130,7 @@ function ChatPage() {
   const [authReady, setAuthReady] = useState(false);
   const [inputType, setInputType] = useState<"text" | "voice">("text");
   const [chatMode, setChatMode] = useState<"voice" | "text">("voice");
+  const callViewportRef = useCallViewport(chatMode === "voice");
   const pendingUserRef = useRef<string>("");
   const pendingPersistsRef = useRef<Promise<unknown>[]>([]);
   const endHandleRef = useRef<(() => void) | null>(null);
@@ -945,24 +957,24 @@ function ChatPage() {
   if (chatMode === "voice") {
     return (
       <div
-        className="mx-auto flex min-h-[100dvh] max-w-3xl flex-col px-4 py-6"
-        style={{ paddingTop: "max(env(safe-area-inset-top), 1.5rem)", paddingBottom: "max(env(safe-area-inset-bottom), 1.5rem)" }}
+        ref={callViewportRef}
+        className="mx-auto flex h-[var(--call-viewport-height,100dvh)] min-h-0 max-w-3xl flex-col overflow-hidden [container-type:size] pt-[max(env(safe-area-inset-top),0.75rem)] pr-[max(env(safe-area-inset-right),0.75rem)] pb-[max(env(safe-area-inset-bottom),0.75rem)] pl-[max(env(safe-area-inset-left),0.75rem)] md:h-auto md:min-h-dvh md:overflow-visible md:px-4 md:pt-[max(env(safe-area-inset-top),1.5rem)] md:pb-[max(env(safe-area-inset-bottom),1.5rem)] [@media(max-height:500px)]:pt-[max(env(safe-area-inset-top),0.25rem)] [@media(max-height:500px)]:pb-[max(env(safe-area-inset-bottom),0.25rem)]"
       >
-        <header className="relative z-20 mb-4 flex items-center justify-between gap-2" style={{ pointerEvents: "auto" }}>
+        <header className="relative z-20 mb-3 grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2 md:mb-4 md:flex md:justify-between" style={{ pointerEvents: "auto" }}>
           <Button
             variant="ghost"
             size="sm"
             onClick={handleDashboardClick}
             disabled={isEndingConversation}
-            className="min-h-11"
+            className="min-h-11 min-w-0 justify-self-start md:justify-center"
           >
             <ArrowLeft className="mr-1 size-4" /> Dashboard
           </Button>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center justify-end gap-2">
             {minutesBadge}
             <p className="hidden text-sm text-muted-foreground sm:block">{modeLabel}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="col-span-2 grid min-w-0 grid-cols-2 gap-2 md:flex md:items-center">
             <Button
               type="button"
               variant="outline"

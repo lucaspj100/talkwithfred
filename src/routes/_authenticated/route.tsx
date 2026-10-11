@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { BottomNav } from "@/components/nav/BottomNav";
 
@@ -18,10 +18,11 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
+  const isChat = useRouterState({ select: (state) => state.location.pathname.startsWith("/chat/") });
   return (
     <>
       {/* Extra bottom padding on mobile so content doesn't hide behind BottomNav */}
-      <div className="pb-20 md:pb-0">
+      <div className={isChat ? "" : "pb-20 md:pb-0"}>
         <Outlet />
       </div>
       <BottomNav />

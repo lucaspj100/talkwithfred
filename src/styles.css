@@ -218,3 +218,4 @@
 @utility animate-idle-breathe   { animation: idle-breathe 4s ease-in-out infinite; }
 @utility animate-brow-flick     { animation: brow-flick 2.2s ease-in-out infinite; }
 @utility animate-reward-pulse   { animation: reward-pulse 1.6s ease-out 1; }
+
