@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, CreditCard, User, Dumbbell } from "lucide-react";
+import { Home, CreditCard, User, Dumbbell, Phone } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getMySubscription } from "@/lib/subscription.functions";
@@ -28,9 +28,10 @@ export function BottomNav() {
 
   const items = [
     { to: "/dashboard", label: "Início", icon: Home, exact: true },
-    { to: "/practice", label: "Treinos", icon: Dumbbell, exact: false },
+    { to: "/practice", label: "Treino", icon: Dumbbell, exact: false },
+    { to: "/dashboard", label: "Chamada", icon: Phone, exact: false, call: true },
     { to: "/assinatura", label: "Assinatura", icon: CreditCard, exact: false, badge: alert },
-    { to: "/settings/onboarding", label: "Perfil", icon: User, exact: false },
+    { to: "/settings/onboarding", label: "Conta", icon: User, exact: false },
   ] as const;
 
   return (
@@ -39,14 +40,16 @@ export function BottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Navegação principal"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className="mx-auto grid max-w-md grid-cols-5">
         {items.map((it) => {
           const Icon = it.icon;
-          const active = it.exact ? pathname === it.to : pathname.startsWith(it.to);
+          const isCall = "call" in it;
+          const active = isCall ? false : it.exact ? pathname === it.to : pathname.startsWith(it.to);
           return (
-            <li key={it.to}>
+            <li key={it.label}>
               <Link
                 to={it.to}
+                search={isCall ? { call: true } : undefined}
                 className={`flex flex-col items-center justify-center gap-1 px-2 py-2.5 text-[11px] font-medium transition ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
