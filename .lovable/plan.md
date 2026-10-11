@@ -1,117 +1,70 @@
-# Plano: Simulador de Inglês para Carreira (funil de leads)
+# Legendas sempre visíveis na chamada — Talk With Fred
 
-Reposicionamento completo do produto: da "IA para praticar inglês" para "Simulador de Inglês para Carreira" com foco em geração de leads para escola executiva (bolsa parcial via WhatsApp).
+## Diagnóstico do layout atual
 
-## 1. Landing page (`src/routes/index.tsx`)
+Análise do código de `RealtimeConversation`, `TranscriptPanel` e das telas que os envolvem; ainda não é uma validação em aparelhos reais.
 
-Substituir hero atual pelo novo posicionamento:
-- **Headline**: "Você tem capacidade para oportunidades maiores, mas o inglês ainda te faz recuar?"
-- **Subheadline**: "Faça uma simulação gratuita com IA, veja onde seu inglês trava e descubra quais oportunidades podem estar ficando fora do seu radar."
-- **CTA primário**: "Fazer simulação gratuita" → `/simulacao`
-- **CTA secundário**: "Ver como funciona" → âncora `#como-funciona`
+- **Legenda e histórico estão misturados.** A ordem atual é cabeçalho → avatar grande → controles → transcrição. A fala em andamento aparece no final do histórico, abaixo dos controles, em vez de ter um espaço próprio.
+- **A tela pode crescer além da altura visível.** A chamada usa altura mínima de `100dvh`, não uma distribuição limitada ao espaço disponível. Cabeçalho, margens, avatar e transcrição somam suas alturas. O cabeçalho também reúne vários botões numa única linha, apertada em celulares.
+- **A rolagem pode mover a página inteira.** A cada atualização de transcrição, `scrollIntoView({ behavior: "smooth" })` tenta levar o final do histórico à tela. Isso pode deslocar o avatar e os controles, além de gerar movimentos sucessivos enquanto o texto chega.
+- **Há espaço inferior desnecessário.** O layout autenticado reserva 80px para a navegação inferior mesmo em `/chat/`, onde essa navegação está oculta. Não é o rodapé sobrepondo a chamada nessa tela; é uma reserva que aumenta o espaço total.
+- **As áreas seguras já são consideradas parcialmente.** Há `viewport-fit=cover` e espaçamento com `safe-area-inset-top/bottom`, mas isso não garante que legenda e controles caibam juntos. `100dvh` sozinho também não resolve todos os comportamentos do teclado virtual.
+- **A transcrição progressiva já existe.** `partialUser`, `partialAssistant` e `turns` oferecem os dados necessários; não é preciso alterar o mecanismo de conversação.
 
-Nova seção **Como funciona** (4 passos): Responda seu momento → Simulação com Fred → Mapa de Oportunidades → Continue pelo WhatsApp.
+## Proposta de alteração mínima
 
-Manter seções sociais existentes (features, depoimentos se houver) reescritas em linguagem carreira.
+Aplicar uma apresentação específica para celular, mantendo a organização atual do desktop.
 
-## 2. Novo fluxo público de simulação (sem login)
+### 1. Espaço próprio para a legenda atual
 
-Criar rota pública `/simulacao` como funil de 3 etapas:
+Ordem no celular:
 
-### Etapa A — Mini diagnóstico (`/simulacao` index)
-Perguntas rápidas (multi-step, sem login):
-1. Área profissional (Tecnologia, Dados, Produto, Comercial, Financeiro, RH, Engenharia, Gestão, Saúde, Outro)
-2. Objetivo principal (Crescer, Promoção, Entrevista, Vaga internacional, Ganhar em dólar/euro, Reuniões, Viagem, Segurança para falar)
-3. Nível atual (Básico, Intermediário travado, Intermediário, Avançado sem segurança, Não sei)
-4. Onde inglês mais limita (Fala, Escuta, Entrevistas, Reuniões, Apresentações, Vergonha, Constância, Vagas internacionais)
-5. Já deixou de avançar por causa do inglês? (Sim, Já pensei mas recuei, Não, Nunca procurei)
+```text
+Cabeçalho compacto da chamada
+Avatar do Fred
+Legenda atual: Você / Fred
+Controles da chamada + acesso ao histórico
+Área segura inferior
+```
 
-Estado do diagnóstico em `sessionStorage` (chave `fred_lead_diag`) para sobreviver ao fluxo sem exigir login.
+- Reservar uma área estável entre avatar e controles: o crescimento do texto não empurra os botões nem muda a altura da página.
+- Atualizar o texto usando os mesmos eventos existentes, sem esperar o fim da fala.
+- Identificar claramente **Você** e **Fred** por nome e tratamento visual, usando as cores atuais do app; não depender só de cor.
+- Manter a última fala visível até a próxima atualização. Durante uma interrupção, dar prioridade à fala do usuário conforme os estados já disponíveis.
+- Em falas longas, acompanhar o trecho mais recente dentro da própria área de legenda, sem rolar a página. O texto completo continua disponível no histórico; não prometer que uma fala inteira de qualquer tamanho caberá simultaneamente.
 
-### Etapa B — Captura de lead + simulação (`/simulacao/pratica`)
-Antes de iniciar a conversa: form curto (nome, email, WhatsApp opcional). Persistir em nova tabela `leads`.
+### 2. Histórico secundário, sem disputar espaço
 
-Simulação com Fred adaptada ao objetivo:
-- Entrevista → simulação de entrevista de emprego em inglês
-- Reuniões → daily/reunião profissional
-- Vaga internacional → conversa com recrutador internacional
-- Promoção/Crescer → conversa com gestor sobre carreira
-- Outros → conversa profissional adaptada à área
+- No celular, abrir **Histórico** em um painel sobreposto ao toque, com rolagem interna e botão de fechar, sem encerrar a chamada.
+- Preservar todas as mensagens já exibidas, inclusive a fala em andamento.
+- Não puxar o usuário para o fim enquanto ele estiver lendo mensagens antigas. Acompanhamento do final somente dentro do histórico e quando ele já estiver próximo do fim.
+- Ao fechar, voltar à legenda atual sem alterar a posição da tela de chamada.
 
-Reutilizar o motor de chat existente, mas em modo "simulação curta" (limite ~6-8 turnos), usando `buildFredSystemPrompt` estendido com o cenário. Chat público (anon) usa uma variante do endpoint `/api/chat` sem exigir auth para leads.
+### 3. Ajustes pequenos na tela que envolve a chamada
 
-Ao fim: botão "Ver meu Mapa de Oportunidades".
+- Distribuir a chamada na altura realmente visível, com avatar menor em telas baixas; priorizar legenda e controles.
+- Reorganizar o cabeçalho apenas no celular, preservando voltar, minutos, modo digitado e encerrar, sem amontoar os botões.
+- Remover a reserva da navegação inferior apenas em `/chat/`; manter as demais telas intactas.
+- Aplicar as áreas seguras uma única vez e considerar mudanças da barra do navegador e do teclado. Não fixar a legenda sobre os controles nem bloquear globalmente a rolagem do app.
+- Manter avisos de erro e de reativação de áudio acessíveis, sem encobrir a legenda.
 
-### Etapa C — Mapa de Oportunidades (`/simulacao/resultado`)
-Tela com:
-- Resumo do perfil (baseado no diagnóstico)
-- Principal trava percebida (do diagnóstico + observação da simulação)
-- Oportunidades nacionais (texto padrão adaptado à área)
-- Oportunidades internacionais (texto padrão adaptado)
-- Estimativa de impacto (faixa, sem promessa)
-- Próximo passo sugerido
-- Aviso sobre estimativas
-- **CTA principal**: "Quero continuar minha análise pelo WhatsApp" → link `wa.me` com mensagem pré-preenchida contendo nome + trava + área
+## Detalhes técnicos e limite de escopo
 
-## 3. Banco de dados
+- `src/components/chat/realtime-conversation.tsx`: separar apresentação da legenda atual e histórico; manter chamada do hook, callbacks, estados de áudio e controles existentes.
+- `src/routes/_authenticated/chat.$conversationId.tsx`: ajustar somente o contêiner e o cabeçalho da apresentação por voz no celular.
+- `src/routes/_authenticated/route.tsx`: ajuste condicional da reserva inferior para `/chat/`, sem mexer em autenticação.
+- `src/styles.css`: somente regras de tamanho, áreas seguras e organização da chamada, se necessárias.
+- Se necessário, observar `window.visualViewport` após a montagem apenas para dimensionamento visual, sem modificar áudio ou eventos Realtime. Preservar um fallback com `dvh`.
+- No desktop, preservar a apresentação atual. Conter a rolagem do histórico no próprio painel para evitar deslocamento inesperado da página, sem mudar sua organização visual.
+- Não alterar `realtime-session.ts`, `use-realtime-voice.ts`, modelo, VAD, WebRTC, prompts, geração/transcrição de áudio, consumo de minutos, autenticação ou banco de dados.
+- A simulação pública possui outro `TranscriptPanel`; não alterá-lo nesta proposta.
 
-Nova tabela `leads` (migration):
-- `name`, `email`, `whatsapp`, `area`, `goal`, `level`, `main_block`, `already_lost_opportunity`
-- `simulation_summary` (texto gerado ao fim da simulação, opcional)
-- `converted_to_whatsapp` (boolean, marcado quando clica no CTA)
-- RLS: apenas service_role escreve/lê (endpoint público server-side); admins podem ler via `has_role('admin')`.
-- GRANTs para authenticated (admin leitura) e service_role.
+## Validação após aprovação
 
-## 4. Server functions / API
+- Conferir chamada ativa com legendas progressivas de ambos os participantes, interrupções, falas longas e troca de turno.
+- Conferir telas estreitas e baixas, orientação horizontal, áreas seguras e abertura/fechamento do histórico.
+- Verificar barra do navegador e teclado virtual, inclusive a troca para modo digitado, sem sobreposições ou saltos de página.
+- Comparar o desktop antes/depois e confirmar que controles, áudio e encerramento continuam funcionando.
+- Separar o que for comprovado no navegador do que ainda exigir teste em Android/iPhone reais.
 
-- `src/lib/leads.functions.ts` — `createLead` (public server fn), `updateLeadSimulation`, `markLeadConverted`. Usa `supabaseAdmin` (server-only).
-- `src/lib/simulation-prompt.ts` — builder de prompt Fred para cenário de simulação carreira (curto, focado, objetivo).
-- Endpoint `/api/chat` já existe; adicionar variante ou parâmetro `mode: "simulation"` que dispensa auth quando `leadId` é fornecido, ou criar `/api/simulation-chat` público que valida `leadId` server-side.
-
-## 5. Configuração comercial
-
-Adicionar em `.env` (usuário informa depois):
-- `VITE_WHATSAPP_NUMBER` — número do WhatsApp comercial (ex: `5511999999999`)
-
-Se não configurado, mostrar aviso mas ainda gerar link genérico.
-
-## 6. O que se mantém
-
-- App autenticado (`/dashboard`, `/chat`, `/practice`, onboarding) permanece intacto para usuários existentes.
-- Fred, correções, personalização, modos de conversa, TTS/STT — nenhum toque.
-- Landing atual será reescrita, mas o app logado continua igual.
-
-## 7. Detalhes técnicos
-
-- Rotas públicas: `src/routes/simulacao.tsx` (layout), `simulacao.index.tsx` (diagnóstico), `simulacao.pratica.tsx` (lead form + chat), `simulacao.resultado.tsx` (mapa).
-- Sessão do lead: `sessionStorage` + `leadId` retornado por `createLead` server fn.
-- Componentes reaproveitados: shadcn (Button, Input, Card), design tokens em `src/styles.css`.
-- Copy em português, tom empático, sem promessa de salário.
-- Aviso legal em rodapé do Mapa: "As estimativas são possibilidades de mercado, não garantias..."
-
-## 8. Fora de escopo (não faremos agora)
-
-- Painel admin de leads (adicionar depois se pedido).
-- Integração real com CRM/WhatsApp Business API (apenas link `wa.me`).
-- Autenticação obrigatória para simulação gratuita (fluxo é público para maximizar conversão).
-- A/B testing de copy.
-
-## Arquivos a criar
-
-- `supabase/migrations/<ts>_leads.sql`
-- `src/lib/leads.functions.ts`
-- `src/lib/simulation-prompt.ts`
-- `src/lib/simulation-options.ts` (perguntas do diagnóstico)
-- `src/routes/simulacao.tsx` (layout)
-- `src/routes/simulacao.index.tsx` (diagnóstico)
-- `src/routes/simulacao.pratica.tsx` (lead + chat)
-- `src/routes/simulacao.resultado.tsx` (mapa de oportunidades)
-- `src/routes/api/simulation-chat.ts` (endpoint público)
-- `src/components/simulacao/*` (Steps, LeadForm, SimulationChat, OpportunityMap)
-
-## Arquivos a editar
-
-- `src/routes/index.tsx` (nova landing)
-- `.env` (adicionar `VITE_WHATSAPP_NUMBER` placeholder)
-
-Aprovar para eu implementar em uma sequência de tool calls.
+**Neste momento:** apenas diagnóstico e proposta para revisão; nenhuma alteração no funcionamento ou na aparência do app e nenhuma publicação.
