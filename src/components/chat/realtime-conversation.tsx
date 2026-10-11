@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Keyboard, Mic, MicOff, Phone, PhoneOff, Loader2 } from "lucide-react";
+import { Keyboard, Mic, MicOff, Phone, PhoneOff, Loader2, History } from "lucide-react";
 import { FredAvatar as FredBrandAvatar } from "@/components/FredBrand";
 import { TalkingAvatar, type TalkingAvatarState } from "@/components/fred/TalkingAvatar";
 import { supabase } from "@/integrations/supabase/client";
+import { CurrentVoiceCaption, VoiceTranscript } from "@/components/chat/voice-transcript";
 import {
   useRealtimeVoice,
   type VoiceState,
@@ -105,6 +106,9 @@ export function RealtimeConversation({
     onUsage: onUsage as never,
   });
 
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const transcriptProps = { history, turns, partialUser, partialAssistant, userName };
+
   const idle = state === "idle";
   const isError = state === "error";
   const connecting = state === "connecting";
@@ -145,7 +149,7 @@ export function RealtimeConversation({
 
   if (idle || isError) {
     return (
-      <div className="flex flex-col items-center rounded-3xl border border-border bg-card/60 p-6 text-center md:p-10">
+      <div className="flex min-h-0 flex-col items-center overflow-y-auto overscroll-contain rounded-3xl border border-border bg-card/60 p-6 text-center md:p-10">
         <TalkingAvatar state="idle" size="large" className="mb-6" />
         <h2 className="font-display text-2xl font-bold">Conversa por voz com Fred</h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
@@ -183,42 +187,48 @@ export function RealtimeConversation({
   }
 
   return (
-    <div className="rounded-3xl border border-border bg-card/60 p-4 md:p-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className={cn("fred-ring h-12 w-12")} data-state={effectiveRingState}>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-border bg-card/60 p-3 md:block md:flex-none md:overflow-visible md:p-6 [@media(max-height:500px)]:py-2">
+      <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 md:flex md:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className={cn("fred-ring h-12 w-12 shrink-0")} data-state={effectiveRingState}>
             <FredBrandAvatar alt="Fred" className="h-12 w-12 ring-0" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-semibold">Fred</p>
-            <p className="text-xs text-muted-foreground">{effectiveStateLabel}</p>
+            <p className="truncate text-xs text-muted-foreground">{effectiveStateLabel}</p>
           </div>
         </div>
         {connecting && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
       </div>
 
-      <div className="my-6 flex flex-col items-center justify-center gap-2">
-        <TalkingAvatar state={talkingState} mouthLevel={effectiveMouthLevel} size="large" />
+      <div className="my-3 flex min-h-0 flex-1 flex-col items-center justify-center gap-2 md:my-6 md:flex-none [@media(max-height:500px)]:my-1">
+        <TalkingAvatar state={talkingState} mouthLevel={effectiveMouthLevel} size="large" className="shrink-0" avatarClassName="max-md:size-[clamp(3rem,20cqh,10rem)]" />
 
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center justify-center gap-2">
-        <Button variant="secondary" size="sm" onClick={toggleMute}>
+      <CurrentVoiceCaption {...transcriptProps} userSpeaking={userSpeaking} />
+
+      <div className={cn("mt-3 grid shrink-0 gap-1 md:mt-0 md:mb-4 md:flex md:flex-wrap md:items-center md:justify-center md:gap-2 [@media(max-height:500px)]:mt-1.5", hideEndButton ? "grid-cols-3" : "grid-cols-4")}>
+        <Button variant="secondary" size="sm" className="min-h-11 min-w-0 px-1.5 text-xs md:min-h-0 md:px-3" onClick={toggleMute}>
           {muted ? <MicOff className="mr-1 size-4" /> : <Mic className="mr-1 size-4" />}
-          {muted ? "Ativar microfone" : "Silenciar"}
+          <span className="md:hidden">{muted ? "Ativar" : "Silenciar"}</span>
+          <span className="hidden md:inline">{muted ? "Ativar microfone" : "Silenciar"}</span>
         </Button>
         {!hideEndButton && (
-          <Button variant="ghost" size="sm" onClick={stop}>
+          <Button variant="ghost" size="sm" className="min-h-11 min-w-0 px-1.5 text-xs md:min-h-0 md:px-3" onClick={stop}>
             <PhoneOff className="mr-1 size-4" /> Encerrar
           </Button>
         )}
-        <Button variant="ghost" size="sm" onClick={onSwitchToText}>
-          <Keyboard className="mr-1 size-4" /> Prefiro digitar
+        <Button variant="ghost" size="sm" className="min-h-11 min-w-0 px-1.5 text-xs md:min-h-0 md:px-3" onClick={onSwitchToText}>
+          <Keyboard className="mr-1 size-4" /> <span className="md:hidden">Digitar</span><span className="hidden md:inline">Prefiro digitar</span>
+        </Button>
+        <Button variant="ghost" size="sm" className="min-h-11 min-w-0 px-1.5 text-xs md:hidden" onClick={() => setHistoryOpen(true)} aria-label="Abrir histórico da conversa">
+          <History className="mr-1 size-4" /> Histórico
         </Button>
       </div>
 
       {responseError && (
-        <div className="mb-3 flex flex-col items-center gap-2 rounded-md bg-destructive/10 p-3 text-center text-sm text-destructive">
+        <div className="mt-2 flex max-h-[24cqh] shrink-0 flex-col items-center gap-2 overflow-y-auto overscroll-contain rounded-md bg-destructive/10 p-2 text-center text-sm text-destructive md:mt-0 md:mb-3 md:max-h-none md:p-3">
           <span>{responseError}</span>
           <Button variant="secondary" size="sm" onClick={retryResponse}>
             Tentar resposta novamente
@@ -227,7 +237,7 @@ export function RealtimeConversation({
       )}
 
       {audioBlocked && (
-        <div className="mb-3 flex flex-col items-center gap-2 rounded-md bg-amber-500/10 p-3 text-center text-sm">
+        <div className="mt-2 flex max-h-[24cqh] shrink-0 flex-col items-center gap-2 overflow-y-auto overscroll-contain rounded-md bg-gold/10 p-2 text-center text-sm md:mt-0 md:mb-3 md:max-h-none md:p-3">
           <span>Seu iPhone pausou o áudio. Toque para continuar ouvindo Fred.</span>
           <Button variant="secondary" size="sm" onClick={resumeAudio}>
             Reativar áudio
@@ -235,13 +245,7 @@ export function RealtimeConversation({
         </div>
       )}
 
-      <TranscriptPanel
-        history={history}
-        turns={turns}
-        partialUser={partialUser}
-        partialAssistant={partialAssistant}
-        userName={userName}
-      />
+      <VoiceTranscript {...transcriptProps} historyOpen={historyOpen} onHistoryOpenChange={setHistoryOpen} />
     </div>
   );
 }
@@ -294,93 +298,3 @@ function stateLabel(s: VoiceState, muted: boolean): string {
   }
 }
 
-function TranscriptPanel({
-  history,
-  turns,
-  partialUser,
-  partialAssistant,
-  userName,
-}: {
-  history: HistoryMessage[];
-  turns: VoiceTurn[];
-  partialUser: string;
-  partialAssistant: string;
-  userName: string;
-}) {
-  const [open, setOpen] = useState(true);
-  const endRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [turns, partialUser, partialAssistant]);
-
-  const visible = turns.filter((t) => t.text.trim().length > 0);
-  const hasContent =
-    history.length > 0 ||
-    visible.length > 0 ||
-    partialUser.trim() ||
-    partialAssistant.trim();
-
-  return (
-    <div className="rounded-xl border border-border/60 bg-background/40">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between px-3 py-2 text-xs text-muted-foreground"
-      >
-        <span>Transcrição</span>
-        <span>{open ? "Ocultar" : "Mostrar"}</span>
-      </button>
-      {open && (
-        <div className="max-h-72 space-y-2 overflow-y-auto px-3 pb-3">
-          {!hasContent && (
-            <p className="py-4 text-center text-xs text-muted-foreground">
-              A transcrição aparece aqui conforme vocês conversam.
-            </p>
-          )}
-          {history.map((m) => (
-            <Bubble key={`h_${m.id}`} role={m.role} userName={userName} text={m.content} faded />
-          ))}
-          {visible.map((t) => (
-            <Bubble key={t.id} role={t.role} userName={userName} text={t.text} />
-          ))}
-          {partialAssistant.trim() && (
-            <Bubble role="assistant" userName={userName} text={partialAssistant} faded />
-          )}
-          {partialUser.trim() && (
-            <Bubble role="user" userName={userName} text={partialUser} faded />
-          )}
-          <div ref={endRef} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Bubble({
-  role,
-  userName,
-  text,
-  faded,
-}: {
-  role: "user" | "assistant";
-  userName: string;
-  text: string;
-  faded?: boolean;
-}) {
-  const mine = role === "user";
-  return (
-    <div className={cn("flex", mine ? "justify-end" : "justify-start", faded && "opacity-60")}>
-      <div
-        className={cn(
-          "max-w-[85%] rounded-xl px-3 py-1.5 text-sm",
-          mine ? "bg-primary/10" : "border border-border bg-card",
-        )}
-      >
-        <span className="mr-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-          {mine ? userName : "Fred"}
-        </span>
-        {text}
-      </div>
-    </div>
-  );
-}

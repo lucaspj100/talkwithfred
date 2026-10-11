@@ -6,6 +6,7 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "sonner";
@@ -28,7 +29,7 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   useEffect(() => {
     console.error(error);
@@ -40,7 +41,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
         <h1 className="text-xl font-semibold">Algo deu errado</h1>
         <p className="mt-2 text-sm text-muted-foreground">Não foi possível preparar a conversa. Tente novamente.</p>
         <button
-          onClick={() => { router.invalidate(); reset(); }}
+          onClick={() => { router.invalidate(); reset?.(); }}
           className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         >
           Tentar novamente

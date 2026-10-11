@@ -13,6 +13,7 @@ export type TalkingAvatarProps = {
   size?: TalkingAvatarSize;
   showStatus?: boolean;
   className?: string;
+  avatarClassName?: string;
 };
 
 const SIZE_BOX: Record<TalkingAvatarSize, string> = {
@@ -46,13 +47,14 @@ export function TalkingAvatar({
   size = "medium",
   showStatus = false,
   className,
+  avatarClassName,
 }: TalkingAvatarProps) {
   const box = SIZE_BOX[size];
   const ring = STATE_TO_RING[state];
 
   return (
     <div className={cn("inline-flex flex-col items-center gap-3", className)}>
-      <div className={cn("fred-ring", box)} data-state={ring}>
+      <div className={cn("fred-ring", box, avatarClassName)} data-state={ring}>
         <FredBrandImage
           alt="Fred"
           className={cn(
