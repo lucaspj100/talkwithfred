@@ -196,7 +196,7 @@ function Dashboard() {
         <Stat
           icon={<Target className="size-4" />}
           label="Nível"
-          value={LABEL[me.userProfile!.english_level] ?? me.userProfile!.english_level}
+          value={me.userProfile!.english_level ? (LABEL[me.userProfile!.english_level] ?? me.userProfile!.english_level) : "—"}
           tone="neutral"
         />
       </div>
@@ -691,7 +691,7 @@ function ReviewShortcut({ latest, count }: { latest: ReviewShortcutLatest; count
 
 type TodaySummary = {
   id: string;
-  status: "ready" | "in_progress" | "completed";
+  status: string;
   total_items: number;
   completed_items: number;
   correct_items: number;
