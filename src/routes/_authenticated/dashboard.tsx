@@ -168,31 +168,54 @@ function Dashboard() {
         </div>
       </header>
 
-      <div className="mt-2 flex flex-col items-center text-center">
-        <TalkingAvatar state="idle" size="large" />
-        <h1 className="mt-6 font-display text-3xl font-extrabold tracking-tight md:text-4xl">
-          Olá, {me.profile?.name || "amigo"}.
+      {/* Greeting */}
+      <section>
+        <h1 className="font-display text-2xl font-extrabold tracking-tight md:text-3xl">
+          Olá, {me.profile?.name || "amigo"}!
         </h1>
-        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-          Alguns minutos de prática já constroem o seu hábito. Escolha por onde começar.
+        <p className="mt-1 text-sm text-muted-foreground">
+          Alguns minutos por dia já fazem diferença no seu inglês.
         </p>
-      </div>
+      </section>
 
-      {/* Stats row — reward colors reserved for progress */}
-      <div className="mt-8 grid gap-3 sm:grid-cols-3">
-        <Stat
-          icon={<Zap className="size-4" />}
-          label="XP"
-          value={stats.xp}
-          tone="gold"
-        />
+      {/* Main call card */}
+      <section className="mt-6 overflow-hidden rounded-3xl border-2 border-primary/50 bg-gradient-to-br from-primary/20 via-card to-card p-6 shadow-lg shadow-primary/10">
+        <div className="flex flex-col items-center text-center md:flex-row md:items-center md:gap-8 md:text-left">
+          <div className="relative shrink-0">
+            <TalkingAvatar state="idle" size="large" />
+            <span className="absolute right-3 top-3 grid size-4 place-items-center rounded-full border-2 border-background bg-[color:var(--success)]" aria-hidden>
+              <span className="size-1.5 animate-ping rounded-full bg-background/70" />
+            </span>
+          </div>
+          <div className="mt-5 min-w-0 flex-1 md:mt-0">
+            <h2 className="font-display text-2xl font-bold">Fale em inglês com o Fred</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Uma conversa por voz, como uma ligação de verdade. Escolha um tema, fale à vontade e o Fred responde na hora.
+            </p>
+            <Button
+              onClick={() => openPicker("call")}
+              size="lg"
+              className="mt-5 h-14 w-full rounded-2xl text-base font-bold shadow-lg shadow-primary/30 md:w-auto md:px-10"
+            >
+              <Mic className="mr-2 size-5" /> Entrar em chamada
+            </Button>
+            {minutesLabel && (
+              <p className="mt-2 text-xs text-muted-foreground">{minutesLabel}</p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Progress — real data only */}
+      <div className="mt-6 grid grid-cols-3 gap-3">
         <Stat
           icon={<Flame className="size-4" />}
-          label="Streak"
+          label="Sequência"
           value={`${stats.streak_days} dia${stats.streak_days === 1 ? "" : "s"}`}
           tone="streak"
           muted={stats.streak_days === 0}
         />
+        <Stat icon={<Zap className="size-4" />} label="XP" value={stats.xp} tone="gold" />
         <Stat
           icon={<Target className="size-4" />}
           label="Nível"
@@ -201,65 +224,37 @@ function Dashboard() {
         />
       </div>
 
-      {/* Focus card */}
-      <FocusCard profile={me.userProfile!} />
-      <SpeedPreference initial={(me.userProfile!.speaking_speed_preference as string | null) ?? "level_adapted"} />
-
-      {/* Practice modes */}
-      <h2 className="mt-10 font-display text-xl font-bold">Como você quer praticar?</h2>
-
-      {/* 1. Call — hero card */}
-      <button
-        onClick={() => openPicker("call")}
-        className="group mt-4 flex w-full flex-col overflow-hidden rounded-3xl border-2 border-primary/60 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent p-6 text-left shadow-lg shadow-primary/10 transition hover:scale-[1.005] hover:border-primary md:flex-row md:items-center md:gap-6"
-      >
-        <div className="relative shrink-0">
-          <TalkingAvatar state="idle" size="small" />
-          <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full border-2 border-background bg-emerald-500">
-            <span className="size-1.5 animate-ping rounded-full bg-emerald-200" />
-          </span>
-        </div>
-        <div className="mt-4 flex-1 md:mt-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-display text-2xl font-bold">Call com o Fred</h3>
-            <span className="rounded-full bg-primary px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary-foreground">
-              Mais imersivo
-            </span>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Conversa contínua e fluida, como uma ligação de verdade. Você pode interromper e ele reage na hora.
-          </p>
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-            <span className="inline-flex items-center font-semibold text-primary">
-              Começar call <ArrowRight className="ml-1 size-4 transition group-hover:translate-x-0.5" />
-            </span>
-            {minutesLabel && (
-              <span className="text-xs text-muted-foreground">· {minutesLabel}</span>
-            )}
-          </div>
-        </div>
-      </button>
-
-      {/* 2. Voice message & 3. Practice without speaking */}
-      <div className="mt-4 grid gap-4 md:grid-cols-2">
-        <ModeCard
-          icon={<MessageSquare className="size-6" />}
-          tone="primary"
+      {/* Practices */}
+      <h2 className="mt-8 font-display text-lg font-bold">Práticas</h2>
+      <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <PracticeTile
+          icon={<MessageSquare className="size-5" />}
           title="Mensagem de voz"
-          description="Grave e envie, como no WhatsApp. O Fred responde em áudio. Ótimo pra praticar em qualquer lugar, no seu ritmo."
-          cta="Enviar mensagem de voz"
+          description="Grave e o Fred responde em áudio"
           onClick={() => openPicker("voice-message")}
-          footer={minutesLabel ?? undefined}
         />
-        <ModeCard
-          icon={<ClipboardCheck className="size-6" />}
-          tone="accent"
-          title="Praticar sem falar"
-          description="Faça exercícios rápidos quando estiver no metrô, ônibus ou sem poder falar."
-          cta="Começar treino"
-          onClick={() => navigate({ to: "/practice" })}
+        <PracticeTile
+          icon={<Trophy className="size-5" />}
+          title="Treino de hoje"
+          description="Exercícios do seu dia"
+          onClick={() => navigate({ to: "/practice/today" })}
+        />
+        <PracticeTile
+          icon={<ClipboardCheck className="size-5" />}
+          title="Prática livre"
+          description="Sem falar, no seu ritmo"
+          onClick={() => navigate({ to: "/practice/livre" })}
+        />
+        <PracticeTile
+          icon={<Sparkles className="size-5" />}
+          title="Revisões"
+          description="Revise suas conversas"
+          onClick={() => navigate({ to: "/revisoes" })}
         />
       </div>
+
+      <FocusCard profile={me.userProfile!} />
+      <SpeedPreference initial={(me.userProfile!.speaking_speed_preference as string | null) ?? "level_adapted"} />
 
       {/* Mode picker modal */}
       <ModePickerDialog
@@ -440,7 +435,22 @@ function SpeedPreference({ initial }: { initial: string }) {
   );
 }
 
-function ModeCard({ icon, title, description, cta, onClick, tone, footer }: {
+function PracticeTile({ icon, title, description, onClick }: {
+  icon: React.ReactNode; title: string; description: string; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex min-w-0 flex-col rounded-2xl border border-border bg-card p-4 text-left transition hover:border-primary/60 active:scale-[0.98]"
+    >
+      <div className="grid size-10 place-items-center rounded-xl bg-primary/15 text-primary">{icon}</div>
+      <p className="mt-3 text-sm font-bold">{title}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+    </button>
+  );
+}
+
+export function ModeCard({ icon, title, description, cta, onClick, tone, footer }: {
   icon: React.ReactNode; title: string; description: string; cta: string; onClick: () => void; tone: "primary" | "accent"; footer?: string;
 }) {
   const ring = tone === "primary" ? "from-primary/20 to-transparent border-primary/40" : "from-accent/30 to-transparent border-accent/50";
