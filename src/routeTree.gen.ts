@@ -9,80 +9,61 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as ConfirmarEmailRouteImport } from './routes/confirmar-email'
-import { Route as EsqueciSenhaRouteImport } from './routes/esqueci-senha'
-import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authenticated/assinatura'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
-import { Route as AuthenticatedPlanosRouteImport } from './routes/_authenticated/planos'
-import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
-import { Route as AuthenticatedPreferenciasRouteImport } from './routes/_authenticated/preferencias'
-import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as ApiRealtimeSessionRouteImport } from './routes/api/realtime-session'
-import { Route as ApiSttRouteImport } from './routes/api/stt'
-import { Route as ApiTtsRouteImport } from './routes/api/tts'
-import { Route as ApiTtsStreamRouteImport } from './routes/api/tts-stream'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
+import { Route as EsqueciSenhaRouteImport } from './routes/esqueci-senha'
+import { Route as ConfirmarEmailRouteImport } from './routes/confirmar-email'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as SimulacaoIndexRouteImport } from './routes/simulacao.index'
 import { Route as SimulacaoResultadoRouteImport } from './routes/simulacao.resultado'
-import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin.assinaturas'
-import { Route as AuthenticatedAdminCustosIaRouteImport } from './routes/_authenticated/admin.custos-ia'
-import { Route as AuthenticatedAdminIdentityRouteImport } from './routes/_authenticated/admin.identity'
-import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
-import { Route as AuthenticatedAdminRetentionRouteImport } from './routes/_authenticated/admin.retention'
-import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
-import { Route as AuthenticatedAssinaturaRetornoRouteImport } from './routes/_authenticated/assinatura.retorno'
-import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
-import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
-import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
-import { Route as AuthenticatedPracticeHistoricoRouteImport } from './routes/_authenticated/practice.historico'
-import { Route as AuthenticatedPracticeLivreRouteImport } from './routes/_authenticated/practice.livre'
-import { Route as AuthenticatedPracticeTodayRouteImport } from './routes/_authenticated/practice.today'
-import { Route as AuthenticatedPracticeVocabularioRouteImport } from './routes/_authenticated/practice.vocabulario'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as ApiTtsStreamRouteImport } from './routes/api/tts-stream'
+import { Route as ApiTtsRouteImport } from './routes/api/tts'
+import { Route as ApiSttRouteImport } from './routes/api/stt'
+import { Route as ApiRealtimeSessionRouteImport } from './routes/api/realtime-session'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedPreferenciasRouteImport } from './routes/_authenticated/preferencias'
+import { Route as AuthenticatedPracticeRouteImport } from './routes/_authenticated/practice'
+import { Route as AuthenticatedPlanosRouteImport } from './routes/_authenticated/planos'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authenticated/assinatura'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedRevisoesIndexRouteImport } from './routes/_authenticated/revisoes.index'
-import { Route as AuthenticatedRevisoesReviewIdRouteImport } from './routes/_authenticated/revisoes.$reviewId'
-import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
-import { Route as AuthenticatedVoiceMessageConversationIdRouteImport } from './routes/_authenticated/voice-message.$conversationId'
-import { Route as ApiAiUsageRecordRouteImport } from './routes/api/ai-usage/record'
-import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/public/realtime-session'
-import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public/simulation-chat'
-import { Route as ApiUsageHeartbeatRouteImport } from './routes/api/usage/heartbeat'
-import { Route as ApiUsageStartRouteImport } from './routes/api/usage/start'
+import { Route as AuthenticatedPracticeIndexRouteImport } from './routes/_authenticated/practice.index'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as ApiUsageStopRouteImport } from './routes/api/usage/stop'
-import { Route as AuthenticatedAdminAssinaturasIdRouteImport } from './routes/_authenticated/admin.assinaturas.$id'
-import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
-import { Route as AuthenticatedChatConversationIdRevisaoRouteImport } from './routes/_authenticated/chat.$conversationId.revisao'
+import { Route as ApiUsageStartRouteImport } from './routes/api/usage/start'
+import { Route as ApiUsageHeartbeatRouteImport } from './routes/api/usage/heartbeat'
+import { Route as ApiPublicSimulationChatRouteImport } from './routes/api/public/simulation-chat'
+import { Route as ApiPublicRealtimeSessionRouteImport } from './routes/api/public/realtime-session'
+import { Route as ApiAiUsageRecordRouteImport } from './routes/api/ai-usage/record'
+import { Route as AuthenticatedVoiceMessageConversationIdRouteImport } from './routes/_authenticated/voice-message.$conversationId'
+import { Route as AuthenticatedSettingsOnboardingRouteImport } from './routes/_authenticated/settings.onboarding'
+import { Route as AuthenticatedRevisoesReviewIdRouteImport } from './routes/_authenticated/revisoes.$reviewId'
+import { Route as AuthenticatedPracticeVocabularioRouteImport } from './routes/_authenticated/practice.vocabulario'
+import { Route as AuthenticatedPracticeTodayRouteImport } from './routes/_authenticated/practice.today'
+import { Route as AuthenticatedPracticeLivreRouteImport } from './routes/_authenticated/practice.livre'
+import { Route as AuthenticatedPracticeHistoricoRouteImport } from './routes/_authenticated/practice.historico'
+import { Route as AuthenticatedPracticeFillInBlankRouteImport } from './routes/_authenticated/practice.fill-in-blank'
+import { Route as AuthenticatedChatConversationIdRouteImport } from './routes/_authenticated/chat.$conversationId'
+import { Route as AuthenticatedAssinaturaRetornoRouteImport } from './routes/_authenticated/assinatura.retorno'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
+import { Route as AuthenticatedAdminRetentionRouteImport } from './routes/_authenticated/admin.retention'
+import { Route as AuthenticatedAdminLeadsRouteImport } from './routes/_authenticated/admin.leads'
+import { Route as AuthenticatedAdminIdentityRouteImport } from './routes/_authenticated/admin.identity'
+import { Route as AuthenticatedAdminCustosIaRouteImport } from './routes/_authenticated/admin.custos-ia'
+import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin.assinaturas'
 import { Route as ApiPublicMercadoPagoWebhookRouteImport } from './routes/api/public/mercado-pago/webhook'
+import { Route as AuthenticatedChatConversationIdRevisaoRouteImport } from './routes/_authenticated/chat.$conversationId.revisao'
+import { Route as AuthenticatedAdminUsersUserIdRouteImport } from './routes/_authenticated/admin.users.$userId'
+import { Route as AuthenticatedAdminAssinaturasIdRouteImport } from './routes/_authenticated/admin.assinaturas.$id'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConfirmarEmailRoute = ConfirmarEmailRouteImport.update({
-  id: '/confirmar-email',
-  path: '/confirmar-email',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EsqueciSenhaRoute = EsqueciSenhaRouteImport.update({
-  id: '/esqueci-senha',
-  path: '/esqueci-senha',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
@@ -90,76 +71,29 @@ const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
   path: '/redefinir-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const EsqueciSenhaRoute = EsqueciSenhaRouteImport.update({
+  id: '/esqueci-senha',
+  path: '/esqueci-senha',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedAssinaturaRoute = AuthenticatedAssinaturaRouteImport.update({
-  id: '/assinatura',
-  path: '/assinatura',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPlanosRoute = AuthenticatedPlanosRouteImport.update({
-  id: '/planos',
-  path: '/planos',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPracticeRoute = AuthenticatedPracticeRouteImport.update({
-  id: '/practice',
-  path: '/practice',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedPreferenciasRoute =
-  AuthenticatedPreferenciasRouteImport.update({
-    id: '/preferencias',
-    path: '/preferencias',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const ApiChatRoute = ApiChatRouteImport.update({
-  id: '/api/chat',
-  path: '/api/chat',
+const ConfirmarEmailRoute = ConfirmarEmailRouteImport.update({
+  id: '/confirmar-email',
+  path: '/confirmar-email',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiRealtimeSessionRoute = ApiRealtimeSessionRouteImport.update({
-  id: '/api/realtime-session',
-  path: '/api/realtime-session',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiSttRoute = ApiSttRouteImport.update({
-  id: '/api/stt',
-  path: '/api/stt',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiTtsRoute = ApiTtsRouteImport.update({
-  id: '/api/tts',
-  path: '/api/tts',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const ApiTtsStreamRoute = ApiTtsStreamRouteImport.update({
-  id: '/api/tts-stream',
-  path: '/api/tts-stream',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/callback',
-  path: '/callback',
-  getParentRoute: () => AuthRoute,
 } as any)
 const SimulacaoIndexRoute = SimulacaoIndexRouteImport.update({
   id: '/simulacao/',
@@ -171,55 +105,76 @@ const SimulacaoResultadoRoute = SimulacaoResultadoRouteImport.update({
   path: '/simulacao/resultado',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedAdminRoute,
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
 } as any)
-const AuthenticatedAdminAssinaturasRoute =
-  AuthenticatedAdminAssinaturasRouteImport.update({
-    id: '/assinaturas',
-    path: '/assinaturas',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminCustosIaRoute =
-  AuthenticatedAdminCustosIaRouteImport.update({
-    id: '/custos-ia',
-    path: '/custos-ia',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminIdentityRoute =
-  AuthenticatedAdminIdentityRouteImport.update({
-    id: '/identity',
-    path: '/identity',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
-  id: '/leads',
-  path: '/leads',
-  getParentRoute: () => AuthenticatedAdminRoute,
+const ApiTtsStreamRoute = ApiTtsStreamRouteImport.update({
+  id: '/api/tts-stream',
+  path: '/api/tts-stream',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminRetentionRoute =
-  AuthenticatedAdminRetentionRouteImport.update({
-    id: '/retention',
-    path: '/retention',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AuthenticatedAdminRoute,
+const ApiTtsRoute = ApiTtsRouteImport.update({
+  id: '/api/tts',
+  path: '/api/tts',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAssinaturaRetornoRoute =
-  AuthenticatedAssinaturaRetornoRouteImport.update({
-    id: '/retorno',
-    path: '/retorno',
-    getParentRoute: () => AuthenticatedAssinaturaRoute,
+const ApiSttRoute = ApiSttRouteImport.update({
+  id: '/api/stt',
+  path: '/api/stt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRealtimeSessionRoute = ApiRealtimeSessionRouteImport.update({
+  id: '/api/realtime-session',
+  path: '/api/realtime-session',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPreferenciasRoute =
+  AuthenticatedPreferenciasRouteImport.update({
+    id: '/preferencias',
+    path: '/preferencias',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedChatConversationIdRoute =
-  AuthenticatedChatConversationIdRouteImport.update({
-    id: '/chat/$conversationId',
-    path: '/chat/$conversationId',
+const AuthenticatedPracticeRoute = AuthenticatedPracticeRouteImport.update({
+  id: '/practice',
+  path: '/practice',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPlanosRoute = AuthenticatedPlanosRouteImport.update({
+  id: '/planos',
+  path: '/planos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAssinaturaRoute = AuthenticatedAssinaturaRouteImport.update({
+  id: '/assinatura',
+  path: '/assinatura',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRevisoesIndexRoute =
+  AuthenticatedRevisoesIndexRouteImport.update({
+    id: '/revisoes/',
+    path: '/revisoes/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedPracticeIndexRoute =
@@ -228,63 +183,29 @@ const AuthenticatedPracticeIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedPracticeRoute,
   } as any)
-const AuthenticatedPracticeFillInBlankRoute =
-  AuthenticatedPracticeFillInBlankRouteImport.update({
-    id: '/fill-in-blank',
-    path: '/fill-in-blank',
-    getParentRoute: () => AuthenticatedPracticeRoute,
-  } as any)
-const AuthenticatedPracticeHistoricoRoute =
-  AuthenticatedPracticeHistoricoRouteImport.update({
-    id: '/historico',
-    path: '/historico',
-    getParentRoute: () => AuthenticatedPracticeRoute,
-  } as any)
-const AuthenticatedPracticeLivreRoute =
-  AuthenticatedPracticeLivreRouteImport.update({
-    id: '/livre',
-    path: '/livre',
-    getParentRoute: () => AuthenticatedPracticeRoute,
-  } as any)
-const AuthenticatedPracticeTodayRoute =
-  AuthenticatedPracticeTodayRouteImport.update({
-    id: '/today',
-    path: '/today',
-    getParentRoute: () => AuthenticatedPracticeRoute,
-  } as any)
-const AuthenticatedPracticeVocabularioRoute =
-  AuthenticatedPracticeVocabularioRouteImport.update({
-    id: '/vocabulario',
-    path: '/vocabulario',
-    getParentRoute: () => AuthenticatedPracticeRoute,
-  } as any)
-const AuthenticatedRevisoesIndexRoute =
-  AuthenticatedRevisoesIndexRouteImport.update({
-    id: '/revisoes/',
-    path: '/revisoes/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedRevisoesReviewIdRoute =
-  AuthenticatedRevisoesReviewIdRouteImport.update({
-    id: '/revisoes/$reviewId',
-    path: '/revisoes/$reviewId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedSettingsOnboardingRoute =
-  AuthenticatedSettingsOnboardingRouteImport.update({
-    id: '/settings/onboarding',
-    path: '/settings/onboarding',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedVoiceMessageConversationIdRoute =
-  AuthenticatedVoiceMessageConversationIdRouteImport.update({
-    id: '/voice-message/$conversationId',
-    path: '/voice-message/$conversationId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const ApiAiUsageRecordRoute = ApiAiUsageRecordRouteImport.update({
-  id: '/api/ai-usage/record',
-  path: '/api/ai-usage/record',
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const ApiUsageStopRoute = ApiUsageStopRouteImport.update({
+  id: '/api/usage/stop',
+  path: '/api/usage/stop',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUsageStartRoute = ApiUsageStartRouteImport.update({
+  id: '/api/usage/start',
+  path: '/api/usage/start',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiUsageHeartbeatRoute = ApiUsageHeartbeatRouteImport.update({
+  id: '/api/usage/heartbeat',
+  path: '/api/usage/heartbeat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicSimulationChatRoute = ApiPublicSimulationChatRouteImport.update({
+  id: '/api/public/simulation-chat',
+  path: '/api/public/simulation-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRealtimeSessionRoute =
@@ -293,37 +214,110 @@ const ApiPublicRealtimeSessionRoute =
     path: '/api/public/realtime-session',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicSimulationChatRoute = ApiPublicSimulationChatRouteImport.update({
-  id: '/api/public/simulation-chat',
-  path: '/api/public/simulation-chat',
+const ApiAiUsageRecordRoute = ApiAiUsageRecordRouteImport.update({
+  id: '/api/ai-usage/record',
+  path: '/api/ai-usage/record',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiUsageHeartbeatRoute = ApiUsageHeartbeatRouteImport.update({
-  id: '/api/usage/heartbeat',
-  path: '/api/usage/heartbeat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiUsageStartRoute = ApiUsageStartRouteImport.update({
-  id: '/api/usage/start',
-  path: '/api/usage/start',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiUsageStopRoute = ApiUsageStopRouteImport.update({
-  id: '/api/usage/stop',
-  path: '/api/usage/stop',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedAdminAssinaturasIdRoute =
-  AuthenticatedAdminAssinaturasIdRouteImport.update({
-    id: '/$id',
-    path: '/$id',
-    getParentRoute: () => AuthenticatedAdminAssinaturasRoute,
+const AuthenticatedVoiceMessageConversationIdRoute =
+  AuthenticatedVoiceMessageConversationIdRouteImport.update({
+    id: '/voice-message/$conversationId',
+    path: '/voice-message/$conversationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedAdminUsersUserIdRoute =
-  AuthenticatedAdminUsersUserIdRouteImport.update({
-    id: '/$userId',
-    path: '/$userId',
-    getParentRoute: () => AuthenticatedAdminUsersRoute,
+const AuthenticatedSettingsOnboardingRoute =
+  AuthenticatedSettingsOnboardingRouteImport.update({
+    id: '/settings/onboarding',
+    path: '/settings/onboarding',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRevisoesReviewIdRoute =
+  AuthenticatedRevisoesReviewIdRouteImport.update({
+    id: '/revisoes/$reviewId',
+    path: '/revisoes/$reviewId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPracticeVocabularioRoute =
+  AuthenticatedPracticeVocabularioRouteImport.update({
+    id: '/vocabulario',
+    path: '/vocabulario',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
+const AuthenticatedPracticeTodayRoute =
+  AuthenticatedPracticeTodayRouteImport.update({
+    id: '/today',
+    path: '/today',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
+const AuthenticatedPracticeLivreRoute =
+  AuthenticatedPracticeLivreRouteImport.update({
+    id: '/livre',
+    path: '/livre',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
+const AuthenticatedPracticeHistoricoRoute =
+  AuthenticatedPracticeHistoricoRouteImport.update({
+    id: '/historico',
+    path: '/historico',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
+const AuthenticatedPracticeFillInBlankRoute =
+  AuthenticatedPracticeFillInBlankRouteImport.update({
+    id: '/fill-in-blank',
+    path: '/fill-in-blank',
+    getParentRoute: () => AuthenticatedPracticeRoute,
+  } as any)
+const AuthenticatedChatConversationIdRoute =
+  AuthenticatedChatConversationIdRouteImport.update({
+    id: '/chat/$conversationId',
+    path: '/chat/$conversationId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAssinaturaRetornoRoute =
+  AuthenticatedAssinaturaRetornoRouteImport.update({
+    id: '/retorno',
+    path: '/retorno',
+    getParentRoute: () => AuthenticatedAssinaturaRoute,
+  } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminRetentionRoute =
+  AuthenticatedAdminRetentionRouteImport.update({
+    id: '/retention',
+    path: '/retention',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminLeadsRoute = AuthenticatedAdminLeadsRouteImport.update({
+  id: '/leads',
+  path: '/leads',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminIdentityRoute =
+  AuthenticatedAdminIdentityRouteImport.update({
+    id: '/identity',
+    path: '/identity',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminCustosIaRoute =
+  AuthenticatedAdminCustosIaRouteImport.update({
+    id: '/custos-ia',
+    path: '/custos-ia',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAssinaturasRoute =
+  AuthenticatedAdminAssinaturasRouteImport.update({
+    id: '/assinaturas',
+    path: '/assinaturas',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const ApiPublicMercadoPagoWebhookRoute =
+  ApiPublicMercadoPagoWebhookRouteImport.update({
+    id: '/api/public/mercado-pago/webhook',
+    path: '/api/public/mercado-pago/webhook',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedChatConversationIdRevisaoRoute =
   AuthenticatedChatConversationIdRevisaoRouteImport.update({
@@ -331,11 +325,17 @@ const AuthenticatedChatConversationIdRevisaoRoute =
     path: '/revisao',
     getParentRoute: () => AuthenticatedChatConversationIdRoute,
   } as any)
-const ApiPublicMercadoPagoWebhookRoute =
-  ApiPublicMercadoPagoWebhookRouteImport.update({
-    id: '/api/public/mercado-pago/webhook',
-    path: '/api/public/mercado-pago/webhook',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminUsersUserIdRoute =
+  AuthenticatedAdminUsersUserIdRouteImport.update({
+    id: '/$userId',
+    path: '/$userId',
+    getParentRoute: () => AuthenticatedAdminUsersRoute,
+  } as any)
+const AuthenticatedAdminAssinaturasIdRoute =
+  AuthenticatedAdminAssinaturasIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedAdminAssinaturasRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -678,39 +678,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/confirmar-email': {
-      id: '/confirmar-email'
-      path: '/confirmar-email'
-      fullPath: '/confirmar-email'
-      preLoaderRoute: typeof ConfirmarEmailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/esqueci-senha': {
-      id: '/esqueci-senha'
-      path: '/esqueci-senha'
-      fullPath: '/esqueci-senha'
-      preLoaderRoute: typeof EsqueciSenhaRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/redefinir-senha': {
@@ -720,103 +692,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RedefinirSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
+    '/esqueci-senha': {
+      id: '/esqueci-senha'
+      path: '/esqueci-senha'
+      fullPath: '/esqueci-senha'
+      preLoaderRoute: typeof EsqueciSenhaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/assinatura': {
-      id: '/_authenticated/assinatura'
-      path: '/assinatura'
-      fullPath: '/assinatura'
-      preLoaderRoute: typeof AuthenticatedAssinaturaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/onboarding': {
-      id: '/_authenticated/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/planos': {
-      id: '/_authenticated/planos'
-      path: '/planos'
-      fullPath: '/planos'
-      preLoaderRoute: typeof AuthenticatedPlanosRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/practice': {
-      id: '/_authenticated/practice'
-      path: '/practice'
-      fullPath: '/practice'
-      preLoaderRoute: typeof AuthenticatedPracticeRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/preferencias': {
-      id: '/_authenticated/preferencias'
-      path: '/preferencias'
-      fullPath: '/preferencias'
-      preLoaderRoute: typeof AuthenticatedPreferenciasRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/chat': {
-      id: '/api/chat'
-      path: '/api/chat'
-      fullPath: '/api/chat'
-      preLoaderRoute: typeof ApiChatRouteImport
+    '/confirmar-email': {
+      id: '/confirmar-email'
+      path: '/confirmar-email'
+      fullPath: '/confirmar-email'
+      preLoaderRoute: typeof ConfirmarEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/realtime-session': {
-      id: '/api/realtime-session'
-      path: '/api/realtime-session'
-      fullPath: '/api/realtime-session'
-      preLoaderRoute: typeof ApiRealtimeSessionRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/stt': {
-      id: '/api/stt'
-      path: '/api/stt'
-      fullPath: '/api/stt'
-      preLoaderRoute: typeof ApiSttRouteImport
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/tts': {
-      id: '/api/tts'
-      path: '/api/tts'
-      fullPath: '/api/tts'
-      preLoaderRoute: typeof ApiTtsRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/api/tts-stream': {
-      id: '/api/tts-stream'
-      path: '/api/tts-stream'
-      fullPath: '/api/tts-stream'
-      preLoaderRoute: typeof ApiTtsStreamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof AuthRoute
     }
     '/simulacao/': {
       id: '/simulacao/'
@@ -832,67 +741,102 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SimulacaoResultadoRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/': {
-      id: '/_authenticated/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
     }
-    '/_authenticated/admin/assinaturas': {
-      id: '/_authenticated/admin/assinaturas'
-      path: '/assinaturas'
-      fullPath: '/admin/assinaturas'
-      preLoaderRoute: typeof AuthenticatedAdminAssinaturasRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/api/tts-stream': {
+      id: '/api/tts-stream'
+      path: '/api/tts-stream'
+      fullPath: '/api/tts-stream'
+      preLoaderRoute: typeof ApiTtsStreamRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/custos-ia': {
-      id: '/_authenticated/admin/custos-ia'
-      path: '/custos-ia'
-      fullPath: '/admin/custos-ia'
-      preLoaderRoute: typeof AuthenticatedAdminCustosIaRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/api/tts': {
+      id: '/api/tts'
+      path: '/api/tts'
+      fullPath: '/api/tts'
+      preLoaderRoute: typeof ApiTtsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/identity': {
-      id: '/_authenticated/admin/identity'
-      path: '/identity'
-      fullPath: '/admin/identity'
-      preLoaderRoute: typeof AuthenticatedAdminIdentityRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/api/stt': {
+      id: '/api/stt'
+      path: '/api/stt'
+      fullPath: '/api/stt'
+      preLoaderRoute: typeof ApiSttRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/leads': {
-      id: '/_authenticated/admin/leads'
-      path: '/leads'
-      fullPath: '/admin/leads'
-      preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/api/realtime-session': {
+      id: '/api/realtime-session'
+      path: '/api/realtime-session'
+      fullPath: '/api/realtime-session'
+      preLoaderRoute: typeof ApiRealtimeSessionRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/retention': {
-      id: '/_authenticated/admin/retention'
-      path: '/retention'
-      fullPath: '/admin/retention'
-      preLoaderRoute: typeof AuthenticatedAdminRetentionRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/users': {
-      id: '/_authenticated/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+    '/_authenticated/preferencias': {
+      id: '/_authenticated/preferencias'
+      path: '/preferencias'
+      fullPath: '/preferencias'
+      preLoaderRoute: typeof AuthenticatedPreferenciasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/assinatura/retorno': {
-      id: '/_authenticated/assinatura/retorno'
-      path: '/retorno'
-      fullPath: '/assinatura/retorno'
-      preLoaderRoute: typeof AuthenticatedAssinaturaRetornoRouteImport
-      parentRoute: typeof AuthenticatedAssinaturaRoute
+    '/_authenticated/practice': {
+      id: '/_authenticated/practice'
+      path: '/practice'
+      fullPath: '/practice'
+      preLoaderRoute: typeof AuthenticatedPracticeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/chat/$conversationId': {
-      id: '/_authenticated/chat/$conversationId'
-      path: '/chat/$conversationId'
-      fullPath: '/chat/$conversationId'
-      preLoaderRoute: typeof AuthenticatedChatConversationIdRouteImport
+    '/_authenticated/planos': {
+      id: '/_authenticated/planos'
+      path: '/planos'
+      fullPath: '/planos'
+      preLoaderRoute: typeof AuthenticatedPlanosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assinatura': {
+      id: '/_authenticated/assinatura'
+      path: '/assinatura'
+      fullPath: '/assinatura'
+      preLoaderRoute: typeof AuthenticatedAssinaturaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/revisoes/': {
+      id: '/_authenticated/revisoes/'
+      path: '/revisoes'
+      fullPath: '/revisoes/'
+      preLoaderRoute: typeof AuthenticatedRevisoesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/practice/': {
@@ -902,95 +846,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPracticeIndexRouteImport
       parentRoute: typeof AuthenticatedPracticeRoute
     }
-    '/_authenticated/practice/fill-in-blank': {
-      id: '/_authenticated/practice/fill-in-blank'
-      path: '/fill-in-blank'
-      fullPath: '/practice/fill-in-blank'
-      preLoaderRoute: typeof AuthenticatedPracticeFillInBlankRouteImport
-      parentRoute: typeof AuthenticatedPracticeRoute
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/practice/historico': {
-      id: '/_authenticated/practice/historico'
-      path: '/historico'
-      fullPath: '/practice/historico'
-      preLoaderRoute: typeof AuthenticatedPracticeHistoricoRouteImport
-      parentRoute: typeof AuthenticatedPracticeRoute
-    }
-    '/_authenticated/practice/livre': {
-      id: '/_authenticated/practice/livre'
-      path: '/livre'
-      fullPath: '/practice/livre'
-      preLoaderRoute: typeof AuthenticatedPracticeLivreRouteImport
-      parentRoute: typeof AuthenticatedPracticeRoute
-    }
-    '/_authenticated/practice/today': {
-      id: '/_authenticated/practice/today'
-      path: '/today'
-      fullPath: '/practice/today'
-      preLoaderRoute: typeof AuthenticatedPracticeTodayRouteImport
-      parentRoute: typeof AuthenticatedPracticeRoute
-    }
-    '/_authenticated/practice/vocabulario': {
-      id: '/_authenticated/practice/vocabulario'
-      path: '/vocabulario'
-      fullPath: '/practice/vocabulario'
-      preLoaderRoute: typeof AuthenticatedPracticeVocabularioRouteImport
-      parentRoute: typeof AuthenticatedPracticeRoute
-    }
-    '/_authenticated/revisoes/': {
-      id: '/_authenticated/revisoes/'
-      path: '/revisoes'
-      fullPath: '/revisoes/'
-      preLoaderRoute: typeof AuthenticatedRevisoesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/revisoes/$reviewId': {
-      id: '/_authenticated/revisoes/$reviewId'
-      path: '/revisoes/$reviewId'
-      fullPath: '/revisoes/$reviewId'
-      preLoaderRoute: typeof AuthenticatedRevisoesReviewIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/settings/onboarding': {
-      id: '/_authenticated/settings/onboarding'
-      path: '/settings/onboarding'
-      fullPath: '/settings/onboarding'
-      preLoaderRoute: typeof AuthenticatedSettingsOnboardingRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/voice-message/$conversationId': {
-      id: '/_authenticated/voice-message/$conversationId'
-      path: '/voice-message/$conversationId'
-      fullPath: '/voice-message/$conversationId'
-      preLoaderRoute: typeof AuthenticatedVoiceMessageConversationIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/api/ai-usage/record': {
-      id: '/api/ai-usage/record'
-      path: '/api/ai-usage/record'
-      fullPath: '/api/ai-usage/record'
-      preLoaderRoute: typeof ApiAiUsageRecordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/realtime-session': {
-      id: '/api/public/realtime-session'
-      path: '/api/public/realtime-session'
-      fullPath: '/api/public/realtime-session'
-      preLoaderRoute: typeof ApiPublicRealtimeSessionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/simulation-chat': {
-      id: '/api/public/simulation-chat'
-      path: '/api/public/simulation-chat'
-      fullPath: '/api/public/simulation-chat'
-      preLoaderRoute: typeof ApiPublicSimulationChatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/usage/heartbeat': {
-      id: '/api/usage/heartbeat'
-      path: '/api/usage/heartbeat'
-      fullPath: '/api/usage/heartbeat'
-      preLoaderRoute: typeof ApiUsageHeartbeatRouteImport
+    '/api/usage/stop': {
+      id: '/api/usage/stop'
+      path: '/api/usage/stop'
+      fullPath: '/api/usage/stop'
+      preLoaderRoute: typeof ApiUsageStopRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/usage/start': {
@@ -1000,26 +867,152 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiUsageStartRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/usage/stop': {
-      id: '/api/usage/stop'
-      path: '/api/usage/stop'
-      fullPath: '/api/usage/stop'
-      preLoaderRoute: typeof ApiUsageStopRouteImport
+    '/api/usage/heartbeat': {
+      id: '/api/usage/heartbeat'
+      path: '/api/usage/heartbeat'
+      fullPath: '/api/usage/heartbeat'
+      preLoaderRoute: typeof ApiUsageHeartbeatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/assinaturas/$id': {
-      id: '/_authenticated/admin/assinaturas/$id'
-      path: '/$id'
-      fullPath: '/admin/assinaturas/$id'
-      preLoaderRoute: typeof AuthenticatedAdminAssinaturasIdRouteImport
-      parentRoute: typeof AuthenticatedAdminAssinaturasRoute
+    '/api/public/simulation-chat': {
+      id: '/api/public/simulation-chat'
+      path: '/api/public/simulation-chat'
+      fullPath: '/api/public/simulation-chat'
+      preLoaderRoute: typeof ApiPublicSimulationChatRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/users/$userId': {
-      id: '/_authenticated/admin/users/$userId'
-      path: '/$userId'
-      fullPath: '/admin/users/$userId'
-      preLoaderRoute: typeof AuthenticatedAdminUsersUserIdRouteImport
-      parentRoute: typeof AuthenticatedAdminUsersRoute
+    '/api/public/realtime-session': {
+      id: '/api/public/realtime-session'
+      path: '/api/public/realtime-session'
+      fullPath: '/api/public/realtime-session'
+      preLoaderRoute: typeof ApiPublicRealtimeSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ai-usage/record': {
+      id: '/api/ai-usage/record'
+      path: '/api/ai-usage/record'
+      fullPath: '/api/ai-usage/record'
+      preLoaderRoute: typeof ApiAiUsageRecordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/voice-message/$conversationId': {
+      id: '/_authenticated/voice-message/$conversationId'
+      path: '/voice-message/$conversationId'
+      fullPath: '/voice-message/$conversationId'
+      preLoaderRoute: typeof AuthenticatedVoiceMessageConversationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings/onboarding': {
+      id: '/_authenticated/settings/onboarding'
+      path: '/settings/onboarding'
+      fullPath: '/settings/onboarding'
+      preLoaderRoute: typeof AuthenticatedSettingsOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/revisoes/$reviewId': {
+      id: '/_authenticated/revisoes/$reviewId'
+      path: '/revisoes/$reviewId'
+      fullPath: '/revisoes/$reviewId'
+      preLoaderRoute: typeof AuthenticatedRevisoesReviewIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/practice/vocabulario': {
+      id: '/_authenticated/practice/vocabulario'
+      path: '/vocabulario'
+      fullPath: '/practice/vocabulario'
+      preLoaderRoute: typeof AuthenticatedPracticeVocabularioRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
+    '/_authenticated/practice/today': {
+      id: '/_authenticated/practice/today'
+      path: '/today'
+      fullPath: '/practice/today'
+      preLoaderRoute: typeof AuthenticatedPracticeTodayRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
+    '/_authenticated/practice/livre': {
+      id: '/_authenticated/practice/livre'
+      path: '/livre'
+      fullPath: '/practice/livre'
+      preLoaderRoute: typeof AuthenticatedPracticeLivreRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
+    '/_authenticated/practice/historico': {
+      id: '/_authenticated/practice/historico'
+      path: '/historico'
+      fullPath: '/practice/historico'
+      preLoaderRoute: typeof AuthenticatedPracticeHistoricoRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
+    '/_authenticated/practice/fill-in-blank': {
+      id: '/_authenticated/practice/fill-in-blank'
+      path: '/fill-in-blank'
+      fullPath: '/practice/fill-in-blank'
+      preLoaderRoute: typeof AuthenticatedPracticeFillInBlankRouteImport
+      parentRoute: typeof AuthenticatedPracticeRoute
+    }
+    '/_authenticated/chat/$conversationId': {
+      id: '/_authenticated/chat/$conversationId'
+      path: '/chat/$conversationId'
+      fullPath: '/chat/$conversationId'
+      preLoaderRoute: typeof AuthenticatedChatConversationIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assinatura/retorno': {
+      id: '/_authenticated/assinatura/retorno'
+      path: '/retorno'
+      fullPath: '/assinatura/retorno'
+      preLoaderRoute: typeof AuthenticatedAssinaturaRetornoRouteImport
+      parentRoute: typeof AuthenticatedAssinaturaRoute
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/retention': {
+      id: '/_authenticated/admin/retention'
+      path: '/retention'
+      fullPath: '/admin/retention'
+      preLoaderRoute: typeof AuthenticatedAdminRetentionRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/leads': {
+      id: '/_authenticated/admin/leads'
+      path: '/leads'
+      fullPath: '/admin/leads'
+      preLoaderRoute: typeof AuthenticatedAdminLeadsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/identity': {
+      id: '/_authenticated/admin/identity'
+      path: '/identity'
+      fullPath: '/admin/identity'
+      preLoaderRoute: typeof AuthenticatedAdminIdentityRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/custos-ia': {
+      id: '/_authenticated/admin/custos-ia'
+      path: '/custos-ia'
+      fullPath: '/admin/custos-ia'
+      preLoaderRoute: typeof AuthenticatedAdminCustosIaRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/assinaturas': {
+      id: '/_authenticated/admin/assinaturas'
+      path: '/assinaturas'
+      fullPath: '/admin/assinaturas'
+      preLoaderRoute: typeof AuthenticatedAdminAssinaturasRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/public/mercado-pago/webhook': {
+      id: '/api/public/mercado-pago/webhook'
+      path: '/api/public/mercado-pago/webhook'
+      fullPath: '/api/public/mercado-pago/webhook'
+      preLoaderRoute: typeof ApiPublicMercadoPagoWebhookRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/chat/$conversationId/revisao': {
       id: '/_authenticated/chat/$conversationId/revisao'
@@ -1028,12 +1021,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedChatConversationIdRevisaoRouteImport
       parentRoute: typeof AuthenticatedChatConversationIdRoute
     }
-    '/api/public/mercado-pago/webhook': {
-      id: '/api/public/mercado-pago/webhook'
-      path: '/api/public/mercado-pago/webhook'
-      fullPath: '/api/public/mercado-pago/webhook'
-      preLoaderRoute: typeof ApiPublicMercadoPagoWebhookRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/admin/users/$userId': {
+      id: '/_authenticated/admin/users/$userId'
+      path: '/$userId'
+      fullPath: '/admin/users/$userId'
+      preLoaderRoute: typeof AuthenticatedAdminUsersUserIdRouteImport
+      parentRoute: typeof AuthenticatedAdminUsersRoute
+    }
+    '/_authenticated/admin/assinaturas/$id': {
+      id: '/_authenticated/admin/assinaturas/$id'
+      path: '/$id'
+      fullPath: '/admin/assinaturas/$id'
+      preLoaderRoute: typeof AuthenticatedAdminAssinaturasIdRouteImport
+      parentRoute: typeof AuthenticatedAdminAssinaturasRoute
     }
   }
 }
